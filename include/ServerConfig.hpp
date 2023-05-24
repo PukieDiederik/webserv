@@ -8,6 +8,7 @@
 // Has config about routes
 struct RouteCfg {
 
+    // Redirects
     bool is_redirect;
     std::string redirect_to;
 
@@ -15,7 +16,10 @@ struct RouteCfg {
     std::string root;
 
     bool cgi_enabled;
-    bool directory_listing_enabled;
+
+    bool auto_index;
+    // This should raise an error if not given and autoindex is false
+    std::string index;
     // If this is empty it will accept any method
     std::vector<std::string> accepted_methods;
 
@@ -30,7 +34,7 @@ struct ServerCfg{
     std::vector<std::string> server_names;
 
     // First argument is the error code, the second argument is the path to a
-    // file. For the directory error page the error code should be -1.
+    // file.
     std::map<short, std::string> error_pages;
     int max_body_size;
 
