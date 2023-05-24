@@ -32,7 +32,7 @@ HttpMessage& HttpMessage::operator=(const HttpMessage& copy)
 // Getters/Setters
 int HttpMessage::major_version() const { return _major_version; }
 int HttpMessage::minor_version() const { return _minor_version; }
-std::string HttpMessage::version_string()
+std::string HttpMessage::version_string() const
 {
     std::stringstream result;
     result << "HTTP/" << _major_version << "." << _minor_version;

@@ -36,7 +36,7 @@ public:
     // Getters/Setters
     int major_version() const;
     int minor_version() const;
-    std::string version_string(); // Returns version string (for example: "HTTP/1.1")
+    std::string version_string() const; // Returns version string (for example: "HTTP/1.1")
 
     const std::string* header(const std::string& field_name) const;
     const std::string& body() const;
