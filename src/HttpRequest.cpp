@@ -4,7 +4,7 @@
 std::string HttpRequest::toStringStart() const
 {
     std::stringstream result;
-    result << _method << _target << HttpMessage::version_string();
+    result << _method << " " << _target << " " << HttpMessage::version_string() << "\n";
     return result.str();
 }
 

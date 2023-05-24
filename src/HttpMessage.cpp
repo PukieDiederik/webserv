@@ -38,14 +38,10 @@ std::string HttpMessage::version_string() const
     result << "HTTP/" << _major_version << "." << _minor_version;
     return result.str();
 }
-const std::string* HttpMessage::header(const std::string& field_name) const
+
+const std::string& HttpMessage::header(const std::string& field_name) const
 {
-    try {
-        return &_headers.at(field_name);
-    }
-    catch(std::exception& e) {
-        return NULL;
-    }
+    return _headers.at(field_name);
 }
 const std::string& HttpMessage::body() const { return _body; }
 

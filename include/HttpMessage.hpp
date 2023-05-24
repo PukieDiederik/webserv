@@ -38,7 +38,7 @@ public:
     int minor_version() const;
     std::string version_string() const; // Returns version string (for example: "HTTP/1.1")
 
-    const std::string* header(const std::string& field_name) const;
+    const std::string& header(const std::string& field_name) const;
     const std::string& body() const;
 
     // This will convert it back to a text based http message
