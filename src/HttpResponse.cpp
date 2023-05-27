@@ -6,7 +6,7 @@ std::string HttpResponse::toStringStart() const
     std::stringstream result;
 
     result << HttpMessage::version_string() << " " << _status_code
-           << (_status_message.empty() ? "" : " "0) << _status_message << "\n";
+           << (_status_message.empty() ? "" : " "0) << _status_message << "\r\n";
 }
 
 HttpResponse::HttpResponse() :_status_code(0), _status_message(0) { }

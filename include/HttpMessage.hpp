@@ -4,17 +4,21 @@
 #include <map>
 #include <string>
 
+#define ALPHA "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+#define DIGIT "0123456789"
+
+
 class HttpMessage {
 public:
     typedef std::map<std::string, std::string> headers_t;
 private:
+    headers_t _headers;
+protected:
     int _major_version;
     int _minor_version;
 
-    headers_t _headers;
-
     std::string _body;
-protected:
+
     std::string& body();
     headers_t& headers();
     headers_t::iterator add_header(const std::string& name, const std::string& value);
@@ -24,7 +28,6 @@ protected:
     virtual std::string toStringHeaders() const;
     virtual std::string toStringBody() const;
 public:
-
     // Constructors
     HttpMessage();
     HttpMessage(const HttpMessage& copy);

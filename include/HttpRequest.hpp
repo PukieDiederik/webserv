@@ -16,7 +16,7 @@ protected:
     std::string _method;
 
 public:
-    HttpRequest(std::string in); // parses the entire request
+    HttpRequest(const std::string& in); // parses the entire request
     HttpRequest(const HttpRequest& copy);
     ~HttpRequest();
 

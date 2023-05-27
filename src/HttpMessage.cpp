@@ -50,7 +50,7 @@ std::string HttpMessage::toStringHeaders() const
 {
     std::stringstream result;
     for (HttpMessage::headers_t::const_iterator i = _headers.begin(); i != _headers.end(); ++i)
-        result << i->first << ": " << i->second << "\n";
+        result << i->first << ": " << i->second << "\r\n";
     return result.str();
 }
 std::string HttpMessage::toStringBody() const { return _body;}
@@ -59,7 +59,7 @@ std::string HttpMessage::toString() const
 {
     std::stringstream result;
 
-    result << toStringStart() << toStringHeaders() << "\n" << toStringBody();
+    result << toStringStart() << toStringHeaders() << "\r\n" << toStringBody();
 
     return result.str();
 }
