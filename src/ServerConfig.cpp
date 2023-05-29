@@ -5,10 +5,13 @@
 RouteCfg::RouteCfg() { }
 RouteCfg::RouteCfg(const RouteCfg& copy) { (void)copy; }
 RouteCfg::~RouteCfg() { }
+RouteCfg RouteCfg::operator=(const RouteCfg& copy) { (void)copy; return *this; }
 
 ServerCfg::ServerCfg() { }
 ServerCfg::ServerCfg(const ServerCfg& copy) { (void)copy; }
 ServerCfg::~ServerCfg() { }
+ServerCfg ServerCfg::operator=(const ServerCfg& copy) { (void)copy; return *this; }
+
 
 // ServerConfig
 ServerConfig::ServerConfig(const std::string& file) { (void)file; }

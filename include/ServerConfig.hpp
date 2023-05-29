@@ -26,6 +26,8 @@ struct RouteCfg {
     RouteCfg();
     RouteCfg(const RouteCfg& copy);
     ~RouteCfg();
+    RouteCfg operator=(const RouteCfg& copy);
+
 };
 
 // Has config about server blocks
@@ -45,7 +47,10 @@ struct ServerCfg{
     // Constructors/Destructor
     ServerCfg();
     ServerCfg(const ServerCfg& copy);
+
     ~ServerCfg();
+
+    ServerCfg operator=(const ServerCfg& copy);
 };
 
 class ServerConfig {
@@ -73,10 +78,6 @@ public:
     ~ServerConfig();
 
     ServerConfig& operator=(const ServerConfig& copy);
-
-
-
-    // Accessors
 };
 
 #endif
