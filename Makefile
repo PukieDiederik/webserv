@@ -1,7 +1,7 @@
 ## Files
 SHELL       = /bin/zsh
 
-FNAMES      = main.cpp HttpMessage.cpp HttpRequest.cpp ParsingUtils.cpp
+FNAMES      = main.cpp HttpMessage.cpp HttpRequest.cpp ParsingUtils.cpp ParsingException.cpp
 
 SRCS        = $(addprefix $(SRCS_DIR)/,$(FNAMES))
 OBJS        = $(addprefix $(OBJS_DIR)/,$(notdir $(FNAMES:.cpp=.o)))
