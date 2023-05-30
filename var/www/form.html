@@ -11,9 +11,42 @@
 	<body>
 		<div class="page-wrapper">
 			<div class="container">
-				<h1 class="title">
-					Form
-				</h1>
+				<section>
+					<h1 class="title">
+						Form
+					</h1>
+				</section>
+
+				<section>
+					<form method="post" action="/cgi-bin/form.rb">
+						<fieldset>
+							<legend>WHAT IS YOUR NAME !?</legend>
+
+							<br>
+							<br>
+
+							<label for="fname">
+								First name:
+								<input type="text" id="fname" name="fname">
+							</label>
+
+							<br>
+							<br>
+
+							<label for="lname">
+								Last name:
+								<input type="text" id="lname" name="lname">
+							</label>
+
+							<br>
+							<br>
+						</fieldset>
+
+						<br>
+						<br>
+						<input type="submit" value="Submit">
+					</form>
+				</section>
 			</div>
 		</div>
 	</body>
