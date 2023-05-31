@@ -58,28 +58,31 @@ struct ServerCfg{
 };
 
 class ServerConfig {
-private:
-    // A list of commands which will be used in 'cgi'. Having one collecion
-    // store all of these will prevent us from having to store many duplicate
-    // commands. This vector will store null terminated arrays.
-    std::vector<char **> cgi_cmds;
-    // The first argument is the file extension, the second is a pointer to
-    // an argv array for the command to launch.
-    std::map<std::string, char**> cgi;
+	private:
+	// A list of commands which will be used in 'cgi'. Having one collecion
+	// store all of these will prevent us from having to store many duplicate
+	// commands. This vector will store null terminated arrays.
+	std::vector<char **> _cgi_cmds;
+	// The first argument is the file extension, the second is a pointer to
+	// an argv array for the command to launch.
+	std::map<std::string, char**> _cgi;
 
-    // This will store mime types and their respective content-type. The first
-    // argument is a file extensions, and the second argument is a content-type
-    std::map<std::string, std::string> mime;
+	// This will store mime types and their respective content-type. The first
+	// argument is a file extensions, and the second argument is a content-type
+	std::map<std::string, std::string> _mime;
     
-    std::vector<ServerCfg> servers;
+	std::vector<ServerCfg> _servers;
 
-    ServerConfig();
+	ServerConfig();
 	protected:// Parser utils
+		/* block delimiters */
 		bool	_keywd_bracket;
     		bool	_subkeywd_bracket;
 
+		/* condif file file descriptor */
 		std::ifstream	_fd_conf;
 
+		/* current line counter */
 		int	_bad_line;
 
 		int	isKeyword(std::string line);
@@ -87,14 +90,19 @@ private:
 		void	parseCgi();
 		void	parseMime();
 		void	parseServer();
-public:
-    // Constructors/Destructors
-    ServerConfig(const std::string& filepath); // will take a file to parse
-    ServerConfig(const ServerConfig& copy);
+			void	parseServerPort(std::string, ServerCfg);
+			void	parseServerErrorPage();
+			void	parseServerMaxBodySize();
+			void	parseServerRoot();
+			void	parseServerRoute();
+	public:
+		// Constructors/Destructors
+		ServerConfig(const std::string& filepath); // will take a file to parse
+		ServerConfig(const ServerConfig& copy);
 
-    ~ServerConfig();
+ 		~ServerConfig();
 
-    ServerConfig& operator=(const ServerConfig& copy);
+		ServerConfig& operator=(const ServerConfig& copy);
 };
 
 #endif

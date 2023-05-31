@@ -6,7 +6,7 @@
 /*   By: gde-alme <gde-alme@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/03/11 03:00:03 by gde-alme          #+#    #+#             */
-/*   Updated: 2023/05/31 04:03:40 by gde-alme         ###   ########.fr       */
+/*   Updated: 2023/05/31 15:16:56 by gde-alme         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,6 +39,11 @@ std::string removeMultipleSpaces(const std::string& str) {
 
 	if (!result.empty() && result[0] == ' ')
 		result = result.substr(1);
+
+	std::string::size_type	pos = result.find_last_not_of(' ');
+
+	if ( pos != std::string::npos)
+		result.erase(pos + 1);
 
 	return result;
 }
