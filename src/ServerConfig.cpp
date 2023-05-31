@@ -153,6 +153,9 @@ void	ServerConfig::parseServerErrorPages(std::string curr_line, ServerCfg &serve
 	std::vector<short>		status_code;
 	std::vector<std::string>	page_path;
 
+	int				counter[2];
+	counter[0] = 0;
+	counter[1] = 0;
 
 	std::getline(iss_curr_line, token, ' ');
 	std::getline(iss_curr_line, token, ' ');
@@ -163,6 +166,7 @@ void	ServerConfig::parseServerErrorPages(std::string curr_line, ServerCfg &serve
 		short	st_cd = ParserUtils::atoi(*it);
 		if (st_cd < 100 || st_cd > 599) { std::cout << "throw error: invalid http_status_code: line: " << _bad_line << std::endl; return ; }
 		status_code.push_back(st_cd);
+		counter[0]++;
 	}
 	
 	std::getline(iss_curr_line, ltoken, ' ');
@@ -171,7 +175,17 @@ void	ServerConfig::parseServerErrorPages(std::string curr_line, ServerCfg &serve
 	getParams(ltoken, page_path);
 
 	for (std::vector<std::string>::iterator it = page_path.begin(); it != page_path.end(); it++) {
-		if ()
+		// evaluate path
+		counter[1]++;
+	}
+
+	if (counter[0] != counter[1]) { std::cout << "throw error: not same number of http_status_codes and page_path: line " << _bad_line << std::endl; return ; }
+
+	std::vector<std::string>::iterator	st = page_path.begin();
+	for (std::vector<short>::iterator it = status_code.begin(); it != status_code.end(); it++) {
+		server_conf.error_pages.insert(std::make_pair(*it, *st));
+		std::cout << *it << " -> " << *st << std::endl;
+		st++;
 	}
 }
 
