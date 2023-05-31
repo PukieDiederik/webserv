@@ -1,10 +1,13 @@
-#include <iostream>
 #include "ServerConfig.hpp"
 
-int main(int argc, char **argv)
-{
-    (void) argc, (void) argv;
+int main(int argc, char **argv) {
+	(void) argc;
 
-    ServerConfig sc("server.cfg");
-    std::cout << "Hello World!" << std::endl;
+	if (argc != 2) {
+		std::cout << "error: missing config file" << std::endl;
+		return (0);
+	}
+
+	ServerConfig sc(argv[1]);
+	
 }

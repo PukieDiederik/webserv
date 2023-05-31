@@ -1,5 +1,4 @@
 #include "ServerConfig.hpp"
-#include <string>
 
 /*
  *	Config file parser:
@@ -24,11 +23,102 @@ ServerCfg::ServerCfg(const ServerCfg& copy) { (void)copy; }
 ServerCfg::~ServerCfg() { }
 ServerCfg ServerCfg::operator=(const ServerCfg& copy) { (void)copy; return *this; }
 
+// evaluates if given line contains a keyword and its respective '{' (or just the keyword); 
+// returns error (5) for all other cases
+int	ServerConfig::isKeyword(std::string line) {
+	int			value = 5;
+	std::string		token1, token2;
+	std::istringstream	iss(line);
 
-// ServerConfig
-ServerConfig::ServerConfig(const std::string& file) {
-	(void)file;
+	std::getline(iss, token1, ' ');
+	if (token1.compare("server") == 0) value = 1;
+	else if (token1.compare("cgi") == 0) value = 2;
+	else if (token1.compare("mime") == 0) value = 3;
+	else if (token1[0] == '#') value = 4;
+
+	std::getline(iss, token2, ' ');
+
+	if (token2.compare(token1) == 0) return (value);
+	else if (token2[0] == '{') _keywd_bracket = true;
+	else if (!token2.empty() && token2[0] != '#') value = 5;
+
+	return (value);
 }
+
+void	ServerConfig::parseServer() {
+	std::string	curr_line;
+	std::string	token;
+	_subkeywd_bracket = false;
+
+	// check if initial { was found, if not find it or return error
+	while (!_keywd_bracket) {
+		std::getline(_fd_conf, curr_line); _bad_line++;
+		std::istringstream	iss_curr_line(curr_line);
+		std::getline(iss_curr_line, token, ' ');
+
+		if (token[0] != '{' && token[0] != '#') { std::cout << "throw error: missing opening bracket: line " << _bad_line << std::endl; return ; }
+		else if (token[0] == '{') _keywd_bracket = true;
+	}
+
+	// read next sub blocks
+	while (std::getline(_fd_conf, curr_line)) {
+		_bad_line++;
+		//if (token == '}' && _subkeywd_bracket == false) return ;
+	}
+
+	if (_fd_conf.eof()) { std::cout << "throw error: missing closing bracket" << std::endl; return ; }
+}
+
+/* ServerConfig constructor:
+ * 	getline until keyword is found
+ * 	set _keywd_bracket true
+ * 	call respective block parser
+ * 	set _keywd_bracket false
+*/
+ServerConfig::ServerConfig(const std::string& filepath) {
+	_fd_conf.open(filepath.c_str());
+	if (_fd_conf.is_open()) {
+		std::string	curr_line;
+		int		eval;
+		_bad_line = 0;
+		while (std::getline(_fd_conf, curr_line)) {
+			_bad_line++;
+			if (curr_line.empty())
+				continue ;
+			eval = isKeyword(curr_line);	
+			switch (eval) {
+				case 1:
+					parseServer();
+					break ;
+				case 2:
+					std::cout << "parse cgi" << std::endl;
+					break ;
+				case 3:
+					std::cout << "parse mime" << std::endl;
+					break ;
+				case 4:
+					std::cout << "just comment" << std::endl;
+					break ;
+				case 5:
+					std::cout << "throw error: bad_line[" << _bad_line << "]: " << curr_line << std::endl;
+					break ;
+				//
+				// if _keywd_bracket not already set to true by evalLine, 1st
+				// char must be a bracket ('{'). Except commentis
+			}
+			//exit(0);
+		}
+	
+		if (_bad_line == 0) std::cout << "throw error: config file empty" << std::endl;
+		_fd_conf.close();
+
+	} else {
+		std::cout << "throw error: can't open file" << std::endl;
+	}
+
+}
+
+
 ServerConfig::ServerConfig(const ServerConfig& copy) { (void)copy; }
 
 ServerConfig::~ServerConfig() { }

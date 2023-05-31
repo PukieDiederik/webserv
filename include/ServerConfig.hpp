@@ -4,6 +4,10 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <cstdlib>
 
 // Has config about routes
 struct RouteCfg {
@@ -70,9 +74,22 @@ private:
     std::vector<ServerCfg> servers;
 
     ServerConfig();
+	protected:// Parser utils
+		bool	_keywd_bracket;
+    		bool	_subkeywd_bracket;
+
+		std::ifstream	_fd_conf;
+
+		int	_bad_line;
+
+		int	isKeyword(std::string line);
+
+		void	parseCgi();
+		void	parseMime();
+		void	parseServer();
 public:
     // Constructors/Destructors
-    ServerConfig(const std::string& file); // will take a file to parse
+    ServerConfig(const std::string& filepath); // will take a file to parse
     ServerConfig(const ServerConfig& copy);
 
     ~ServerConfig();
