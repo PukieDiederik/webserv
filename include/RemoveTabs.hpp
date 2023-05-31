@@ -6,12 +6,12 @@
 /*   By: gde-alme <gde-alme@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/03/11 03:00:07 by gde-alme          #+#    #+#             */
-/*   Updated: 2023/05/31 03:56:49 by gde-alme         ###   ########.fr       */
+/*   Updated: 2023/05/31 19:07:35 by gde-alme         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef __SEDLOSER_HPP__
-#define __SEDLOSER_HPP__
+#ifndef __REMOVETABS_HPP__
+#define __REMOVETABS_HPP__
 
 #include <iostream>
 #include <fstream>
@@ -35,4 +35,4 @@ class RemoveTabs {
 		std::string	s3;
 };
 
-#endif /* __SEDLOSER_HPP__ */
+#endif /* __REMOVETABS_HPP__ */
