@@ -93,7 +93,7 @@ class ServerConfig {
 		void	parseServer();
 			void	parseServerPort(std::string, ServerCfg);
 			void	parseServerNames(std::string, ServerCfg);
-			void	parseServerErrorPage();
+			void	parseServerErrorPages(std::string, ServerCfg);
 			void	parseServerMaxBodySize();
 			void	parseServerRoot();
 			void	parseServerRoute();

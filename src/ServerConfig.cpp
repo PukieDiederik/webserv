@@ -82,7 +82,7 @@ void	ServerConfig::getParams(std::string str, std::vector<std::string> &params) 
 void	ServerConfig::parseServerPort(std::string curr_line, ServerCfg server_conf) {
 	if (server_conf.port > 0) { std::cout << "throw error: multiple port config: line: " << _bad_line << std::endl; return ; }
 
-	std::string		token;
+	std::string		token, ltoken;
 	std::istringstream	iss_curr_line(curr_line);
 
 	std::getline(iss_curr_line, token, ' ');
@@ -91,8 +91,8 @@ void	ServerConfig::parseServerPort(std::string curr_line, ServerCfg server_conf)
 	if ((server_conf.port = ParserUtils::atoi(token.c_str())) < 0) { std::cout << "throw error: bad port config: line: " << _bad_line << std::endl; return ; }
 	else if (server_conf.port == 0) server_conf.port = 42; // assign available ports !!
 
-	std::getline(iss_curr_line, token, ' ');
-	if (token.empty() && token[0] != '#') { std::cout << "throw error: unexpected token: line: " << _bad_line << std::endl; } 
+	std::getline(iss_curr_line, ltoken, ' ');
+	if (!(ltoken.empty()) && ltoken[0] != '#') { std::cout << "throw error: unexpected token: line: " << _bad_line << std::endl; } 
 }
 
 /*	@parseServerNames:
@@ -106,7 +106,7 @@ void	ServerConfig::parseServerPort(std::string curr_line, ServerCfg server_conf)
  * */
 void	ServerConfig::parseServerNames(std::string curr_line, ServerCfg server_conf) {
 	std::istringstream	iss_curr_line(curr_line);
-	std::string		token;
+	std::string		token, ltoken;
 
 	std::getline(iss_curr_line, token, ' ');
 	std::getline(iss_curr_line, token, ' ');
@@ -129,7 +129,15 @@ void	ServerConfig::parseServerNames(std::string curr_line, ServerCfg server_conf
 		}
 		server_conf.server_names.push_back(*it);
 	}
+
+	std::getline(iss_curr_line, ltoken, ' ');
+	if (!(ltoken.empty()) && ltoken[0] != '#') { std::cout << "throw error: unexpected token: line: " << _bad_line << std::endl; } 
 }
+
+void	ServerCfg::parserServerErrorPages() {
+	
+}
+
 
 /*	@parseServer:
  * 		Checks if inital '{' was found, if not finds it or throws error
@@ -160,7 +168,7 @@ void	ServerConfig::parseServer() {
 		std::getline(iss_curr_line, token, ' ');
 		if (token.compare("port") == 0) parseServerPort(curr_line, server_conf);
 		else if (token.compare("server_names") == 0) parseServerNames(curr_line, server_conf);
-		else if (token.compare("error_page") == 0) std::cout << "set error page" << std::endl;
+		else if (token.compare("error_pages") == 0) parseErrorPages(curr_line, server_conf);
 		else if (token.compare("max_body_size") == 0) std::cout << "set max_body_size" << std::endl;
 		else if (token.compare("root") == 0) std::cout << "set root" << std::endl;
 		else if (token.compare("route") == 0) std::cout << "set route" << std::endl;
