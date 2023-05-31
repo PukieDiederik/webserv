@@ -1,4 +1,5 @@
 #include "ServerConfig.hpp"
+#include "RemoveTabs.hpp"
 
 /*
  *	Config file parser:
@@ -27,30 +28,31 @@ ServerCfg ServerCfg::operator=(const ServerCfg& copy) { (void)copy; return *this
 // returns error (5) for all other cases
 int	ServerConfig::isKeyword(std::string line) {
 	int			value = 5;
-	std::string		token1, token2;
+	std::string		token, ntoken;
 	std::istringstream	iss(line);
 
-	std::getline(iss, token1, ' ');
-	if (token1.compare("server") == 0) value = 1;
-	else if (token1.compare("cgi") == 0) value = 2;
-	else if (token1.compare("mime") == 0) value = 3;
-	else if (token1[0] == '#') value = 4;
+	std::getline(iss, token, ' ');
+	if (token.compare("server") == 0) value = 1;
+	else if (token.compare("cgi") == 0) value = 2;
+	else if (token.compare("mime") == 0) value = 3;
+	else if (token[0] == '#') value = 4;
 
-	std::getline(iss, token2, ' ');
+	std::getline(iss, ntoken, ' ');
 
-	if (token2.compare(token1) == 0) return (value);
-	else if (token2[0] == '{') _keywd_bracket = true;
-	else if (!token2.empty() && token2[0] != '#') value = 5;
+	if (ntoken.compare(token) == 0) return (value);
+	else if (ntoken[0] == '{') _keywd_bracket = true;
+	else if (!ntoken.empty() && ntoken[0] != '#') value = 5;
 
 	return (value);
 }
 
 void	ServerConfig::parseServer() {
 	std::string	curr_line;
-	std::string	token;
-	_subkeywd_bracket = false;
+	std::string	token, ntoken;
 
-	// check if initial { was found, if not find it or return error
+	_subkeywd_bracket = false;
+	
+	// check if initial '{' was found, if not find it or return error
 	while (!_keywd_bracket) {
 		std::getline(_fd_conf, curr_line); _bad_line++;
 		std::istringstream	iss_curr_line(curr_line);
@@ -63,7 +65,23 @@ void	ServerConfig::parseServer() {
 	// read next sub blocks
 	while (std::getline(_fd_conf, curr_line)) {
 		_bad_line++;
-		//if (token == '}' && _subkeywd_bracket == false) return ;
+		if (curr_line.empty()) continue ;
+
+		// same process as before: which subkeyword (block) it is
+		// then accordingly parse said block
+		// '}' after subkeywd still to handle
+
+		std::istringstream	iss_curr_line(curr_line);
+		std::getline(iss_curr_line, token, ' ');
+		if (token.compare("port") == 0) std::cout << "set port" << std::endl;
+		else if (token.compare("server_names") == 0) std::cout << "set server names" << std::endl;
+		else if (token.compare("error_page") == 0) std::cout << "set error page" << std::endl;
+		else if (token.compare("max_body_size") == 0) std::cout << "set max_body_size" << std::endl;
+		else if (token.compare("root") == 0) std::cout << "set root" << std::endl;
+		else if (token.compare("route") == 0) std::cout << "set route" << std::endl;
+		else if (token[0] == '#') continue ;
+		else if (token[0] == '}') return ;
+		else { std::cout << "throw error: bad server parameter: line: " << _bad_line << std::endl; return ; }
 	}
 
 	if (_fd_conf.eof()) { std::cout << "throw error: missing closing bracket" << std::endl; return ; }
@@ -76,17 +94,32 @@ void	ServerConfig::parseServer() {
  * 	set _keywd_bracket false
 */
 ServerConfig::ServerConfig(const std::string& filepath) {
-	_fd_conf.open(filepath.c_str());
+	RemoveTabs	noSpaces;
+
+	if (filepath.empty()) {
+		std::cout << "throw error: bad config file" << std::endl;
+	}
+	if (!(noSpaces.openFile(filepath))) {
+		std::cout << "throw error: can't open file" << std::endl;
+	}
+
+	noSpaces.replace();
+	noSpaces.writeToFile();
+
+	std::string	dot_filepath = ".";
+	dot_filepath += filepath;
+
+	_fd_conf.open(dot_filepath.c_str());
 	if (_fd_conf.is_open()) {
 		std::string	curr_line;
-		int		eval;
+		int		value;
 		_bad_line = 0;
 		while (std::getline(_fd_conf, curr_line)) {
 			_bad_line++;
 			if (curr_line.empty())
 				continue ;
-			eval = isKeyword(curr_line);	
-			switch (eval) {
+			value = isKeyword(curr_line);	
+			switch (value) {
 				case 1:
 					parseServer();
 					break ;
@@ -102,9 +135,6 @@ ServerConfig::ServerConfig(const std::string& filepath) {
 				case 5:
 					std::cout << "throw error: bad_line[" << _bad_line << "]: " << curr_line << std::endl;
 					break ;
-				//
-				// if _keywd_bracket not already set to true by evalLine, 1st
-				// char must be a bracket ('{'). Except commentis
 			}
 			//exit(0);
 		}
@@ -116,6 +146,7 @@ ServerConfig::ServerConfig(const std::string& filepath) {
 		std::cout << "throw error: can't open file" << std::endl;
 	}
 
+	std::cout << "ServerConfig parsing done." << std::endl;
 }
 
 

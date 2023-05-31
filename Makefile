@@ -1,7 +1,7 @@
 ## Files
 SHELL       = /bin/zsh
 
-FNAMES      = main.cpp ServerConfig.cpp
+FNAMES      = main.cpp ServerConfig.cpp RemoveTabs.cpp
 
 SRCS        = $(addprefix $(SRCS_DIR)/,$(FNAMES))
 OBJS        = $(addprefix $(OBJS_DIR)/,$(notdir $(FNAMES:.cpp=.o)))
