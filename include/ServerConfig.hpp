@@ -91,9 +91,9 @@ class ServerConfig {
 		void	parseCgi();
 		void	parseMime();
 		void	parseServer();
-			void	parseServerPort(std::string, ServerCfg);
-			void	parseServerNames(std::string, ServerCfg);
-			void	parseServerErrorPages(std::string, ServerCfg);
+			void	parseServerPort(std::string, ServerCfg &);
+			void	parseServerNames(std::string, ServerCfg &);
+			void	parseServerErrorPages(std::string, ServerCfg &);
 			void	parseServerMaxBodySize();
 			void	parseServerRoot();
 			void	parseServerRoute();

@@ -20,7 +20,9 @@ RouteCfg::RouteCfg(const RouteCfg& copy) { (void)copy; }
 RouteCfg::~RouteCfg() { }
 RouteCfg RouteCfg::operator=(const RouteCfg& copy) { (void)copy; return *this; }
 
-ServerCfg::ServerCfg() { }
+ServerCfg::ServerCfg() {
+	this->port = -42;
+}
 ServerCfg::ServerCfg(const ServerCfg& copy) { (void)copy; }
 ServerCfg::~ServerCfg() { }
 ServerCfg ServerCfg::operator=(const ServerCfg& copy) { (void)copy; return *this; }
@@ -58,7 +60,7 @@ int	ServerConfig::isKeyword(std::string line) {
 void	ServerConfig::getParams(std::string str, std::vector<std::string> &params) {
 	std::string 		param;
 
-	if (str[0] != '[' || str[str.length() - 1] != ']' || str.size() < 5) { std::cout << "throw error: bad server_names config: line: " << _bad_line << std::endl; return ; }
+	if (str[0] != '[' || str[str.length() - 1] != ']' || str.size() < 5) { std::cout << "throw error: bad parameter config: line: " << _bad_line << std::endl; return ; }
 	else (str = ParserUtils::removeDelimiters(str));
 
 	std::istringstream 	iss(str);
@@ -66,7 +68,7 @@ void	ServerConfig::getParams(std::string str, std::vector<std::string> &params) 
 	while (std::getline(iss, param, ',')) {
 		if (!param.empty()) {
 			if (param[0] != '\"' || param[param.length() - 1] != '\"' || param.size() < 3) {
-				std::cout << "throw error: bad server_names config: line: " << _bad_line << std::endl;
+				std::cout << "throw error: bad parameter config: line: " << _bad_line << std::endl;
 				return ;
 			} else 	param = ParserUtils::removeDelimiters(param);
 			params.push_back(param);
@@ -79,7 +81,7 @@ void	ServerConfig::getParams(std::string str, std::vector<std::string> &params) 
  *		Atoi's given port, throws error is bad input
  *		Checks for addiciontal token in string, throws erros if not comments
  * */
-void	ServerConfig::parseServerPort(std::string curr_line, ServerCfg server_conf) {
+void	ServerConfig::parseServerPort(std::string curr_line, ServerCfg &server_conf) {
 	if (server_conf.port > 0) { std::cout << "throw error: multiple port config: line: " << _bad_line << std::endl; return ; }
 
 	std::string		token, ltoken;
@@ -104,7 +106,7 @@ void	ServerConfig::parseServerPort(std::string curr_line, ServerCfg server_conf)
  *			A hostname may not start with a hyphen.
  *		Checks for additional tokens in string, throws error if not comments
  * */
-void	ServerConfig::parseServerNames(std::string curr_line, ServerCfg server_conf) {
+void	ServerConfig::parseServerNames(std::string curr_line, ServerCfg &server_conf) {
 	std::istringstream	iss_curr_line(curr_line);
 	std::string		token, ltoken;
 
@@ -134,8 +136,43 @@ void	ServerConfig::parseServerNames(std::string curr_line, ServerCfg server_conf
 	if (!(ltoken.empty()) && ltoken[0] != '#') { std::cout << "throw error: unexpected token: line: " << _bad_line << std::endl; } 
 }
 
-void	ServerCfg::parserServerErrorPages() {
+
+/*	parserServerErrorPages:
+ *		Calls @getParams to populate status_code_string
+ *		Evaluates if status_code_string is valid, throw error if not, converts to short if it is
+ *		Calls @getParams to populate page_path
+ *		Evaluates if page_path if valid
+ *		Checks if same number of status_codes and page_paths
+ *		Populates dictionary with status_code -> page_path
+ * */
+void	ServerConfig::parseServerErrorPages(std::string curr_line, ServerCfg &server_conf) {
+	std::istringstream	iss_curr_line(curr_line);
+	std::string		token, ltoken;
+
+	std::vector<std::string>	status_code_string;
+	std::vector<short>		status_code;
+	std::vector<std::string>	page_path;
+
+
+	std::getline(iss_curr_line, token, ' ');
+	std::getline(iss_curr_line, token, ' ');
+
+	getParams(token, status_code_string);
+
+	for (std::vector<std::string>::iterator it = status_code_string.begin(); it != status_code_string.end(); it++) {
+		short	st_cd = ParserUtils::atoi(*it);
+		if (st_cd < 100 || st_cd > 599) { std::cout << "throw error: invalid http_status_code: line: " << _bad_line << std::endl; return ; }
+		status_code.push_back(st_cd);
+	}
 	
+	std::getline(iss_curr_line, ltoken, ' ');
+	if (ltoken.empty()) { std::cout << "throw error: missing http_status_code_pages_path: line: " << _bad_line << std::endl; return ; }
+
+	getParams(ltoken, page_path);
+
+	for (std::vector<std::string>::iterator it = page_path.begin(); it != page_path.end(); it++) {
+		if ()
+	}
 }
 
 
@@ -148,6 +185,7 @@ void	ServerConfig::parseServer() {
 	std::string	curr_line;
 	std::string	token, ntoken;
 	ServerCfg	server_conf; // this object constructor can be used to set all values to default (to then compare with expected values)
+
 
 	_subkeywd_bracket = false;
 	
@@ -168,7 +206,7 @@ void	ServerConfig::parseServer() {
 		std::getline(iss_curr_line, token, ' ');
 		if (token.compare("port") == 0) parseServerPort(curr_line, server_conf);
 		else if (token.compare("server_names") == 0) parseServerNames(curr_line, server_conf);
-		else if (token.compare("error_pages") == 0) parseErrorPages(curr_line, server_conf);
+		else if (token.compare("error_pages") == 0) parseServerErrorPages(curr_line, server_conf);
 		else if (token.compare("max_body_size") == 0) std::cout << "set max_body_size" << std::endl;
 		else if (token.compare("root") == 0) std::cout << "set root" << std::endl;
 		else if (token.compare("route") == 0) std::cout << "set route" << std::endl;
