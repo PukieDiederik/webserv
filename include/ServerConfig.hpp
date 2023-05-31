@@ -86,11 +86,13 @@ class ServerConfig {
 		int	_bad_line;
 
 		int	isKeyword(std::string line);
-
+		void	getParams(std::string, std::vector<std::string> &params);
+		
 		void	parseCgi();
 		void	parseMime();
 		void	parseServer();
 			void	parseServerPort(std::string, ServerCfg);
+			void	parseServerNames(std::string, ServerCfg);
 			void	parseServerErrorPage();
 			void	parseServerMaxBodySize();
 			void	parseServerRoot();
