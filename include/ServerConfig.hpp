@@ -9,6 +9,10 @@
 #include <sstream>
 #include <cstdlib>
 
+// check filepath
+#include <sys/types.h>
+#include <dirent.h>
+
 // Has config about routes
 struct RouteCfg {
 
@@ -22,9 +26,8 @@ struct RouteCfg {
     bool cgi_enabled;
 
     bool auto_index;
-    // This should raise an error if not given and autoindex is false
-    std::string index;
-    // If this is empty it will accept any method
+    // This should raise an error if not given and autoindex is     std::string index;
+	// If this is empty it will accept any method
     std::vector<std::string> accepted_methods;
 
     RouteCfg();
@@ -94,7 +97,7 @@ class ServerConfig {
 			void	parseServerNames(std::string, ServerCfg &);
 			void	parseServerErrorPages(std::string, ServerCfg &);
 			void	parseServerMaxBodySize(std::string, ServerCfg &);
-			void	parseServerRoot();
+			void	parseServerRoot(std::string, ServerCfg &);
 			void	parseServerRoute();
 	public:
 		std::vector<ServerCfg>	_servers;

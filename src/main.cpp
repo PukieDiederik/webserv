@@ -8,5 +8,6 @@ int main(int argc, char **argv) {
 		return (0);
 	}
 
+	std::cout << "\nIf any possible errors do occur: \n" << std::endl;
 	ServerConfig sc(argv[1]);
 }

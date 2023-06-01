@@ -23,6 +23,7 @@ RouteCfg RouteCfg::operator=(const RouteCfg& copy) { (void)copy; return *this; }
 ServerCfg::ServerCfg() {
 	this->port = -42;
 	this->max_body_size = 0;
+	this->root_dir = "nopath";
 }
 //ServerCfg::ServerCfg(const ServerCfg& copy) { (void)copy; }
 ServerCfg::~ServerCfg() { }
@@ -219,7 +220,46 @@ void	ServerConfig::parseServerMaxBodySize(std::string curr_line, ServerCfg &serv
 
 }
 
+/*	@parseServerRoot:
+ *		Checks if its a valid absolute path, throws error if not or multiple defenitions
+ *		Checks if more token and present in line, if not comments throws error
+ * */
+void	ServerConfig::parseServerRoot(std::string curr_line, ServerCfg &server_conf) {
+	if (server_conf.root_dir.compare("nopath") != 0) { std::cout << "throw error: mutiple root_dir definitions: line: " << _bad_line << std::endl; return ; }
 
+	std::istringstream	iss_curr_line(curr_line);
+	std::string		token, ltoken;
+
+	std::getline(iss_curr_line, token, ' ');
+	std::getline(iss_curr_line, token, ' ');
+
+	if (token[0] != '"' || token[token.size() - 1] != '"' || token.length() < 3 || token[1] != '/') {
+		std::cout << "throw error: invalid root_dir path: line: " << _bad_line << std::endl; return ;
+	}
+
+	token = ParserUtils::removeDelimiters(token);
+
+	//find last occurence of '/' and remove everything after that
+	int lastIndex = -1;
+	for (int i = 0; i < token.length(); ++i) {
+		if (token[i] == '/') {
+			lastIndex = i;
+        	}
+    	}
+
+	std::string	dir_path = token;
+	if (lastIndex != -1) dir_path.erase(lastIndex + 1);
+
+	DIR	*checker = opendir(dir_path.c_str());
+	if (checker == NULL) { std::cout << "throw error: invalid root_dir path: line: " << _bad_line << std::endl; return ; }
+	closedir(checker);
+
+	server_conf.root_dir = token;
+
+	std::getline(iss_curr_line, ltoken, ' ');
+
+	if (!(ltoken.empty()) && ltoken[0] != '#') { std::cout << "throw error: unexpected token: line: " << _bad_line << std::endl; } 
+}
 
 /*	@parseServer:
  * 		Checks if inital '{' was found, if not finds it or throws error
@@ -252,7 +292,7 @@ void	ServerConfig::parseServer(ServerCfg &server_conf) {
 		else if (token.compare("server_names") == 0) parseServerNames(curr_line, server_conf);
 		else if (token.compare("error_pages") == 0) parseServerErrorPages(curr_line, server_conf);
 		else if (token.compare("max_body_size") == 0) parseServerMaxBodySize(curr_line, server_conf);
-		else if (token.compare("root") == 0) std::cout << "set root" << std::endl;
+		else if (token.compare("root") == 0) parseServerRoot(curr_line, server_conf);
 		else if (token.compare("route") == 0) std::cout << "set route" << std::endl;
 		else if (token[0] == '#') continue ;
 		else if (token[0] == '}') { _keywd_bracket = false; return ; }
@@ -298,7 +338,6 @@ ServerConfig::ServerConfig(const std::string& filepath) {
 			if (value == 1) {
 				ServerCfg	server_conf;
 				parseServer(server_conf);
-				std::cout << "\tServer port: [" << server_conf.port << "]" << std::endl;
 				_servers.push_back(server_conf);
 			} else if (value == 2) {
 				std::cout << "parse cgi" << std::endl;
@@ -333,7 +372,9 @@ ServerConfig::ServerConfig(const std::string& filepath) {
 		for (std::map<short, std::string>::iterator jit = (*it).error_pages.begin(); jit != (*it).error_pages.end(); jit++)
 			std::cout << "\t\t[" << jit->first << "] -> [" << jit->second << "]" << std::endl;
 
-		std::cout << "\tServer max_body_size:\n\t[" << (*it).max_body_size << "]" << std::endl;
+		std::cout << "\tServer max_body_size:\n\t\t[" << (*it).max_body_size << "]" << std::endl;
+		
+		std::cout << "\tServer root dir:\n\t\t[" << (*it).root_dir << "]" << std::endl;
 	}
 }
 
