@@ -15,49 +15,50 @@
 
 // Has config about routes
 struct RouteCfg {
+	//Route path
+	std::string	route_path;
+	// Redirects
+	bool	is_redirect;
+    	std::string	redirect_to;
 
-    // Redirects
-    bool is_redirect;
-    std::string redirect_to;
+	// This will be an absolute path
+	std::string	root;
 
-    // This will be an absolute path
-    std::string root;
+	bool	cgi_enabled;
 
-    bool cgi_enabled;
-
-    bool auto_index;
-    // This should raise an error if not given and autoindex is     std::string index;
+	bool	auto_index;
+	// This should raise an error if not given and autoindex is false
+	std::string index;
 	// If this is empty it will accept any method
-    std::vector<std::string> accepted_methods;
+ 
+	std::vector<std::string>	accepted_methods;
 
-    RouteCfg();
-    RouteCfg(const RouteCfg& copy);
-    ~RouteCfg();
-    RouteCfg operator=(const RouteCfg& copy);
+	RouteCfg();
+	//RouteCfg(const RouteCfg& copy);
+	~RouteCfg();
+	//RouteCfg operator=(const RouteCfg& copy);
 
 };
 
 // Has config about server blocks
 struct ServerCfg {
-    short port;
-    std::vector<std::string> server_names;
+	short	port;
+	std::vector<std::string>	server_names;
 
-    // First argument is the error code, the second argument is the path to a
-    // file.
-    std::map<short, std::string> error_pages;
-    int max_body_size;
+	// First argument is the error code, the second argument is the path to a file.
+ 
+	std::map<short, std::string>	error_pages;
+	int	max_body_size;
 
-    // This should be an absolute path
-    std::string root_dir;
-    std::vector<RouteCfg> routes;
+	// This should be an absolute path
+	std::string	root_dir;
+	std::vector<RouteCfg>	routes;
 
-    // Constructors/Destructor
-    ServerCfg();
-    //ServerCfg(const ServerCfg& copy);
-
-    ~ServerCfg();
-
-    //ServerCfg operator=(const ServerCfg& copy);
+	// Constructors/Destructor
+	ServerCfg();
+	//ServerCfg(const ServerCfg& copy);
+	~ServerCfg();
+	//ServerCfg operator=(const ServerCfg& copy);
 };
 
 class ServerConfig {
@@ -92,13 +93,13 @@ class ServerConfig {
 		
 		void	parseCgi();
 		void	parseMime();
-		void	parseServer(ServerCfg &);
+		void	parseServer();
 			void	parseServerPort(std::string, ServerCfg &);
 			void	parseServerNames(std::string, ServerCfg &);
 			void	parseServerErrorPages(std::string, ServerCfg &);
 			void	parseServerMaxBodySize(std::string, ServerCfg &);
 			void	parseServerRoot(std::string, ServerCfg &);
-			void	parseServerRoute();
+			void	parseServerRoute(std::string curr_line, ServerCfg &);
 	public:
 		std::vector<ServerCfg>	_servers;
 		// Constructors/Destructors

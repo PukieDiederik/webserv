@@ -15,10 +15,16 @@
  * */
 
 
-RouteCfg::RouteCfg() { }
-RouteCfg::RouteCfg(const RouteCfg& copy) { (void)copy; }
+RouteCfg::RouteCfg() {
+	this->is_redirect = false;
+	this->root = "nopath";
+	this->cgi_enabled = false;
+	this->auto_index = false;
+	this->index = "notgiven";
+}
+//RouteCfg::RouteCfg(const RouteCfg& copy) { (void)copy; }
 RouteCfg::~RouteCfg() { }
-RouteCfg RouteCfg::operator=(const RouteCfg& copy) { (void)copy; return *this; }
+//RouteCfg RouteCfg::operator=(const RouteCfg& copy) { (void)copy; return *this; }
 
 ServerCfg::ServerCfg() {
 	this->port = -42;
@@ -261,15 +267,69 @@ void	ServerConfig::parseServerRoot(std::string curr_line, ServerCfg &server_conf
 	if (!(ltoken.empty()) && ltoken[0] != '#') { std::cout << "throw error: unexpected token: line: " << _bad_line << std::endl; } 
 }
 
+/*	@parseServerRoute:
+ *		Looks for opening subkeywd_bracket ({)
+ *		Calls getline parsing each subkeywd to the RouteCfg object
+ *
+ * */
+void	ServerConfig::parseServerRoute(std::string curr_line, ServerCfg &server_conf) {
+	RouteCfg	route_conf;
+
+	std::istringstream	iss_curr_line(curr_line);
+	std::string		token, ltoken;
+
+	std::getline(iss_curr_line, token, ' ');
+	std::getline(iss_curr_line, token, ' ');
+
+	if (token[0] != '"' || token[token.size() - 1] != '"' || token.length() < 3 || token[1] != '/') {
+		std::cout << "throw error: invalid route_path: line: " << _bad_line << std::endl; return ;
+	}
+
+	// add route_path !
+
+	std::getline(iss_curr_line, ltoken, ' ');
+	if (!(ltoken.empty()) && ltoken[0] != '#' && ltoken.compare("{") != 0) {
+		std::cout << "throw error: unexpected token: line: " << _bad_line << std::endl;
+	} else if (ltoken.compare("{") == 0) _subkeywd_bracket = true;
+
+	while (!_subkeywd_bracket) {
+		std::getline(_fd_conf, curr_line); _bad_line++;
+		std::istringstream	iss_curr_line(curr_line);
+		std::getline(iss_curr_line, token, ' ');
+
+		if (token.compare("{") != 0 && token[0] != '#') { std::cout << "throw error: missing opening bracket: line " << _bad_line << std::endl; return ; }
+		else if (token.compare("{") == 0) _subkeywd_bracket = true;
+	}
+
+	while (getline(_fd_conf, curr_line)) {
+		_bad_line++;
+		if (curr_line.empty()) continue ;
+
+		std::istringstream	iss_c_line(curr_line);
+
+		std::getline(iss_c_line, token, ' ');
+		if (token.compare("}") == 0) { _subkeywd_bracket = false; server_conf.routes.push_back(route_conf); return ; }
+		if (token.compare("auto_index") == 0) {
+			if (route_conf.auto_index == true) { std::cout << "throw error: multiple index definitions: line: " << _bad_line << std::endl; return ; }
+			route_conf.auto_index = true;
+			std::getline(iss_curr_line, ltoken, ' ');
+			if (!(ltoken.empty()) && ltoken[0] != '#') { std::cout << "throw error: unexpected token: line: " << _bad_line << std::endl; }
+		}
+	}
+	if (_fd_conf.eof()) { std::cout << "throw error: missing closing bracket in route_config" << std::endl; return ; }	
+}
+
 /*	@parseServer:
  * 		Checks if inital '{' was found, if not finds it or throws error
  * 		If one subkeyword (block) is found, calls for its parsing
  * 		Stops if '}' is found or EOF
 */
 
-void	ServerConfig::parseServer(ServerCfg &server_conf) {
+void	ServerConfig::parseServer() {
 	std::string	curr_line;
 	std::string	token, ntoken;
+
+	ServerCfg	server_conf;
 
 	_subkeywd_bracket = false;
 	
@@ -278,8 +338,8 @@ void	ServerConfig::parseServer(ServerCfg &server_conf) {
 		std::istringstream	iss_curr_line(curr_line);
 		std::getline(iss_curr_line, token, ' ');
 
-		if (token[0] != '{' && token[0] != '#') { std::cout << "throw error: missing opening bracket: line " << _bad_line << std::endl; return ; }
-		else if (token[0] == '{') _keywd_bracket = true;
+		if (token.compare("{") != 0 && token[0] != '#') { std::cout << "throw error: missing opening bracket: line " << _bad_line << std::endl; return ; }
+		else if (token.compare("{") == '{') _keywd_bracket = true;
 	}
 
 	while (std::getline(_fd_conf, curr_line)) {
@@ -293,9 +353,9 @@ void	ServerConfig::parseServer(ServerCfg &server_conf) {
 		else if (token.compare("error_pages") == 0) parseServerErrorPages(curr_line, server_conf);
 		else if (token.compare("max_body_size") == 0) parseServerMaxBodySize(curr_line, server_conf);
 		else if (token.compare("root") == 0) parseServerRoot(curr_line, server_conf);
-		else if (token.compare("route") == 0) std::cout << "set route" << std::endl;
+		else if (token.compare("route") == 0) parseServerRoute(curr_line, server_conf);
 		else if (token[0] == '#') continue ;
-		else if (token[0] == '}') { _keywd_bracket = false; return ; }
+		else if (token[0] == '}') { _keywd_bracket = false; _servers.push_back(server_conf); return ; }
 		else { std::cout << "throw error: bad server parameter: line: " << _bad_line << std::endl; return ; }
 	}
 
@@ -336,9 +396,7 @@ ServerConfig::ServerConfig(const std::string& filepath) {
 				continue ;
 			value = isKeyword(curr_line);	
 			if (value == 1) {
-				ServerCfg	server_conf;
-				parseServer(server_conf);
-				_servers.push_back(server_conf);
+				parseServer();
 			} else if (value == 2) {
 				std::cout << "parse cgi" << std::endl;
 			} else if (value == 3) {
