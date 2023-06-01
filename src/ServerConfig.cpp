@@ -14,7 +14,6 @@
  *			- Missing parameters
  * */
 
-
 RouteCfg::RouteCfg() {
 	this->is_redirect = false;
 	this->root = "nopath";
@@ -50,7 +49,7 @@ int	ServerConfig::isKeyword(std::string line) {
 	if (token.compare("server") == 0) value = 1;
 	else if (token.compare("cgi") == 0) value = 2;
 	else if (token.compare("mime") == 0) value = 3;
-	else if (token[0] == '#') value = 4;
+	else if (token[0] == '#') return (4);
 
 	std::getline(iss, ntoken, ' ');
 
@@ -306,15 +305,39 @@ void	ServerConfig::parseServerRoute(std::string curr_line, ServerCfg &server_con
 		if (curr_line.empty()) continue ;
 
 		std::istringstream	iss_c_line(curr_line);
+		std::string		ntoken, nltoken;
 
-		std::getline(iss_c_line, token, ' ');
-		if (token.compare("}") == 0) { _subkeywd_bracket = false; server_conf.routes.push_back(route_conf); return ; }
-		if (token.compare("auto_index") == 0) {
+		std::getline(iss_c_line, ntoken, ' ');
+		if (ntoken.compare("}") == 0) {
+			_subkeywd_bracket = false; server_conf.routes.push_back(route_conf); return ;
+		} else if (ntoken.compare("auto_index") == 0) {
 			if (route_conf.auto_index == true) { std::cout << "throw error: multiple index definitions: line: " << _bad_line << std::endl; return ; }
 			route_conf.auto_index = true;
-			std::getline(iss_curr_line, ltoken, ' ');
-			if (!(ltoken.empty()) && ltoken[0] != '#') { std::cout << "throw error: unexpected token: line: " << _bad_line << std::endl; }
-		}
+			std::getline(iss_c_line, nltoken, ' ');
+			if (!(nltoken.empty()) && nltoken[0] != '#') { std::cout << "throw error: unexpected token: line: " << _bad_line << std::endl; }
+		} else if (ntoken.compare("index") == 0) {
+			if (route_conf.index.compare("notgiven") != 0) { std::cout << "throw error: multiple index definitions: line: " << _bad_line << std::endl; return ; }
+			route_conf.index = ntoken;
+			std::getline(iss_c_line, nltoken, ' ');
+			if (!(nltoken.empty()) && nltoken[0] != '#') { std::cout << "throw error: unexpected token: line: " << _bad_line << std::endl; }
+		} else if (ntoken.compare("enable_cgi") == 0) {
+			if (route_conf.cgi_enabled = true) { std::cout << "throw error: multiple enable_cgi definitions: line: " << _bad_line << std::endl; return ; }
+			route_conf.cgi_enabled = true;
+			std::getline(iss_c_line, nltoken, ' ');
+			if (!(nltoken.empty()) && nltoken[0] != '#') { std::cout << "throw error: unexpected token: line: " << _bad_line << std::endl; }
+		} else if (ntoken.compare("root") == 0) {
+			if (route_conf.root.compare("nopath") != 0) { std::cout << "throw error: multiple root definitions: line: " << _bad_line << std::endl; return ; }
+			std::cout << ntoken << std::endl;
+			if (ntoken[0] != '"' || ntoken[ntoken.length() - 1] != '"' || ntoken.length() < 3) { std::cout << "throw error: invalid root path: line: " << _bad_line << std::endl; return ; }
+			ntoken = ParserUtils::removeDelimiters(ntoken);
+			for (int i = 0; ntoken[i] != '\0'; i++) {
+				if (ntoken[i] == '/' && ntoken[i + 1] == '/') { std::cout << "throw error: invalid root_path: line: " << _bad_line << std::endl; return ; }
+			}
+			route_conf.root = ntoken;
+			std::getline(iss_c_line, nltoken, ' ');
+			if (!(nltoken.empty()) && nltoken[0] != '#') { std::cout << "throw error: unexpected token: line: " << _bad_line << std::endl; }
+		} 
+
 	}
 	if (_fd_conf.eof()) { std::cout << "throw error: missing closing bracket in route_config" << std::endl; return ; }	
 }
@@ -348,6 +371,7 @@ void	ServerConfig::parseServer() {
 
 		std::istringstream	iss_curr_line(curr_line);
 		std::getline(iss_curr_line, token, ' ');
+		//std::cout << "c_line: " << curr_line << "c_token: " << token << std::endl;
 		if (token.compare("port") == 0) parseServerPort(curr_line, server_conf);
 		else if (token.compare("server_names") == 0) parseServerNames(curr_line, server_conf);
 		else if (token.compare("error_pages") == 0) parseServerErrorPages(curr_line, server_conf);
