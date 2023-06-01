@@ -24,9 +24,9 @@ ServerCfg::ServerCfg() {
 	this->port = -42;
 	this->max_body_size = 0;
 }
-ServerCfg::ServerCfg(const ServerCfg& copy) { (void)copy; }
+//ServerCfg::ServerCfg(const ServerCfg& copy) { (void)copy; }
 ServerCfg::~ServerCfg() { }
-ServerCfg ServerCfg::operator=(const ServerCfg& copy) { (void)copy; return *this; }
+//ServerCfg ServerCfg::operator=(const ServerCfg& copy) { (void)copy; return *this; }
 
 
 
@@ -298,6 +298,7 @@ ServerConfig::ServerConfig(const std::string& filepath) {
 			if (value == 1) {
 				ServerCfg	server_conf;
 				parseServer(server_conf);
+				std::cout << "\tServer port: [" << server_conf.port << "]" << std::endl;
 				_servers.push_back(server_conf);
 			} else if (value == 2) {
 				std::cout << "parse cgi" << std::endl;
@@ -321,8 +322,18 @@ ServerConfig::ServerConfig(const std::string& filepath) {
 	int	i = 1;
 	for (std::vector<ServerCfg>::iterator it = _servers.begin(); it != _servers.end(); it++) {
 		std::cout << "\nServer[" << i++ << "]:" << std::endl;
-		ServerCfg	server = *it;
-		std::cout << "\tServer port: [" << server.port << "]" << std::endl;
+
+		std::cout << "\tServer port:\n\t\t[" << (*it).port << "]" << std::endl;
+		
+		std::cout << "\tServer name(s): " << std::endl;
+		for (std::vector<std::string>::iterator jit = (*it).server_names.begin(); jit != (*it).server_names.end(); jit++)
+			std::cout << "\t\t[" << *jit << "]" << std::endl;
+
+		std::cout << "\tServer error_pages: " << std::endl;
+		for (std::map<short, std::string>::iterator jit = (*it).error_pages.begin(); jit != (*it).error_pages.end(); jit++)
+			std::cout << "\t\t[" << jit->first << "] -> [" << jit->second << "]" << std::endl;
+
+		std::cout << "\tServer max_body_size:\n\t[" << (*it).max_body_size << "]" << std::endl;
 	}
 }
 

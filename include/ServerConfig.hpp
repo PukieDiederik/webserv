@@ -35,7 +35,7 @@ struct RouteCfg {
 };
 
 // Has config about server blocks
-struct ServerCfg{
+struct ServerCfg {
     short port;
     std::vector<std::string> server_names;
 
@@ -50,11 +50,11 @@ struct ServerCfg{
 
     // Constructors/Destructor
     ServerCfg();
-    ServerCfg(const ServerCfg& copy);
+    //ServerCfg(const ServerCfg& copy);
 
     ~ServerCfg();
 
-    ServerCfg operator=(const ServerCfg& copy);
+    //ServerCfg operator=(const ServerCfg& copy);
 };
 
 class ServerConfig {
@@ -97,7 +97,7 @@ class ServerConfig {
 			void	parseServerRoot();
 			void	parseServerRoute();
 	public:
-	std::vector<ServerCfg>	_servers;
+		std::vector<ServerCfg>	_servers;
 		// Constructors/Destructors
 		ServerConfig(const std::string& filepath); // will take a file to parse
 		ServerConfig(const ServerConfig& copy);
