@@ -71,7 +71,6 @@ class ServerConfig {
 	// argument is a file extensions, and the second argument is a content-type
 	std::map<std::string, std::string> _mime;
     
-	std::vector<ServerCfg> _servers;
 
 	ServerConfig();
 	protected:// Parser utils
@@ -90,14 +89,15 @@ class ServerConfig {
 		
 		void	parseCgi();
 		void	parseMime();
-		void	parseServer();
+		void	parseServer(ServerCfg &);
 			void	parseServerPort(std::string, ServerCfg &);
 			void	parseServerNames(std::string, ServerCfg &);
 			void	parseServerErrorPages(std::string, ServerCfg &);
-			void	parseServerMaxBodySize();
+			void	parseServerMaxBodySize(std::string, ServerCfg &);
 			void	parseServerRoot();
 			void	parseServerRoute();
 	public:
+	std::vector<ServerCfg>	_servers;
 		// Constructors/Destructors
 		ServerConfig(const std::string& filepath); // will take a file to parse
 		ServerConfig(const ServerConfig& copy);

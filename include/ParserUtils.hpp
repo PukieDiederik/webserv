@@ -7,6 +7,7 @@
  *	@removeDelimiters:
  *		Removes 1st and last char from given string
 */
+
 namespace ParserUtils {
 	int	atoi(std::string str) {
 		int	value = 0;

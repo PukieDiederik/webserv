@@ -9,5 +9,4 @@ int main(int argc, char **argv) {
 	}
 
 	ServerConfig sc(argv[1]);
-	
 }

@@ -22,14 +22,17 @@ RouteCfg RouteCfg::operator=(const RouteCfg& copy) { (void)copy; return *this; }
 
 ServerCfg::ServerCfg() {
 	this->port = -42;
+	this->max_body_size = 0;
 }
 ServerCfg::ServerCfg(const ServerCfg& copy) { (void)copy; }
 ServerCfg::~ServerCfg() { }
 ServerCfg ServerCfg::operator=(const ServerCfg& copy) { (void)copy; return *this; }
 
+
+
 /*	@isKeyword:
- *		Evaluates if given line contains a keyword and its respective '{' (or just the keyword); 
- *		Returns error (5) for all other cases
+*		Evaluates if given line contains a keyword and its respective '{' (or just the keyword)
+*		Returns error (5) for all other cases
 */
 int	ServerConfig::isKeyword(std::string line) {
 	int			value = 5;
@@ -136,7 +139,6 @@ void	ServerConfig::parseServerNames(std::string curr_line, ServerCfg &server_con
 	if (!(ltoken.empty()) && ltoken[0] != '#') { std::cout << "throw error: unexpected token: line: " << _bad_line << std::endl; } 
 }
 
-
 /*	parserServerErrorPages:
  *		Calls @getParams to populate status_code_string
  *		Evaluates if status_code_string is valid, throw error if not, converts to short if it is
@@ -144,6 +146,7 @@ void	ServerConfig::parseServerNames(std::string curr_line, ServerCfg &server_con
  *		Evaluates if page_path if valid
  *		Checks if same number of status_codes and page_paths
  *		Populates dictionary with status_code -> page_path
+ *		Checks if aditional tokens in string, if not comments throws error
  * */
 void	ServerConfig::parseServerErrorPages(std::string curr_line, ServerCfg &server_conf) {
 	std::istringstream	iss_curr_line(curr_line);
@@ -184,10 +187,38 @@ void	ServerConfig::parseServerErrorPages(std::string curr_line, ServerCfg &serve
 	std::vector<std::string>::iterator	st = page_path.begin();
 	for (std::vector<short>::iterator it = status_code.begin(); it != status_code.end(); it++) {
 		server_conf.error_pages.insert(std::make_pair(*it, *st));
-		std::cout << *it << " -> " << *st << std::endl;
 		st++;
 	}
+
+	std::getline(iss_curr_line, ltoken, ' ');
+	if (!(ltoken.empty()) && ltoken[0] != '#') { std::cout << "throw error: unexpected token: line: " << _bad_line << std::endl; } 
 }
+
+/*	@parseServerMaxBodySize:
+ *		Checks if value already set (multiple configs)
+ *		Checks if its a valid number
+ *		Checks if aditional tokens in string, if not comments throws error
+ * */
+void	ServerConfig::parseServerMaxBodySize(std::string curr_line, ServerCfg &server_conf) {
+	if (server_conf.max_body_size > 0) { std::cout << "throw error: multiple max_body_size values: line: " << _bad_line << std::endl; return ; }
+	std::istringstream	iss_curr_line(curr_line);
+	std::string		token, ltoken;
+
+	std::getline(iss_curr_line, token, ' ');
+	std::getline(iss_curr_line, token, ' ');
+
+	int	value = ParserUtils::atoi(token);
+
+	if (value < 0) {  std::cout << "throw error: invalid max_body_size value: line: " << _bad_line << std::endl; return ; }
+
+	server_conf.max_body_size = value;
+
+	std::getline(iss_curr_line, ltoken, ' ');
+
+	if (!(ltoken.empty()) && ltoken[0] != '#') { std::cout << "throw error: unexpected token: line: " << _bad_line << std::endl; } 
+
+}
+
 
 
 /*	@parseServer:
@@ -195,11 +226,10 @@ void	ServerConfig::parseServerErrorPages(std::string curr_line, ServerCfg &serve
  * 		If one subkeyword (block) is found, calls for its parsing
  * 		Stops if '}' is found or EOF
 */
-void	ServerConfig::parseServer() {
+
+void	ServerConfig::parseServer(ServerCfg &server_conf) {
 	std::string	curr_line;
 	std::string	token, ntoken;
-	ServerCfg	server_conf; // this object constructor can be used to set all values to default (to then compare with expected values)
-
 
 	_subkeywd_bracket = false;
 	
@@ -221,7 +251,7 @@ void	ServerConfig::parseServer() {
 		if (token.compare("port") == 0) parseServerPort(curr_line, server_conf);
 		else if (token.compare("server_names") == 0) parseServerNames(curr_line, server_conf);
 		else if (token.compare("error_pages") == 0) parseServerErrorPages(curr_line, server_conf);
-		else if (token.compare("max_body_size") == 0) std::cout << "set max_body_size" << std::endl;
+		else if (token.compare("max_body_size") == 0) parseServerMaxBodySize(curr_line, server_conf);
 		else if (token.compare("root") == 0) std::cout << "set root" << std::endl;
 		else if (token.compare("route") == 0) std::cout << "set route" << std::endl;
 		else if (token[0] == '#') continue ;
@@ -231,7 +261,6 @@ void	ServerConfig::parseServer() {
 
 	if (_fd_conf.eof()) { std::cout << "throw error: missing closing bracket" << std::endl; return ; }
 
-	_servers.push_back(server_conf);
 }
 
 /*	@ServerConfig constructor:
@@ -266,22 +295,16 @@ ServerConfig::ServerConfig(const std::string& filepath) {
 			if (curr_line.empty())
 				continue ;
 			value = isKeyword(curr_line);	
-			switch (value) {
-				case 1:
-					parseServer();
-					break ;
-				case 2:
-					std::cout << "parse cgi" << std::endl;
-					break ;
-				case 3:
-					std::cout << "parse mime" << std::endl;
-					break ;
-				case 4:
-					std::cout << "just comment" << std::endl;
-					break ;
-				case 5:
-					std::cout << "throw error: bad_line[" << _bad_line << "]: " << curr_line << std::endl;
-					break ;
+			if (value == 1) {
+				ServerCfg	server_conf;
+				parseServer(server_conf);
+				_servers.push_back(server_conf);
+			} else if (value == 2) {
+				std::cout << "parse cgi" << std::endl;
+			} else if (value == 3) {
+				std::cout << "parse mime" << std::endl;
+			} else if (value == 5) {
+				std::cout << "throw error: bad_line[" << _bad_line << "]: " << curr_line << std::endl;
 			}
 			//exit(0);
 		}
@@ -293,7 +316,14 @@ ServerConfig::ServerConfig(const std::string& filepath) {
 		std::cout << "throw error: can't open file" << std::endl;
 	}
 
-	std::cout << "ServerConfig parsing done." << std::endl;
+	std::cout << "\nServerConfig parsing done." << std::endl;
+	std::cout << "\nServerConfig:" << std::endl;
+	int	i = 1;
+	for (std::vector<ServerCfg>::iterator it = _servers.begin(); it != _servers.end(); it++) {
+		std::cout << "\nServer[" << i++ << "]:" << std::endl;
+		ServerCfg	server = *it;
+		std::cout << "\tServer port: [" << server.port << "]" << std::endl;
+	}
 }
 
 
