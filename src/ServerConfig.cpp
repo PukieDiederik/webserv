@@ -387,7 +387,6 @@ void	ServerConfig::parseServer() {
 
 		std::istringstream	iss_curr_line(curr_line);
 		std::getline(iss_curr_line, token, ' ');
-		//std::cout << "c_line: " << curr_line << "c_token: " << token << std::endl;
 		if (token.compare("port") == 0) parseServerPort(curr_line, server_conf);
 		else if (token.compare("server_names") == 0) parseServerNames(curr_line, server_conf);
 		else if (token.compare("error_pages") == 0) parseServerErrorPages(curr_line, server_conf);
@@ -395,12 +394,50 @@ void	ServerConfig::parseServer() {
 		else if (token.compare("root") == 0) parseServerRoot(curr_line, server_conf);
 		else if (token.compare("route") == 0) parseServerRoute(curr_line, server_conf);
 		else if (token[0] == '#') continue ;
-		else if (token[0] == '}') { _keywd_bracket = false; _servers.push_back(server_conf); return ; }
+		else if (token.compare("}") == 0) { _keywd_bracket = false; _servers.push_back(server_conf); return ; }
 		else { std::cout << "throw error: bad server parameter: line: " << _bad_line << std::endl; return ; }
 	}
 
 	if (_fd_conf.eof()) { std::cout << "throw error: missing closing bracket" << std::endl; return ; }
+}
 
+void	ServerConfig::parseMime() {
+	std::string	curr_line;
+	std::string	token, ltoken;
+
+	while (!_keywd_bracket) {
+		std::getline(_fd_conf, curr_line); _bad_line++;
+		std::istringstream	iss_curr_line(curr_line);
+		std::getline(iss_curr_line, token, ' ');
+
+		if (token.compare("{") != 0 && token[0] != '#') { std::cout << "throw error: missing opening bracket: line " << _bad_line << std::endl; return ; }
+		else if (token.compare("{") == 0) _keywd_bracket = true;
+	}
+	while (std::getline(_fd_conf, curr_line)) {
+		_bad_line++;
+		if (curr_line.empty()) continue ;
+
+		std::istringstream	iss_curr_line(curr_line);
+		std::getline(iss_curr_line, token, ' ');
+		
+		std::vector<std::string>	file_extensions;
+		std::vector<std::string>	points_to;
+		if (token.compare("mime_add") == 0) {
+			std::getline(iss_curr_line, token, ' ');
+			getParams(token, file_extensions);
+			std::getline(iss_curr_line, token, ' ');
+			getParams(token, points_to);
+			for (std::vector<std::string>::iterator it = file_extensions.begin(); it != file_extensions.end(); it++) {
+				_mime.insert(std::make_pair(*it, points_to[0]));
+			}
+			std::getline(iss_curr_line, ltoken, ' ');
+			if (!(ltoken.empty()) && ltoken[0] != '#') { std::cout << "throw error: unexpected token: line: " << _bad_line << std::endl; }
+		}
+		else if (token.compare("}") == 0) { _keywd_bracket = false; return ; }
+		else if (token[0] == '#') continue ;
+		else { std::cout << "throw error: bad server parameter: line: " << _bad_line << std::endl; return ; }
+	}
+	if (_fd_conf.eof()) { std::cout << "throw error: missing closing bracket" << std::endl; return ; }
 }
 
 /*	@ServerConfig constructor:
@@ -440,7 +477,7 @@ ServerConfig::ServerConfig(const std::string& filepath) {
 			} else if (value == 2) {
 				std::cout << "parse cgi" << std::endl;
 			} else if (value == 3) {
-				std::cout << "parse mime" << std::endl;
+				parseMime();
 			} else if (value == 5) {
 				std::cout << "throw error: bad_line[" << _bad_line << "]: " << curr_line << std::endl;
 			}
@@ -489,6 +526,11 @@ ServerConfig::ServerConfig(const std::string& filepath) {
 			for (std::vector<std::string>::iterator vit = (*jit).accepted_methods.begin(); vit != (*jit).accepted_methods.end(); vit++) {
 				std::cout << "\t\t\t[" << *vit << "]" << std::endl;
 			}
+		}
+
+		std::cout << "\tServer mimes:" << std::endl;;
+		for (std::map<std::string, std::string>::iterator	jit = _mime.begin(); jit != _mime.end(); jit++) {
+			std::cout << "\t\t[" << jit->first << "] -> [" << jit->second << "]" << std::endl;
 		}
 	}
 }
