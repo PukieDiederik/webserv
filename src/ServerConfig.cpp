@@ -284,7 +284,7 @@ void	ServerConfig::parseServerRoute(std::string curr_line, ServerCfg &server_con
 		std::cout << "throw error: invalid route_path: line: " << _bad_line << std::endl; return ;
 	}
 
-	// add route_path !
+	route_conf.route_path = token;
 
 	std::getline(iss_curr_line, ltoken, ' ');
 	if (!(ltoken.empty()) && ltoken[0] != '#' && ltoken.compare("{") != 0) {
@@ -340,15 +340,18 @@ void	ServerConfig::parseServerRoute(std::string curr_line, ServerCfg &server_con
 			route_conf.root = ntoken;
 			std::getline(iss_c_line, nltoken, ' ');
 			if (!(nltoken.empty()) && nltoken[0] != '#') { std::cout << "throw error: unexpected token: line: " << _bad_line << std::endl; return ; }
-		} else if (token.compare("methods") == 0) {
-			std::cout << ntoken << std::endl;
+		} else if (ntoken.compare("methods") == 0) {
 			if (!(route_conf.accepted_methods.empty())) { std::cout << "thorw error: multiple methods definitions: line: " << _bad_line << std::endl; return ; }
 			std::getline(iss_c_line, ntoken, ' ');
 			if (ntoken[0] != '[' || ntoken[ntoken.length() - 1] != ']' || ntoken.length() < 5) { std::cout << "throw error: invalid methods: line: " << _bad_line << std::endl; return ; }
-			ntoken = ParserUtils::removeDelimiters(ntoken);
-			getParams(ntoken, route_conf.accepted_methods); //try ? catch error
-			std::cout << ntoken << std::endl;
-			std::cout << route_conf.accepted_methods[0] << std::endl;
+			getParams(ntoken, route_conf.accepted_methods);
+			std::getline(iss_c_line, nltoken, ' ');
+			if (!(nltoken.empty()) && nltoken[0] != '#') { std::cout << "throw error: unexpected token: line: " << _bad_line << std::endl; return ; }
+		} else if (ntoken.compare("redirect") == 0) {
+			if (!(route_conf.is_redirect == true)) { std::cout << "thorw error: multiple redirection definitions: line: " << _bad_line << std::endl; return ; }
+			std::getline(iss_c_line, ntoken, ' ');
+			//add redirect
+			
 		}
 
 	}
@@ -470,6 +473,23 @@ ServerConfig::ServerConfig(const std::string& filepath) {
 		std::cout << "\tServer max_body_size:\n\t\t[" << (*it).max_body_size << "]" << std::endl;
 		
 		std::cout << "\tServer root dir:\n\t\t[" << (*it).root_dir << "]" << std::endl;
+
+		std::cout << "\tServer route(s):" << std::endl; int j = 1;
+		for (std::vector<RouteCfg>::iterator jit = (*it).routes.begin(); jit != (*it).routes.end(); jit++) {
+			std::cout << "\tRoute[" << j << "]" << std::endl;
+			std::cout << "\t\tRoute path:\n\t\t\t[" << (*jit).route_path << "]" << std::endl;
+		       	if ((*jit).is_redirect) std::cout << "\t\tRoute redirection:\n\t\t\t[" << (*jit).redirect_to << "]" << std::endl;
+			std::cout << "\t\tRoute root:\n\t\t\t[" << (*jit).root << "]" << std::endl;
+			std::cout << "\t\tRoute cgi enabled:\n\t\t\t[" << std::flush; 
+			if ((*jit).cgi_enabled) std::cout << "yes]" << std::endl;
+			else std::cout << "no]" << std::endl;
+			if ((*jit).auto_index) std::cout << "\t\tRoute auto_index\n\t\t\t[yes]" << std::endl;
+			else std::cout << "\t\tRoute index:\n\t\t\t[" << (*jit).index << "]" << std::endl;
+			std::cout << "\t\tRoute accepted methods:" << std::endl;
+			for (std::vector<std::string>::iterator vit = (*jit).accepted_methods.begin(); vit != (*jit).accepted_methods.end(); vit++) {
+				std::cout << "\t\t\t[" << *vit << "]" << std::endl;
+			}
+		}
 	}
 }
 
