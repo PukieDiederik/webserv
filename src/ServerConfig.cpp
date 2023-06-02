@@ -156,7 +156,7 @@ void	ServerConfig::parseServerNames(std::string curr_line, ServerCfg &server_con
  * */
 void	ServerConfig::parseServerErrorPages(std::string curr_line, ServerCfg &server_conf) {
 	std::istringstream	iss_curr_line(curr_line);
-	std::string		token, ltoken;
+	std::string		token, ltoken, ctoken;
 
 	std::vector<std::string>	status_code_string;
 	std::vector<short>		status_code;
@@ -196,8 +196,8 @@ void	ServerConfig::parseServerErrorPages(std::string curr_line, ServerCfg &serve
 		st++;
 	}
 
-	std::getline(iss_curr_line, ltoken, ' ');
-	if (!(ltoken.empty()) && ltoken[0] != '#') { std::cout << "throw error: unexpected token: line: " << _bad_line << std::endl; } 
+	std::getline(iss_curr_line, ctoken, ' ');
+	if (!(ctoken.empty()) && ctoken[0] != '#') { std::cout << "throw error: unexpected token: line: " << _bad_line << std::endl; } 
 }
 
 /*	@parseServerMaxBodySize:
@@ -348,7 +348,7 @@ void	ServerConfig::parseServerRoute(std::string curr_line, ServerCfg &server_con
 			std::getline(iss_c_line, nltoken, ' ');
 			if (!(nltoken.empty()) && nltoken[0] != '#') { std::cout << "throw error: unexpected token: line: " << _bad_line << std::endl; return ; }
 		} else if (ntoken.compare("redirect") == 0) {
-			if (!(route_conf.is_redirect == true)) { std::cout << "thorw error: multiple redirection definitions: line: " << _bad_line << std::endl; return ; }
+			if (route_conf.is_redirect == true) { std::cout << "thorw error: multiple redirection definitions: line: " << _bad_line << std::endl; return ; }
 			std::getline(iss_c_line, ntoken, ' ');
 			//add redirect
 			
@@ -421,14 +421,13 @@ void	ServerConfig::parseMime() {
 		std::getline(iss_curr_line, token, ' ');
 		
 		std::vector<std::string>	file_extensions;
-		std::vector<std::string>	points_to;
 		if (token.compare("mime_add") == 0) {
 			std::getline(iss_curr_line, token, ' ');
 			getParams(token, file_extensions);
 			std::getline(iss_curr_line, token, ' ');
-			getParams(token, points_to);
+			if (token[0] != '"' || token[token.length() - 1] != '"' || token.length() < 3) { std::cout << "throw error: bad mime config: line: " << _bad_line << std::endl; }
 			for (std::vector<std::string>::iterator it = file_extensions.begin(); it != file_extensions.end(); it++) {
-				_mime.insert(std::make_pair(*it, points_to[0]));
+				_mime.insert(std::make_pair(*it, ParserUtils::removeDelimiters(token)));
 			}
 			std::getline(iss_curr_line, ltoken, ' ');
 			if (!(ltoken.empty()) && ltoken[0] != '#') { std::cout << "throw error: unexpected token: line: " << _bad_line << std::endl; }
@@ -513,7 +512,7 @@ ServerConfig::ServerConfig(const std::string& filepath) {
 
 		std::cout << "\tServer route(s):" << std::endl; int j = 1;
 		for (std::vector<RouteCfg>::iterator jit = (*it).routes.begin(); jit != (*it).routes.end(); jit++) {
-			std::cout << "\tRoute[" << j << "]" << std::endl;
+			std::cout << "\tRoute[" << j++ << "]" << std::endl;
 			std::cout << "\t\tRoute path:\n\t\t\t[" << (*jit).route_path << "]" << std::endl;
 		       	if ((*jit).is_redirect) std::cout << "\t\tRoute redirection:\n\t\t\t[" << (*jit).redirect_to << "]" << std::endl;
 			std::cout << "\t\tRoute root:\n\t\t\t[" << (*jit).root << "]" << std::endl;
