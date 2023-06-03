@@ -10,8 +10,8 @@ std::string HttpResponse::toStringStart() const
     return result.str();
 }
 
-HttpResponse::HttpResponse() :_status_code(0), _status_message("") { }
-HttpResponse::HttpResponse(const HttpResponse& copy) { *this = copy; }
+HttpResponse::HttpResponse() :HttpMessage(), _status_code(0), _status_message("") { }
+HttpResponse::HttpResponse(const HttpResponse& copy) :HttpMessage() { *this = copy; }
 HttpResponse::~HttpResponse() { }
 
 HttpResponse& HttpResponse::operator= (const HttpResponse& copy)
