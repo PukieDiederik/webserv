@@ -55,7 +55,7 @@ struct ServerCfg{
 };
 
 class ServerConfig {
-private:
+public: //TODO: make this private, if this is in a PR it should be rejected
     // A list of commands which will be used in 'cgi'. Having one collecion
     // store all of these will prevent us from having to store many duplicate
     // commands. This vector will store null terminated arrays.
