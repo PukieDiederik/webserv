@@ -5,7 +5,7 @@
 #include "HttpRequest.hpp"
 #include "HttpResponse.hpp"
 
-class Server{
+class Server {
 private:
     ServerCfg& _cfg;
     ServerConfig& _gen_cfg;
