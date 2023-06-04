@@ -7,6 +7,7 @@
 
 // Has config about routes
 struct RouteCfg {
+    std::string name;
 
     // Redirects
     bool is_redirect;

@@ -2,6 +2,7 @@
 SHELL       = /bin/zsh
 
 FNAMES      = main.cpp\
+			  Server.cpp Router.cpp\
 			  HttpMessage.cpp HttpResponse.cpp HttpRequest.cpp\
 			  ParsingUtils.cpp ParsingException.cpp\
 			  ServerConfig.cpp
