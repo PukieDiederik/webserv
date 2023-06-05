@@ -1,6 +1,8 @@
 #ifndef __PARSERUTILS_HPP__
 #define __PARSERUTILS_HPP__
 
+# include <string>
+
 /* ParserUtils:
  * 	@atoi:
  * 		Only handles positive numbers
@@ -9,7 +11,7 @@
 */
 
 namespace ParserUtils {
-	int	atoi(std::string str) {
+	int	atoi(std::string str); /*{
 		int	value = 0;
 		for (int i = 0; str[i] != '\0'; i++) {
 			if (str[i] < '0' || str[i] > '9') return (-42);
@@ -17,13 +19,20 @@ namespace ParserUtils {
 		}
 		return (value);
 	}
-
-	std::string	removeDelimiters(std::string str) {
+*/
+	std::string	removeDelimiters(std::string str); /*{
 		str = str.substr(1);
 		str = str.substr(0, str.length() -1);
 
 		return (str);
 	}
+*/
+	int	countCharOccurs(char needle, std::string stack); /*{
+		int	count = 0;
+		for (int i = 0; stack[i] != '\0'; i++)
+			if (stack[i] == needle)
+				count++;
+		return (count);
+	}*/
 }
-
 #endif

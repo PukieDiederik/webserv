@@ -42,7 +42,8 @@ struct RouteCfg {
 
 // Has config about server blocks
 struct ServerCfg {
-	short	port;
+	std::string	host;
+	short		port;
 	std::vector<std::string>	server_names;
 
 	// First argument is the error code, the second argument is the path to a file.
@@ -94,6 +95,7 @@ class ServerConfig {
 		void	parseCgi();
 		void	parseMime();
 		void	parseServer();
+			void	parseServerHost(std::string, ServerCfg &);
 			void	parseServerPort(std::string, ServerCfg &);
 			void	parseServerNames(std::string, ServerCfg &);
 			void	parseServerErrorPages(std::string, ServerCfg &);
