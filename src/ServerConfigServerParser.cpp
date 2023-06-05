@@ -1,6 +1,12 @@
 #include "ServerConfig.hpp"
 #include "ParserUtils.hpp"
 
+/*	@parseServerHost:
+ *		Checks if host is already set, if so throws error
+ *		Atoi's each of ipv4 value so to check if >= 0 && <= 255
+ *		Checks for additional token in string
+ *
+ * */
 void	ServerConfig::parseServerHost(std::string curr_line, ServerCfg &server_conf) {
 	if (server_conf.host.compare("notdefined") != 0) { std::cout << "throw error: multiple host ipv4 config: line: " << _bad_line << std::endl; return ; }
 
@@ -10,20 +16,30 @@ void	ServerConfig::parseServerHost(std::string curr_line, ServerCfg &server_conf
 	std::getline(iss_curr_line, token, ' ');
 	std::getline(iss_curr_line, token, ' ');
 	
+	if (token.compare("localhost") == 0) {
+		server_conf.host = "127.0.0.0";
+		std::getline(iss_curr_line, ltoken, ' ');
+		if (!(ltoken.empty()) && ltoken[0] != '#') { std::cout << "throw error: unexpected token: line: " << _bad_line << std::endl; } 
+		return ;
+	}
 	if (token.length() < 8 || ParserUtils::countCharOccurs('.', token) != 3) { std::cout << "throw error: bad host config: line: " << _bad_line << std::endl; return ; }
 
 	std::istringstream	iss_host(token);
 	std::getline(iss_host, ntoken, '.');
-	std::cout << ntoken << std::endl;
-	exit(0);
-	//while (token)
+	for (int i = 0; i < 3; i++) {
+		int	value = ParserUtils::atoi(ntoken);
+	      	if ( value < 0 || value > 255) { std::cout << "throw error: bad ipv4 config: line: " << _bad_line << std::endl; return ; }
+	}
+	server_conf.host = token;
 
+	std::getline(iss_curr_line, ltoken, ' ');
+	if (!(ltoken.empty()) && ltoken[0] != '#') { std::cout << "throw error: unexpected token: line: " << _bad_line << std::endl; } 
 }
 
 /*	@parseServerPort:
  *		Checks if port is already set, throws error if resetting
  *		Atoi's given port, throws error is bad input
- *		Checks for addiciontal token in string, throws erros if not comments
+ *		Checks for additional token in string, throws erros if not comments
  * */
 void	ServerConfig::parseServerPort(std::string curr_line, ServerCfg &server_conf) {
 	if (server_conf.port > 0) { std::cout << "throw error: multiple port config: line: " << _bad_line << std::endl; return ; }

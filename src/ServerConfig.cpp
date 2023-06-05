@@ -180,6 +180,8 @@ ServerConfig::ServerConfig(const std::string& filepath) {
 	int	i = 1;
 	for (std::vector<ServerCfg>::iterator it = _servers.begin(); it != _servers.end(); it++) {
 		std::cout << "\nServer[" << i++ << "]:" << std::endl;
+		
+		std::cout << "\tServer host:\n\t\t[" << (*it).host << "]" << std::endl;
 
 		std::cout << "\tServer port:\n\t\t[" << (*it).port << "]" << std::endl;
 		
