@@ -2,10 +2,15 @@
 #define ROUTER_HPP
 
 #include "ServerConfig.hpp"
+#include "Server.hpp"
+#include <vector>
 
 class Router {
 private:
     ServerConfig _cfg;
+    int* _socket_fds;
+
+    std::vector<Server> _servers;
 
     Router();
 public:

@@ -7,8 +7,8 @@
 
 class Server {
 private:
-    ServerCfg& _cfg;
-    ServerConfig& _gen_cfg;
+    ServerCfg _cfg;
+    ServerConfig _gen_cfg;
 
     Server();
 public:
@@ -22,6 +22,8 @@ public:
 
     // Will take a request and handle it, which includes calling cgi
     HttpResponse handleRequest(const HttpRequest& req);
+
+    ServerCfg& cfg();
 };
 
 #endif

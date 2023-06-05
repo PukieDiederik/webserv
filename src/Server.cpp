@@ -22,3 +22,5 @@ HttpResponse Server::handleRequest(const HttpRequest& req)
     (void)req;
     return HttpResponse();
 }
+
+ServerCfg& Server::cfg() { return _cfg; }
