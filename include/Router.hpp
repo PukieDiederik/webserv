@@ -5,6 +5,9 @@
 #include "Server.hpp"
 #include <vector>
 
+#define MAX_EVENTS 100
+#define BUFFER_SIZE 4096
+
 class Router {
 private:
     ServerConfig _cfg;

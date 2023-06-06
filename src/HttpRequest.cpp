@@ -1,8 +1,9 @@
-#include <sstream>
-#include <iostream>
 #include "HttpRequest.hpp"
 #include "ParsingUtils.hpp"
 #include "ParsingException.hpp"
+#include <sstream>
+
+#include <iostream>
 
 std::string HttpRequest::toStringStart() const
 {
@@ -15,9 +16,11 @@ HttpRequest::HttpRequest(const std::string& in) : HttpMessage()
 {
     std::istringstream is(in);
     std::string line;
+    std::string rest = in;
 
     { // Parse header
         std::getline(is, line);
+        rest = rest.substr(line.length() + 1);
         line = trimSpace(line);
 
         std::size_t method_end = line.find_first_of(' ');
@@ -48,6 +51,7 @@ HttpRequest::HttpRequest(const std::string& in) : HttpMessage()
 
     { // Parse header fields
         std::getline(is, line);
+        rest = rest.substr(line.length());
         line = trimSpace(line);
         while (line != "")
         {
@@ -63,11 +67,15 @@ HttpRequest::HttpRequest(const std::string& in) : HttpMessage()
             add_header(field_name, field_value);
 
             std::getline(is, line);
+            rest = rest.substr(line.length() + 1);
             line = trimSpace(line);
         }
     }
 
-    _body = is.str();
+    // Remove newline which seperates headers and body
+    rest = rest.substr(1);
+
+    _body = rest;
 }
 
 HttpRequest::HttpRequest(const HttpRequest& copy) :HttpMessage() { *this = copy; }

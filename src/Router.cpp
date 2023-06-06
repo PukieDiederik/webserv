@@ -1,11 +1,16 @@
 #include "Router.hpp"
 #include "ServerConfig.hpp"
+#include "HttpRequest.hpp"
 #include <cstring>
 #include <unistd.h>
 #include <sys/socket.h>
+#include <sys/epoll.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <iostream>
+#include <stdexcept>
+#include <fcntl.h>
+#include <sstream>
 
 Router::Router(ServerConfig& cfg) : _cfg(cfg), _socket_fds(NULL)
 {
@@ -45,10 +50,6 @@ Router::Router(ServerConfig& cfg) : _cfg(cfg), _socket_fds(NULL)
     _socket_fds = new int[_cfg.servers.size()];
     std::memset(_socket_fds, -1, sizeof(int) * _cfg.servers.size());
 
-    std::cout << _cfg.servers.size() << c.servers.size() << std::endl;
-    std::cout << c.servers[1].port << " " << s2.port << std::endl;
-    std::cout << _cfg.servers[1].port << std::endl;
-
     // Loop over each server
     for (std::size_t i = 0; i < _cfg.servers.size(); ++i)
     {
@@ -59,15 +60,22 @@ Router::Router(ServerConfig& cfg) : _cfg(cfg), _socket_fds(NULL)
         struct sockaddr_in sa;
         sa.sin_family = AF_INET;
         sa.sin_port = ntohs(_servers.back().cfg().port);
-        inet_pton(AF_INET, "127.0.0.1", &sa.sin_addr.s_addr); //TODO: error check this
-//        sa.sin_addr.s_addr = INADDR_ANY;
+//        sa.sin_addr.s_addr = (127 << 24) | (0 << 16) | (0 << 8) | (1);
 
-        _socket_fds[i] = socket(AF_INET, SOCK_STREAM, 0);
+        if(!inet_pton(AF_INET, "127.0.0.1", &sa.sin_addr.s_addr)) //TODO replace this with host once implemented
+            throw std::runtime_error("Could not parse IP");
+
+        if ((_socket_fds[i] = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+            throw std::runtime_error("Could not create socket");
+
+        if (fcntl(_socket_fds[i], F_SETFL, O_NONBLOCK) < 0)
+            throw std::runtime_error("Could not set socket fd to non blocking");
 
         if (bind(_socket_fds[i], (struct sockaddr *)&sa, sizeof(sa)) < 0)
-            std::cerr << "could not bind\n";
+            throw std::runtime_error("Could not open ports");
+
 #if DEBUG==1
-        std::cout << "Started listening on port: " << _servers.back().cfg().port << std::endl;
+        std::cout << "Bound to port: " << _servers.back().cfg().port << std::endl;
 #endif
     }
 
@@ -102,18 +110,58 @@ Router& Router::operator=(const Router& copy)
 
 void Router::listen()
 {
-    ::listen(_socket_fds[0], SOMAXCONN);
+    int epoll_fd = epoll_create(1); // Size is ignored
+    struct epoll_event* epoll_events = new epoll_event[_servers.size()];
+
+    if (epoll_fd < 0)
+        throw std::runtime_error("Could not create epoll");
+
+
+    for (std::size_t i = 0; i < _servers.size(); ++i)
+    {
+        // Add socket to epoll
+        epoll_events[i].data.fd = _socket_fds[i];
+        epoll_events[i].events = EPOLLIN;
+        if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, epoll_events[i].data.fd, &epoll_events[i]))
+            throw std::runtime_error("Could not add epoll_event to epoll");
+
+        // Start listening for data
+        ::listen(_socket_fds[i], SOMAXCONN);
+    }
+
+    struct epoll_event events[MAX_EVENTS];
+    char buffer[BUFFER_SIZE];
 
     while (true)
     {
-        struct sockaddr_in clientAddress;
-        socklen_t clientAddressLength = sizeof(clientAddress);
+        int num_events = epoll_wait(epoll_fd, events, MAX_EVENTS, -1);
+        if (num_events < 0)
+            throw std::runtime_error("Error while waiting for events");
 
-        int clientSocket = accept(_socket_fds[0], (struct sockaddr*)&clientAddress, &clientAddressLength);
+        for (int i = 0; i < num_events; ++i)
+        {
+            std::cout << "handling new request" << std::endl;
+            struct sockaddr_in client_sockaddr;
+            socklen_t client_sockaddr_len = sizeof(client_sockaddr);
+            std::memset(&client_sockaddr, 0, sizeof(client_sockaddr));
 
-        char buffer[100];
-        recv(clientSocket, buffer, sizeof(buffer),0);
-        write(0, buffer, 100);
+            int client_socket = accept(events[i].data.fd, (struct sockaddr*)(&client_sockaddr), &client_sockaddr_len);
+            int bytes_read = recv(client_socket, buffer, sizeof(buffer), 0);
+            std::ostringstream req_sstream;
+            req_sstream.write(buffer, bytes_read);
+
+            while (bytes_read > 0)
+            {
+                bytes_read = recv(client_sockaddr_len, &buffer, sizeof(buffer), 0);
+                req_sstream.write(buffer, bytes_read);
+            }
+
+            std::cout << "origin: " << req_sstream.str() << std::endl;
+            HttpRequest req(req_sstream.str());
+            std::cout << req.toString() << std::flush;
+            close (client_socket);
+        }
     }
-    // TODO: start listening to ports
+    close(epoll_fd);
+    delete[] epoll_events;
 }
