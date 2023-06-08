@@ -1,6 +1,7 @@
 #include "Router.hpp"
 #include "ServerConfig.hpp"
 #include "HttpRequest.hpp"
+#include "HttpResponse.hpp"
 #include <cstring>
 #include <unistd.h>
 #include <sys/socket.h>
@@ -112,6 +113,7 @@ void Router::listen()
 {
     int epoll_fd = epoll_create(1); // Size is ignored
     struct epoll_event* epoll_events = new epoll_event[_servers.size()];
+    std::map<int, Server*> fd_server_map;
 
     if (epoll_fd < 0)
         throw std::runtime_error("Could not create epoll");
@@ -124,6 +126,8 @@ void Router::listen()
         epoll_events[i].events = EPOLLIN;
         if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, epoll_events[i].data.fd, &epoll_events[i]))
             throw std::runtime_error("Could not add epoll_event to epoll");
+
+        fd_server_map[_socket_fds[i]] = &_servers[i];
 
         // Start listening for data
         ::listen(_socket_fds[i], SOMAXCONN);
@@ -158,7 +162,21 @@ void Router::listen()
 
             std::cout << "origin: " << req_sstream.str() << std::endl;
             HttpRequest req(req_sstream.str());
-            std::cout << req.toString() << std::flush;
+
+            Server* serv = fd_server_map[events[i].data.fd];
+
+            HttpResponse res = serv->handleRequest(req);
+            std::string res_s = res.toString();
+            int bytes_send = 0;
+
+            std::cout << "res: \n" << res_s;
+
+            for (std::size_t i = 0; i < res_s.length(); i += bytes_send)
+            {
+                bytes_send = send(client_socket, res_s.c_str() + i, res_s.length() - i, MSG_DONTWAIT);
+                if (bytes_send <= 0)
+                    break; // Something errored
+            }
             close (client_socket);
         }
     }

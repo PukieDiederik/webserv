@@ -24,6 +24,8 @@ public:
 
     std::string& target();
     const std::string& target() const;
+
+    const std::string& method() const;
 };
 
 #endif

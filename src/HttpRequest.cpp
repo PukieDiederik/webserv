@@ -91,3 +91,6 @@ HttpRequest& HttpRequest::operator=(const HttpRequest& copy)
 
 std::string& HttpRequest::target() { return _target; }
 const std::string& HttpRequest::target() const { return _target; }
+
+const std::string& HttpRequest::method() const { return _method; }
+

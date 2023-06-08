@@ -5,6 +5,9 @@
 #include "HttpRequest.hpp"
 #include "HttpResponse.hpp"
 
+#define BUFFER_SIZE 4096
+
+
 class Server {
 private:
     ServerCfg _cfg;
