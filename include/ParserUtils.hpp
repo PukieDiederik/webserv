@@ -10,7 +10,12 @@
  *		Removes 1st and last char from given string
 */
 
+
 namespace ParserUtils {
+	std::string removeMultipleSpaces(const std::string& str);
+
+	std::string	parseLine(std::string rline, std::string s1, std::string s2);
+	
 	int	atoi(std::string str); /*{
 		int	value = 0;
 		for (int i = 0; str[i] != '\0'; i++) {

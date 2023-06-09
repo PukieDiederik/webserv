@@ -1,5 +1,4 @@
 #include "ServerConfig.hpp"
-#include "RemoveTabs.hpp"
 #include "ParserUtils.hpp"
 
 /*
@@ -92,6 +91,7 @@ void	ServerConfig::parseMime() {
 
 	while (!_keywd_bracket) {
 		std::getline(_fd_conf, curr_line); _bad_line++;
+		curr_line = ParserUtils::parseLine(curr_line, "	", " ");
 		std::istringstream	iss_curr_line(curr_line);
 		std::getline(iss_curr_line, token, ' ');
 
@@ -99,6 +99,7 @@ void	ServerConfig::parseMime() {
 		else if (token.compare("{") == 0) _keywd_bracket = true;
 	}
 	while (std::getline(_fd_conf, curr_line)) {
+		curr_line = ParserUtils::parseLine(curr_line, "	", " ");
 		_bad_line++;
 		if (curr_line.empty()) continue ;
 
@@ -124,6 +125,7 @@ void	ServerConfig::parseMime() {
 	if (_fd_conf.eof()) { std::cout << "throw error: missing closing bracket" << std::endl; return ; }
 }
 
+
 /*	@ServerConfig constructor:
  * 		Calls getline until keyword is found
  * 		Sets _keywd_bracket true
@@ -131,27 +133,17 @@ void	ServerConfig::parseMime() {
  * 		Sets _keywd_bracket false
 */
 ServerConfig::ServerConfig(const std::string& filepath) {
-	RemoveTabs	noSpaces;
-
 	if (filepath.empty()) {
 		std::cout << "throw error: bad config file" << std::endl;
 	}
-	if (!(noSpaces.openFile(filepath))) {
-		std::cout << "throw error: can't open file" << std::endl;
-	}
 
-	noSpaces.replace();
-	noSpaces.writeToFile();
-
-	std::string	dot_filepath = ".";
-	dot_filepath += filepath;
-
-	_fd_conf.open(dot_filepath.c_str());
+	_fd_conf.open(filepath.c_str());
 	if (_fd_conf.is_open()) {
 		std::string	curr_line;
 		int		value;
 		_bad_line = 0;
 		while (std::getline(_fd_conf, curr_line)) {
+			curr_line = ParserUtils::parseLine(curr_line, "	", " ");
 			_bad_line++;
 			if (curr_line.empty())
 				continue ;

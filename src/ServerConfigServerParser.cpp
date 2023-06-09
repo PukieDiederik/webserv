@@ -244,6 +244,7 @@ void	ServerConfig::parseServerRoute(std::string curr_line, ServerCfg &server_con
 
 	while (!_subkeywd_bracket) {
 		std::getline(_fd_conf, curr_line); _bad_line++;
+		curr_line = ParserUtils::parseLine(curr_line, "	", " ");
 		std::istringstream	iss_curr_line(curr_line);
 		std::getline(iss_curr_line, token, ' ');
 
@@ -253,6 +254,7 @@ void	ServerConfig::parseServerRoute(std::string curr_line, ServerCfg &server_con
 
 	// maybe take this loop apart into diff funcs :/
 	while (getline(_fd_conf, curr_line)) {
+		curr_line = ParserUtils::parseLine(curr_line, "	", " ");
 		_bad_line++;
 		if (curr_line.empty()) continue ;
 
@@ -335,6 +337,7 @@ void	ServerConfig::parseServer() {
 	while (std::getline(_fd_conf, curr_line)) {
 		_bad_line++;
 		if (curr_line.empty()) continue ;
+		curr_line = ParserUtils::parseLine(curr_line, "	", " ");
 
 		std::istringstream	iss_curr_line(curr_line);
 		std::getline(iss_curr_line, token, ' ');
