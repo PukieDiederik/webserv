@@ -71,7 +71,7 @@ int	ServerConfig::isKeyword(std::string line) {
 void	ServerConfig::getParams(std::string str, std::vector<std::string> &params) {
 	std::string 		param;
 
-	if (str[0] != '[' || str[str.length() - 1] != ']' || str.size() < 5) { std::cout << "throw error: bad parameter config: line: " << _bad_line << std::endl; return ; }
+	if (str[0] != '[' || str[str.length() - 1] != ']' || str.size() < 5) throw std::runtime_error("Error: bad parameter config: line: " + ParserUtils::intToString(_bad_line));
 	else (str = ParserUtils::removeDelimiters(str));
 
 	std::istringstream 	iss(str);
@@ -79,7 +79,7 @@ void	ServerConfig::getParams(std::string str, std::vector<std::string> &params) 
 	while (std::getline(iss, param, ',')) {
 		if (!param.empty()) {
 			if (param[0] != '\"' || param[param.length() - 1] != '\"' || param.size() < 3) {
-				std::cout << "throw error: bad parameter config: line: " << _bad_line << std::endl;
+				throw std::runtime_error("Error: bad parameter config: line: " + ParserUtils::intToString(_bad_line));
 				return ;
 			} else 	param = ParserUtils::removeDelimiters(param);
 			params.push_back(param);
@@ -97,7 +97,7 @@ void	ServerConfig::parseMime() {
 		std::istringstream	iss_curr_line(curr_line);
 		std::getline(iss_curr_line, token, ' ');
 
-		if (token.compare("{") != 0 && token[0] != '#') { std::cout << "throw error: missing opening bracket: line " << _bad_line << std::endl; return ; }
+		if (token.compare("{") != 0 && token[0] != '#') throw std::runtime_error("Error: missing opening bracket: line " + ParserUtils::intToString(_bad_line));
 		else if (token.compare("{") == 0) _keywd_bracket = true;
 	}
 	while (std::getline(_fd_conf, curr_line)) {
@@ -111,20 +111,24 @@ void	ServerConfig::parseMime() {
 		std::vector<std::string>	file_extensions;
 		if (token.compare("mime_add") == 0) {
 			std::getline(iss_curr_line, token, ' ');
-			getParams(token, file_extensions);
+			try { getParams(token, file_extensions);
+			} catch (std::exception &ex) {
+				throw ;
+			}
 			std::getline(iss_curr_line, token, ' ');
-			if (token[0] != '"' || token[token.length() - 1] != '"' || token.length() < 3) { std::cout << "throw error: bad mime config: line: " << _bad_line << std::endl; }
+			if (token[0] != '"' || token[token.length() - 1] != '"' || token.length() < 3) throw std::runtime_error("Error: bad mime config: line: " + ParserUtils::intToString(_bad_line));
 			for (std::vector<std::string>::iterator it = file_extensions.begin(); it != file_extensions.end(); it++) {
 				_mime.insert(std::make_pair(*it, ParserUtils::removeDelimiters(token)));
 			}
 			std::getline(iss_curr_line, ltoken, ' ');
-			if (!(ltoken.empty()) && ltoken[0] != '#') { std::cout << "throw error: unexpected token: line: " << _bad_line << std::endl; }
+			if (!(ltoken.empty()) && ltoken[0] != '#') throw std::runtime_error("Error: unexpected token: line: " + ParserUtils::intToString(_bad_line));
 		}
 		else if (token.compare("}") == 0) { _keywd_bracket = false; return ; }
 		else if (token[0] == '#') continue ;
-		else { std::cout << "throw error: bad server parameter: line: " << _bad_line << std::endl; return ; }
+		else
+			throw std::runtime_error("Error: bad server parameter: line: " + ParserUtils::intToString(_bad_line));
 	}
-	if (_fd_conf.eof()) { std::cout << "throw error: missing closing bracket" << std::endl; return ; }
+	if (_fd_conf.eof()) throw std::runtime_error("Error: missing closing bracket");
 }
 
 
@@ -135,9 +139,7 @@ void	ServerConfig::parseMime() {
  * 		Sets _keywd_bracket false
 */
 ServerConfig::ServerConfig(const std::string& filepath) {
-	if (filepath.empty()) {
-		std::cout << "throw error: bad config file" << std::endl;
-	}
+	if (filepath.empty()) throw std::runtime_error("Error: bad config file");
 
 	_fd_conf.open(filepath.c_str());
 	if (_fd_conf.is_open()) {
@@ -151,23 +153,33 @@ ServerConfig::ServerConfig(const std::string& filepath) {
 				continue ;
 			value = isKeyword(curr_line);	
 			if (value == 1) {
-				parseServer();
+				try {
+					parseServer();
+				} catch (const std::exception &ex) {
+					std::cout << "Error: server parser: " << std::flush;
+					throw ;
+				}
 			} else if (value == 2) {
 				std::cout << "parse cgi" << std::endl;
 			} else if (value == 3) {
-				parseMime();
+				try {
+					parseMime();
+				} catch (const std::exception &ex) {
+					std::cout << "Error: mime parser: " << std::flush;
+					throw ;
+				}
 			} else if (value == 5) {
-				std::cout << "throw error: bad_line[" << _bad_line << "]: " << curr_line << std::endl;
+				throw std::runtime_error("Error: bad line[" + ParserUtils::intToString(_bad_line) + "]");
 			}
-			//exit(0);
 		}
 	
-		if (_bad_line == 0) std::cout << "throw error: config file empty" << std::endl;
-		_fd_conf.close();
+		if (_bad_line == 0)  {
+			_fd_conf.close();
+			throw std::runtime_error("Error: config file empty");
+		}
 
-	} else {
-		std::cout << "throw error: can't open file" << std::endl;
-	}
+	} else
+		throw std::runtime_error("Error: can't open file");
 	try {
 		checker();
 	} catch (const std::exception &ex) {

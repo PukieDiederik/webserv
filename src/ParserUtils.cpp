@@ -98,8 +98,8 @@ bool	ParserUtils::isValidIp(std::string url) {
 	std::string		token, ntoken;
 	std::istringstream	iss_curr_line(url);
 
-	std::getline(iss_curr_line, token, '.');
 	for (int i = 0; i < 3; i++) {
+		std::getline(iss_curr_line, token, '.');
 		int	value = ParserUtils::atoi(token.c_str());
 	      	if ( value < 0 || value > 255) return (false);
 	}
@@ -133,4 +133,10 @@ bool	ParserUtils::isValidURL(std::string url) {
 	}
 
 	return (false);
+}
+
+std::string ParserUtils::intToString(int number) {
+	std::ostringstream oss;
+	oss << number;
+	return oss.str();
 }

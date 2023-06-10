@@ -33,5 +33,7 @@ namespace ParserUtils {
 	bool	isValidIp(std::string url);
 
 	bool	isValidURL(std::string url);
+
+	std::string	intToString(int number);
 }
 #endif
