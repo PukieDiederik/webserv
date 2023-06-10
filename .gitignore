@@ -1,9 +1,8 @@
 # Ignore executable
 webserv
 
-# Ignore issues & .config_file
+# Ignore issues file
 issues
-.test.conf
 
 # Created by https://www.toptal.com/developers/gitignore/api/visualstudiocode,clion,sublimetext,c++,vim
 # Edit at https://www.toptal.com/developers/gitignore?templates=visualstudiocode,clion,sublimetext,c++,vim

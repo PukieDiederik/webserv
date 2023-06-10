@@ -349,6 +349,7 @@ void	ServerConfig::parseServer() {
 		_bad_line++;
 		if (curr_line.empty()) continue ;
 		curr_line = ParserUtils::parseLine(curr_line, "	", " ");
+		if (ParserUtils::strAllSpaces(curr_line)) continue ;
 
 		std::istringstream	iss_curr_line(curr_line);
 		std::getline(iss_curr_line, token, ' ');

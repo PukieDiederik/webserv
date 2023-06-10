@@ -35,5 +35,7 @@ namespace ParserUtils {
 	bool	isValidURL(std::string url);
 
 	std::string	intToString(int number);
+
+	bool	strAllSpaces(std::string line);
 }
 #endif

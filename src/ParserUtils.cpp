@@ -140,3 +140,13 @@ std::string ParserUtils::intToString(int number) {
 	oss << number;
 	return oss.str();
 }
+
+bool	ParserUtils::strAllSpaces(std::string str) {
+	int	c1 = 0, c2 = 0;
+	for (int i = 0; str[i] != '\0'; i++) {
+		c1++;
+		if (str[i] == 32) c2++;
+	}
+	if (c1 == c2) return (true);
+	return (false);
+}
