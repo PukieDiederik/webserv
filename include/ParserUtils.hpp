@@ -1,6 +1,10 @@
 #ifndef __PARSERUTILS_HPP__
 #define __PARSERUTILS_HPP__
 
+# include <iostream>
+# include <sstream>
+# include <algorithm>
+# include <cctype>
 # include <string>
 
 /* ParserUtils:
@@ -16,28 +20,18 @@ namespace ParserUtils {
 
 	std::string	parseLine(std::string rline, std::string s1, std::string s2);
 	
-	int	atoi(std::string str); /*{
-		int	value = 0;
-		for (int i = 0; str[i] != '\0'; i++) {
-			if (str[i] < '0' || str[i] > '9') return (-42);
-			else { value *= 10; value += (str[i] - 48); }
-		}
-		return (value);
-	}
-*/
-	std::string	removeDelimiters(std::string str); /*{
-		str = str.substr(1);
-		str = str.substr(0, str.length() -1);
+	int	atoi(std::string str);
 
-		return (str);
-	}
-*/
-	int	countCharOccurs(char needle, std::string stack); /*{
-		int	count = 0;
-		for (int i = 0; stack[i] != '\0'; i++)
-			if (stack[i] == needle)
-				count++;
-		return (count);
-	}*/
+	std::string	removeDelimiters(std::string str);
+
+	int	countCharOccurs(char needle, std::string stack);
+	
+	bool	isValidPath(std::string path);
+
+	bool	isValidAuth(std::string auth);
+
+	bool	isValidIp(std::string url);
+
+	bool	isValidURL(std::string url);
 }
 #endif

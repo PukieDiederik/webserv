@@ -9,5 +9,10 @@ int main(int argc, char **argv) {
 	}
 
 	std::cout << "\nIf any possible errors do occur: \n" << std::endl;
-	ServerConfig sc(argv[1]);
+	try {
+		ServerConfig sc(argv[1]);
+	} catch (const std::exception &ex) {
+		std::cout << ex.what() << std::endl;
+	}
+	return (0);
 }

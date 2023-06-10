@@ -303,7 +303,10 @@ void	ServerConfig::parseServerRoute(std::string curr_line, ServerCfg &server_con
 		} else if (ntoken.compare("redirect") == 0) {
 			if (route_conf.is_redirect == true) { std::cout << "thorw error: multiple redirection definitions: line: " << _bad_line << std::endl; return ; }
 			std::getline(iss_c_line, ntoken, ' ');
-			//add redirect
+			if (ntoken[0] != '"' || ntoken[ntoken.length() - 1] != '"' || ntoken.length() < 3) { std::cout << "throw error: invalid redirection: line: " << _bad_line << std::endl; return ; }
+			ntoken = ParserUtils::removeDelimiters(ntoken);
+			if (ParserUtils::isValidURL(ntoken)) { route_conf.is_redirect = true; route_conf.redirect_to = ntoken; }
+			else {std::cout << "throw error: invalid redirection: line: " << _bad_line << std::endl; return ;}
 			
 		}
 

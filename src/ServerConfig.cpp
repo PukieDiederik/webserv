@@ -1,5 +1,6 @@
 #include "ServerConfig.hpp"
 #include "ParserUtils.hpp"
+#include <stdexcept>
 
 /*
  *	Config file parser:
@@ -15,6 +16,7 @@
 
 RouteCfg::RouteCfg() {
 	this->is_redirect = false;
+	this->redirect_to = "notset";
 	this->root = "nopath";
 	this->cgi_enabled = false;
 	this->auto_index = false;
@@ -166,50 +168,11 @@ ServerConfig::ServerConfig(const std::string& filepath) {
 	} else {
 		std::cout << "throw error: can't open file" << std::endl;
 	}
-
-	std::cout << "\nServerConfig parsing done." << std::endl;
-	std::cout << "\nServerConfig:" << std::endl;
-	int	i = 1;
-	for (std::vector<ServerCfg>::iterator it = _servers.begin(); it != _servers.end(); it++) {
-		std::cout << "\nServer[" << i++ << "]:" << std::endl;
-		
-		std::cout << "\tServer host:\n\t\t[" << (*it).host << "]" << std::endl;
-
-		std::cout << "\tServer port:\n\t\t[" << (*it).port << "]" << std::endl;
-		
-		std::cout << "\tServer name(s): " << std::endl;
-		for (std::vector<std::string>::iterator jit = (*it).server_names.begin(); jit != (*it).server_names.end(); jit++)
-			std::cout << "\t\t[" << *jit << "]" << std::endl;
-
-		std::cout << "\tServer error_pages: " << std::endl;
-		for (std::map<short, std::string>::iterator jit = (*it).error_pages.begin(); jit != (*it).error_pages.end(); jit++)
-			std::cout << "\t\t[" << jit->first << "] -> [" << jit->second << "]" << std::endl;
-
-		std::cout << "\tServer max_body_size:\n\t\t[" << (*it).max_body_size << "]" << std::endl;
-		
-		std::cout << "\tServer root dir:\n\t\t[" << (*it).root_dir << "]" << std::endl;
-
-		std::cout << "\tServer route(s):" << std::endl; int j = 1;
-		for (std::vector<RouteCfg>::iterator jit = (*it).routes.begin(); jit != (*it).routes.end(); jit++) {
-			std::cout << "\tRoute[" << j++ << "]" << std::endl;
-			std::cout << "\t\tRoute path:\n\t\t\t[" << (*jit).route_path << "]" << std::endl;
-		       	if ((*jit).is_redirect) std::cout << "\t\tRoute redirection:\n\t\t\t[" << (*jit).redirect_to << "]" << std::endl;
-			std::cout << "\t\tRoute root:\n\t\t\t[" << (*jit).root << "]" << std::endl;
-			std::cout << "\t\tRoute cgi enabled:\n\t\t\t[" << std::flush; 
-			if ((*jit).cgi_enabled) std::cout << "yes]" << std::endl;
-			else std::cout << "no]" << std::endl;
-			if ((*jit).auto_index) std::cout << "\t\tRoute auto_index\n\t\t\t[yes]" << std::endl;
-			else std::cout << "\t\tRoute index:\n\t\t\t[" << (*jit).index << "]" << std::endl;
-			std::cout << "\t\tRoute accepted methods:" << std::endl;
-			for (std::vector<std::string>::iterator vit = (*jit).accepted_methods.begin(); vit != (*jit).accepted_methods.end(); vit++) {
-				std::cout << "\t\t\t[" << *vit << "]" << std::endl;
-			}
-		}
-
-		std::cout << "\tServer mimes:" << std::endl;;
-		for (std::map<std::string, std::string>::iterator	jit = _mime.begin(); jit != _mime.end(); jit++) {
-			std::cout << "\t\t[" << jit->first << "] -> [" << jit->second << "]" << std::endl;
-		}
+	try {
+		checker();
+	} catch (const std::exception &ex) {
+		std::cout << "Error: checker: " << std::flush;
+		throw ;
 	}
 }
 

@@ -102,6 +102,8 @@ class ServerConfig {
 			void	parseServerMaxBodySize(std::string, ServerCfg &);
 			void	parseServerRoot(std::string, ServerCfg &);
 			void	parseServerRoute(std::string curr_line, ServerCfg &);
+
+		void	checker();
 	public:
 		std::vector<ServerCfg>	_servers;
 		// Constructors/Destructors

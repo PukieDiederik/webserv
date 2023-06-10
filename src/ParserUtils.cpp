@@ -67,3 +67,70 @@ std::string	ParserUtils::parseLine(std::string rline, std::string s1, std::strin
 	}
 	return (removeMultipleSpaces(rline));
 }
+
+bool	ParserUtils::isValidPath(std::string path) {
+	for (int i = 0; path[i] != '\0'; i++) {
+		if ((path[i] < 97 || path[i] > 122) && (path[i] < 65 || path[i] > 90) && path[i] != '/' && path[i] != '.')
+			return (false);
+		if (path[i] == '/' && path[i + 1] == '/')
+			return (false);
+	}
+	return (true);
+}
+
+bool	ParserUtils::isValidAuth(std::string auth) {
+	if (ParserUtils::countCharOccurs('.', auth) < 1) return (false);
+	std::string	extra = auth.substr(0, auth.find('.'));
+	if (ParserUtils::countCharOccurs('.', auth) == 1 && extra.compare("www") == 0) return (false);
+	for (int i = 0; auth[i] != '\0'; i++) {
+		if (auth[i] == '/') break ;
+		if ((auth[i] < 97 || auth[i] > 122) && auth[i] != '.')
+			return (false);
+		if (auth[i] == '.' && auth[i + 1] == '.')
+			return (false);
+	}
+	return (true);
+}
+
+bool	ParserUtils::isValidIp(std::string url) {
+	if (url.length() < 7 || ParserUtils::countCharOccurs('.', url) != 3) return (false);
+
+	std::string		token, ntoken;
+	std::istringstream	iss_curr_line(url);
+
+	std::getline(iss_curr_line, token, '.');
+	for (int i = 0; i < 3; i++) {
+		int	value = ParserUtils::atoi(token.c_str());
+	      	if ( value < 0 || value > 255) return (false);
+	}
+	return (true);
+}
+
+bool	ParserUtils::isValidURL(std::string url) {
+	// Check if the URI starts with a valid scheme
+	if (url.substr(0, 7) == "http://" || url.substr(0, 8) == "https://") {
+		if (url.length() <= 7 || url.find("://") != url.rfind(":"))
+			return (false);
+
+		// Check if the auth of the URL contains valid chars
+		std::string auth = url.substr(url.find("://") + 3);
+		if (!(isValidAuth(auth)) && !(isValidIp(auth)))
+			return (false);
+		// Check if the path of the URL contains valid chars
+		if (auth.find("/") != std::string::npos) {
+			std::string path = auth.substr(auth.find("/"));
+			if (path.empty()) return (true);
+			return (isValidPath(path));
+		}
+		return (true);
+	}
+
+	// Check if the path of the URL contains valid chars
+	if (url.find("/") != std::string::npos && url[0] == '/') {
+		std::string path = url.substr(url.find("/"));
+		if (path.empty()) return (true);
+		return (isValidPath(path));
+	}
+
+	return (false);
+}
