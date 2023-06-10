@@ -74,6 +74,27 @@ ul li {
 	border-radius: 8px;
 
 }
+
+.running-container {
+	position: relative;
+	height: 800px;
+    width: 100%;
+    border: 4px solid rgb(140, 240, 200);
+    border-radius: 8px;
+}
+
+.running-button {
+	position: absolute;
+	text-align: center;
+	color: black;
+	font-weight: 600;
+	letter-spacing: 0.1rem;
+	text-decoration: none;
+	background: rgb(140, 240, 200);
+	width: 120px;
+	padding: 12px 24px;
+	border-radius: 8px;
+}
 /* END: Standard */
 
 
