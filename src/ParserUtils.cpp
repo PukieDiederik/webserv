@@ -70,9 +70,12 @@ std::string	ParserUtils::parseLine(std::string rline, std::string s1, std::strin
 
 bool	ParserUtils::isValidPath(std::string path) {
 	for (int i = 0; path[i] != '\0'; i++) {
-		if ((path[i] < 97 || path[i] > 122) && (path[i] < 65 || path[i] > 90) && path[i] != '/' && path[i] != '.')
+		if ((path[i] < 97 || path[i] > 122) && (path[i] < 65 || path[i] > 90) && (path[i] < 48 || path[i] > 57)\
+			       	&& path[i] != '/' && path[i] != '.' && path[i] != '_' && path[i] != '-')
 			return (false);
 		if (path[i] == '/' && path[i + 1] == '/')
+			return (false);
+		if (path[i] == ',' && path[i + 1] == '.')
 			return (false);
 	}
 	return (true);
@@ -84,7 +87,7 @@ bool	ParserUtils::isValidAuth(std::string auth) {
 	if (ParserUtils::countCharOccurs('.', auth) == 1 && extra.compare("www") == 0) return (false);
 	for (int i = 0; auth[i] != '\0'; i++) {
 		if (auth[i] == '/') break ;
-		if ((auth[i] < 97 || auth[i] > 122) && auth[i] != '.')
+		if ((auth[i] < 97 || auth[i] > 122) && (auth[i] < 48 || auth[i] > 57) && auth[i] != '.')
 			return (false);
 		if (auth[i] == '.' && auth[i + 1] == '.')
 			return (false);

@@ -1,17 +1,21 @@
 #ifndef SERVER_CONFIG_HPP
 #define SERVER_CONFIG_HPP
 
-#include <map>
-#include <string>
-#include <vector>
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <cstdlib>
+# include <map>
+# include <string>
+# include <vector>
+# include <iostream>
+# include <fstream>
+# include <sstream>
+# include <cstdlib>
 
 // check filepath
-#include <sys/types.h>
-#include <dirent.h>
+# include <sys/types.h>
+# include <dirent.h>
+
+# ifndef VERBOSE
+# define VERBOSE false
+# endif
 
 // Has config about routes
 struct RouteCfg {

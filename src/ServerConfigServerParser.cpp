@@ -139,7 +139,7 @@ void	ServerConfig::parseServerErrorPages(std::string curr_line, ServerCfg &serve
 	}
 
 	for (std::vector<std::string>::iterator it = page_path.begin(); it != page_path.end(); it++) {
-		if (!(ParserUtils::isValidPath)) throw std::runtime_error("Error: invalid error_page path: line: " + ParserUtils::intToString(_bad_line));
+		if (!(ParserUtils::isValidPath(*it))) throw std::runtime_error("Error: invalid error_page path: line: " + ParserUtils::intToString(_bad_line));
 		counter[1]++;
 	}
 
@@ -200,7 +200,7 @@ void	ServerConfig::parseServerRoot(std::string curr_line, ServerCfg &server_conf
 
 	//find last occurence of '/' and remove everything after that
 	int lastIndex = -1;
-	for (int i = 0; i < token.length(); ++i) {
+	for (int i = 0; token[i] != '\0'; ++i) {
 		if (token[i] == '/') {
 			lastIndex = i;
         	}
