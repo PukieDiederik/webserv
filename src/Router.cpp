@@ -161,11 +161,20 @@ void Router::listen()
             }
 
             std::cout << "origin: " << req_sstream.str() << std::endl;
-            HttpRequest req(req_sstream.str());
+            HttpResponse res;
 
-            Server* serv = fd_server_map[events[i].data.fd];
+            try {
+                HttpRequest req(req_sstream.str());
+                Server* serv = fd_server_map[events[i].data.fd];
+                res = serv->handleRequest(req);
+            }
+            catch (std::exception e)
+            {
+                std::cerr << "Could not parse request\n";
+                res.set_status(400, "Bad request");
+                res.set_header("Server", "42-webserv");
+            }
 
-            HttpResponse res = serv->handleRequest(req);
             std::string res_s = res.toString();
             int bytes_send = 0;
 
