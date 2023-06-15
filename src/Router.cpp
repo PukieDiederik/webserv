@@ -109,11 +109,19 @@ Router& Router::operator=(const Router& copy)
     return *this;
 }
 
+struct event
+{
+    struct epoll_event event;
+    bool is_server;
+    Server* server;
+    int related_server_fd;
+};
+
 void Router::listen()
 {
     int epoll_fd = epoll_create(1); // Size is ignored
-    struct epoll_event* epoll_events = new epoll_event[_servers.size()];
-    std::map<int, Server*> fd_server_map;
+    // Map which stores all epoll events using fd as a file descriptor
+    std::map<int, struct event> event_map;
 
     if (epoll_fd < 0)
         throw std::runtime_error("Could not create epoll");
@@ -122,12 +130,15 @@ void Router::listen()
     for (std::size_t i = 0; i < _servers.size(); ++i)
     {
         // Add socket to epoll
-        epoll_events[i].data.fd = _socket_fds[i];
-        epoll_events[i].events = EPOLLIN;
-        if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, epoll_events[i].data.fd, &epoll_events[i]))
+        struct event e;
+        e.event.data.fd = _socket_fds[i];
+        e.event.events = EPOLLIN;
+        e.is_server = true;
+        e.server = &_servers[i];
+        e.related_server_fd = _socket_fds[i];
+        event_map[_socket_fds[i]] = e;
+        if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, e.event.data.fd, &event_map[_socket_fds[i]].event))
             throw std::runtime_error("Could not add epoll_event to epoll");
-
-        fd_server_map[_socket_fds[i]] = &_servers[i];
 
         // Start listening for data
         ::listen(_socket_fds[i], SOMAXCONN);
@@ -165,7 +176,7 @@ void Router::listen()
 
             try {
                 HttpRequest req(req_sstream.str());
-                Server* serv = fd_server_map[events[i].data.fd];
+                Server* serv = event_map[events[i].data.fd].server;
                 res = serv->handleRequest(req);
             }
             catch (std::exception e)
@@ -190,5 +201,4 @@ void Router::listen()
         }
     }
     close(epoll_fd);
-    delete[] epoll_events;
 }
