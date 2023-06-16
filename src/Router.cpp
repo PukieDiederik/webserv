@@ -145,6 +145,7 @@ void Router::listen()
     }
 
     struct epoll_event events[MAX_EVENTS];
+    std::map<int, std::string> out_buffer; // Holds everything that needs to be written to a file descriptor
     char buffer[BUFFER_SIZE];
 
     while (true)
@@ -155,49 +156,83 @@ void Router::listen()
 
         for (int i = 0; i < num_events; ++i)
         {
-            std::cout << "handling new request" << std::endl;
-            struct sockaddr_in client_sockaddr;
-            socklen_t client_sockaddr_len = sizeof(client_sockaddr);
-            std::memset(&client_sockaddr, 0, sizeof(client_sockaddr));
+                if (events[i].events & EPOLLIN)
+                {
+                std::cout << "handling new request" << std::endl;
+                struct sockaddr_in client_sockaddr;
+                socklen_t client_sockaddr_len = sizeof(client_sockaddr);
+                std::memset(&client_sockaddr, 0, sizeof(client_sockaddr));
 
-            int client_socket = accept(events[i].data.fd, (struct sockaddr*)(&client_sockaddr), &client_sockaddr_len);
-            int bytes_read = recv(client_socket, buffer, sizeof(buffer), 0);
-            std::ostringstream req_sstream;
-            req_sstream.write(buffer, bytes_read);
-
-            while (bytes_read > 0)
-            {
-                bytes_read = recv(client_sockaddr_len, &buffer, sizeof(buffer), 0);
+                int client_socket = accept(events[i].data.fd, (struct sockaddr*)(&client_sockaddr), &client_sockaddr_len);
+                int bytes_read = recv(client_socket, buffer, sizeof(buffer), 0);
+                std::ostringstream req_sstream;
                 req_sstream.write(buffer, bytes_read);
-            }
 
-            std::cout << "origin: " << req_sstream.str() << std::endl;
-            HttpResponse res;
+                while (bytes_read > 0)
+                {
+                    bytes_read = recv(client_sockaddr_len, &buffer, sizeof(buffer), 0);
+                    req_sstream.write(buffer, bytes_read);
+                }
 
-            try {
-                HttpRequest req(req_sstream.str());
-                Server* serv = event_map[events[i].data.fd].server;
-                res = serv->handleRequest(req);
+                HttpResponse res;
+
+                try {
+                    HttpRequest req(req_sstream.str());
+                    Server* serv = event_map[events[i].data.fd].server;
+                    res = serv->handleRequest(req);
+                }
+                catch (std::exception e)
+                {
+                    std::cerr << "Could not parse request\n";
+                    res.set_status(400, "Bad request");
+                    res.set_header("Server", "42-webserv");
+                }
+
+                std::string res_s = res.toString();
+                out_buffer[client_socket] += res_s;
+
+                struct event e;
+                e.event.data.fd = client_socket;
+                e.event.events = EPOLLIN | EPOLLOUT;
+                // e.is_server = true;
+                // e.server = &_servers[i];
+                // e.related_server_fd = _socket_fds[i];
+                event_map[client_socket] = e;
+                epoll_ctl(epoll_fd, EPOLL_CTL_ADD, e.event.data.fd, &event_map[client_socket].event);
+
+                //TODO: move this to seperate part
+                // std::cout << "res: \n" << res_s;
+
+                // for (std::size_t i = 0; i < res_s.length(); i += bytes_send)
+                // {
+                //     bytes_send = send(client_socket, res_s.c_str() + i, res_s.length() - i, MSG_DONTWAIT);
+                //     if (bytes_send <= 0)
+                //         break; // Something errored
+                // }
+
             }
-            catch (std::exception e)
+            if (events[i].events & EPOLLOUT)
             {
-                std::cerr << "Could not parse request\n";
-                res.set_status(400, "Bad request");
-                res.set_header("Server", "42-webserv");
+                std::map<int, std::string>::iterator out_it;
+
+                out_it = out_buffer.find(events[i].data.fd);
+                if (out_it == out_buffer.end())
+                    continue;
+
+                int bytes_send = 0;
+                // start writing
+                for (std::size_t s = 0; s < out_it->second.length(); s += bytes_send)
+                {
+                    bytes_send = send(events[i].data.fd, out_it->second.c_str() + i, out_it->second.length() - i, MSG_DONTWAIT);
+                    if (bytes_send <= 0)
+                        break; // Something errored
+                }
+                out_buffer.erase(out_it);
+
+                // Update epoll
+                event_map[events[i].data.fd].event.events &= !EPOLLOUT;
+                epoll_ctl(epoll_fd, EPOLL_CTL_MOD, events[i].data.fd, &event_map[events[i].data.fd].event);
             }
-
-            std::string res_s = res.toString();
-            int bytes_send = 0;
-
-            std::cout << "res: \n" << res_s;
-
-            for (std::size_t i = 0; i < res_s.length(); i += bytes_send)
-            {
-                bytes_send = send(client_socket, res_s.c_str() + i, res_s.length() - i, MSG_DONTWAIT);
-                if (bytes_send <= 0)
-                    break; // Something errored
-            }
-            close (client_socket);
         }
     }
     close(epoll_fd);
