@@ -7,12 +7,6 @@
 # include <cctype>
 # include <string>
 
-/*	@getParams:
- *		Checks if string is delimited by brackets ('[]') and removes them
- *		Checks if each param is separated by a comma and removes them
- *		Checks if each param is delimited by quotes and removes them
- *		Populates a vector<string> with each param
-*/
 namespace ParserUtils {
 	/*	@identifyKeyword:
 	*		Evaluates if given line contains a keyword and its respective '{' (or just the keyword)
@@ -38,11 +32,23 @@ namespace ParserUtils {
 		return (keyword);
 	}
 
+	/*	@getParams:
+	 *		Checks if string is delimited by brackets ('[]') and removes them
+	 *		Checks if each param is separated by a comma and removes them
+	 *		Checks if each param is delimited by quotes and removes them
+	 *		Populates a vector<string> with each param
+	*/
 	void	getParams(std::string &str, std::vector<std::string> &params, int &bad_line) {
 		std::string 		param;
 
-		if (str[0] != '[' || str[str.length() - 1] != ']' || str.size() < 5) throw std::runtime_error("Error: bad parameter config: line: " + ParserUtils::intToString(bad_line));
-		else (str = ParserUtils::removeDelimiters(str));
+		if (str[0] != '[' || str[str.length() - 1] != ']' || str.size() < 5) throw std::runtime_error("Error: bad array config: line: " + ParserUtils::intToString(bad_line));
+		else {
+			str = ParserUtils::removeDelimiters(str);
+			//comma edge cases & remove spaces between commas and next token
+			for (int i = 0; str[i] != '\0'; i++) {
+				if (str[i] == ',' && (str[i - 1] != '"' || str[i + 1] != '"')) throw std::runtime_error("Error: invalid parameter config: line: " + ParserUtils::intToString(bad_line));
+			}
+		}
 
 		std::istringstream 	iss(str);
 
@@ -108,6 +114,25 @@ namespace ParserUtils {
 		return result;
 	}
 
+	void	removeArraySpaces(std::string &str) {
+		bool	betweenQuotes = false;
+
+		for (int l = 0; str[l] != '\0'; l++) {
+			if (str[l] == '[') {
+				for (int i = l; str[i] != '\0' && str[i] != ']'; i++) {
+					if (str[i] == '"' && betweenQuotes) betweenQuotes = false;
+					else if (str[i] == '"') betweenQuotes = true;
+					else if ((str[i] == ' ' || str[i] == '	') && !(betweenQuotes)) {
+						int	j = 0, k = i;
+						while (str[k] == ' ' || str[k] == '	') { j++; k++; }
+						str.erase(i, j);
+					}
+					l = i;
+				}
+			}
+		}
+	}
+
 	std::string	parseLine(std::string &rline, std::string s1, std::string s2) {
 		if (rline == "")
 			return ("");
@@ -122,9 +147,15 @@ namespace ParserUtils {
 			else
 				pos++;
 		}
+		removeArraySpaces(rline);
 		return (removeMultipleSpaces(rline));
 	}
 
+	/*	@isValidPath:
+	 *		Only valid chars: (a-z; A-Z; 0-9; '/'; '.'; '_'; '-')
+	 *		Checking for doubble slashes "//" and doubble dots ".."
+	 *
+	 */
 	bool	isValidPath(const std::string &path) {
 		for (int i = 0; path[i] != '\0'; i++) {
 			if ((path[i] < 97 || path[i] > 122) && (path[i] < 65 || path[i] > 90) && (path[i] < 48 || path[i] > 57)\
