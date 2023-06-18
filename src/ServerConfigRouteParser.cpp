@@ -128,7 +128,7 @@ void	parseRedirect(RouteCfg &route_conf, std::istringstream &iss_c_line, int &ba
  *		Calls getline parsing each subkeywd to the RouteCfg object
  *
  */
-void	ServerConfig::parseServerRoute(std::string curr_line, ServerCfg &server_conf, int &bad_line, std::ifstream &fd_conf) {
+void	ServerConfig::parseServerRoute(std::string &curr_line, ServerCfg &server_conf, int &bad_line, std::ifstream &fd_conf) {
 	RouteCfg	route_conf;
 	bool		subkeywd_bracket = false;
 

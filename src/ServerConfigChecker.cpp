@@ -54,7 +54,7 @@ void	ServerConfig::checker() {
 			if ((*jit).is_redirect && (*jit).redirect_to.compare("notset") == 0) throw std::runtime_error("missing redirection config");
 		       	if ((*jit).is_redirect && VERBOSE) std::cout << "\t\tRoute redirection:\n\t\t\t[" << (*jit).redirect_to << "]" << std::endl;
 
-			if ((*jit).root.compare("nopath") == 0) throw std::runtime_error("missing route root config");
+			if ((*jit).root.compare("nopath") != 0 && (*jit).route_path.compare("redirect") == 0) throw std::runtime_error("missing route root config");
 			if (VERBOSE)
 				std::cout << "\t\tRoute root:\n\t\t\t[" << (*jit).root << "]" << std::endl;
 

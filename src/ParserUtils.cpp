@@ -18,7 +18,7 @@ namespace ParserUtils {
 	*		Evaluates if given line contains a keyword and its respective '{' (or just the keyword)
 	*		Returns error (5) for all other cases
 	*/
-	int	identifyKeyword(std::string line, bool &keywd_bracket) {
+	int	identifyKeyword(const std::string &line, bool &keywd_bracket) {
 		int			keyword = ERROR;
 		std::string		token, ntoken;
 		std::istringstream	iss(line);
@@ -38,7 +38,7 @@ namespace ParserUtils {
 		return (keyword);
 	}
 
-	void	getParams(std::string str, std::vector<std::string> &params, int &bad_line) {
+	void	getParams(std::string &str, std::vector<std::string> &params, int &bad_line) {
 		std::string 		param;
 
 		if (str[0] != '[' || str[str.length() - 1] != ']' || str.size() < 5) throw std::runtime_error("Error: bad parameter config: line: " + ParserUtils::intToString(bad_line));
@@ -57,7 +57,7 @@ namespace ParserUtils {
 		}
 	}
 
-	int	atoi(std::string str) {
+	int	atoi(const std::string &str) {
 		int	value = 0;
 		for (int i = 0; str[i] != '\0'; i++) {
 			if (str[i] < '0' || str[i] > '9') return (-42);
@@ -66,14 +66,14 @@ namespace ParserUtils {
 		return (value);
 	}
 
-	std::string	removeDelimiters(std::string str) {
+	std::string	removeDelimiters(std::string &str) {
 		str = str.substr(1);
 		str = str.substr(0, str.length() -1);
 
 		return (str);
 	}
 
-	int	countCharOccurs(char needle, std::string stack) {
+	int	countCharOccurs(char needle, const std::string &stack) {
 		int	count = 0;
 		for (int i = 0; stack[i] != '\0'; i++)
 			if (stack[i] == needle)
@@ -108,7 +108,7 @@ namespace ParserUtils {
 		return result;
 	}
 
-	std::string	parseLine(std::string rline, std::string s1, std::string s2) {
+	std::string	parseLine(std::string &rline, std::string s1, std::string s2) {
 		if (rline == "")
 			return ("");
 		size_t	s1Len = s1.length();
@@ -125,7 +125,7 @@ namespace ParserUtils {
 		return (removeMultipleSpaces(rline));
 	}
 
-	bool	isValidPath(std::string path) {
+	bool	isValidPath(const std::string &path) {
 		for (int i = 0; path[i] != '\0'; i++) {
 			if ((path[i] < 97 || path[i] > 122) && (path[i] < 65 || path[i] > 90) && (path[i] < 48 || path[i] > 57)\
 				       	&& path[i] != '/' && path[i] != '.' && path[i] != '_' && path[i] != '-')
@@ -138,7 +138,7 @@ namespace ParserUtils {
 		return (true);
 	}
 
-	bool	isValidAuth(std::string auth) {
+	bool	isValidAuth(const std::string &auth) {
 		if (ParserUtils::countCharOccurs('.', auth) < 1) return (false);
 		std::string	extra = auth.substr(0, auth.find('.'));
 		if (ParserUtils::countCharOccurs('.', auth) == 1 && extra.compare("www") == 0) return (false);
@@ -152,11 +152,11 @@ namespace ParserUtils {
 		return (true);
 	}
 
-	bool	isValidIp(std::string url) {
-		if (url.length() < 7 || ParserUtils::countCharOccurs('.', url) != 3) return (false);
+	bool	isValidIp(const std::string &ip) {
+		if (ip.length() < 7 || ParserUtils::countCharOccurs('.', ip) != 3) return (false);
 
 		std::string		token, ntoken;
-		std::istringstream	iss_curr_line(url);
+		std::istringstream	iss_curr_line(ip);
 
 		for (int i = 0; i < 3; i++) {
 			std::getline(iss_curr_line, token, '.');
@@ -166,7 +166,7 @@ namespace ParserUtils {
 		return (true);
 	}
 
-	bool	isValidURL(std::string url) {
+	bool	isValidURL(const std::string &url) {
 		// Check if the URI starts with a valid scheme
 		if (url.substr(0, 7) == "http://" || url.substr(0, 8) == "https://") {
 			if (url.length() <= 7 || url.find("://") != url.rfind(":"))
@@ -195,13 +195,13 @@ namespace ParserUtils {
 		return (false);
 	}
 
-	std::string	intToString(int number) {
+	std::string	intToString(const int &number) {
 		std::ostringstream oss;
 		oss << number;
 		return oss.str();
 	}
 
-	bool	strAllSpaces(std::string str) {
+	bool	strAllSpaces(const std::string &str) {
 		int	c1 = 0, c2 = 0;
 		for (int i = 0; str[i] != '\0'; i++) {
 			c1++;

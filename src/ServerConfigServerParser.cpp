@@ -13,7 +13,7 @@
  *		Checks for additional token in string
  *
  * */
-void	ServerConfig::parseServerHost(std::string curr_line, ServerCfg &server_conf, int &bad_line) {
+void	ServerConfig::parseServerHost(const std::string &curr_line, ServerCfg &server_conf, int &bad_line) {
 	if (server_conf.host.compare("notdefined") != 0) throw std::runtime_error("Error: multiple host ipv4 config: line: " + ParserUtils::intToString(bad_line));
 
 	std::string		token, ntoken, ltoken;
@@ -42,7 +42,7 @@ void	ServerConfig::parseServerHost(std::string curr_line, ServerCfg &server_conf
  *		Atoi's given port, throws error is bad input
  *		Checks for additional token in string, throws erros if not comments
  * */
-void	ServerConfig::parseServerPort(std::string curr_line, ServerCfg &server_conf, int &bad_line) {
+void	ServerConfig::parseServerPort(const std::string &curr_line, ServerCfg &server_conf, int &bad_line) {
 	if (server_conf.port > 0) throw std::runtime_error("Error: multiple port config: line: " + ParserUtils::intToString(bad_line));
 
 	std::string		token, ltoken;
@@ -67,7 +67,7 @@ void	ServerConfig::parseServerPort(std::string curr_line, ServerCfg &server_conf
  *			A hostname may not start with a hyphen.
  *		Checks for additional tokens in string, throws error if not comments
  * */
-void	ServerConfig::parseServerNames(std::string curr_line, ServerCfg &server_conf, int &bad_line) {
+void	ServerConfig::parseServerNames(const std::string &curr_line, ServerCfg &server_conf, int &bad_line) {
 	std::istringstream	iss_curr_line(curr_line);
 	std::string		token, ltoken;
 
@@ -109,7 +109,7 @@ void	ServerConfig::parseServerNames(std::string curr_line, ServerCfg &server_con
  *		Populates dictionary with status_code -> page_path
  *		Checks if aditional tokens in string, if not comments throws error
  * */
-void	ServerConfig::parseServerErrorPages(std::string curr_line, ServerCfg &server_conf, int &bad_line) {
+void	ServerConfig::parseServerErrorPages(const std::string &curr_line, ServerCfg &server_conf, int &bad_line) {
 	std::istringstream	iss_curr_line(curr_line);
 	std::string		token, ltoken, ctoken;
 
@@ -166,7 +166,7 @@ void	ServerConfig::parseServerErrorPages(std::string curr_line, ServerCfg &serve
  *		Checks if its a valid number
  *		Checks if aditional tokens in string, if not comments throws error
  * */
-void	ServerConfig::parseServerMaxBodySize(std::string curr_line, ServerCfg &server_conf, int &bad_line) {
+void	ServerConfig::parseServerMaxBodySize(const std::string &curr_line, ServerCfg &server_conf, int &bad_line) {
 	if (server_conf.max_body_size > 0) throw std::runtime_error("Error: multiple max_body_size values: line: " + ParserUtils::intToString(bad_line));
 	std::istringstream	iss_curr_line(curr_line);
 	std::string		token, ltoken;
@@ -190,7 +190,7 @@ void	ServerConfig::parseServerMaxBodySize(std::string curr_line, ServerCfg &serv
  *		Checks if its a valid absolute path, throws error if not or multiple defenitions
  *		Checks if more token and present in line, if not comments throws error
  * */
-void	ServerConfig::parseServerRoot(std::string curr_line, ServerCfg &server_conf, int &bad_line) {
+void	ServerConfig::parseServerRoot(const std::string &curr_line, ServerCfg &server_conf, int &bad_line) {
 	if (server_conf.root_dir.compare("nopath") != 0) throw std::runtime_error("Error: mutiple root_dir definitions: line: " + ParserUtils::intToString(bad_line));
 
 	std::istringstream	iss_curr_line(curr_line);

@@ -83,19 +83,16 @@ class ServerConfig {
 
 	ServerConfig();
 	protected:// Parser utils
-		int	identifyKeyword(std::string line, bool &keywd_bracket);
-		void	getParams(std::string, std::vector<std::string> &params);
-		
 		void	parseCgi(int &bad_line);
 		void	parseMime(int &bad_line, bool &keywd_bracket, std::ifstream &fd_conf);
 		void	parseServer(int &bad_line, bool &keywd_bracket, std::ifstream &fd_conf);
-			void	parseServerHost(std::string, ServerCfg &, int &bad_line);
-			void	parseServerPort(std::string, ServerCfg &, int &bad_line);
-			void	parseServerNames(std::string, ServerCfg &, int &bad_line);
-			void	parseServerErrorPages(std::string, ServerCfg &, int &bad_line);
-			void	parseServerMaxBodySize(std::string, ServerCfg &, int &bad_line);
-			void	parseServerRoot(std::string, ServerCfg &, int &bad_line);
-			void	parseServerRoute(std::string curr_line, ServerCfg &, int &bad_line, std::ifstream &fd_conf);
+			void	parseServerHost(const std::string &, ServerCfg &, int &bad_line);
+			void	parseServerPort(const std::string &, ServerCfg &, int &bad_line);
+			void	parseServerNames(const std::string &, ServerCfg &, int &bad_line);
+			void	parseServerErrorPages(const std::string &, ServerCfg &, int &bad_line);
+			void	parseServerMaxBodySize(const std::string &, ServerCfg &, int &bad_line);
+			void	parseServerRoot(const std::string &curr_line, ServerCfg &, int &bad_line);
+			void	parseServerRoute(std::string &curr_line, ServerCfg &, int &bad_line, std::ifstream &fd_conf);
 
 		void	checker();
 	public:

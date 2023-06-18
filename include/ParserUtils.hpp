@@ -13,30 +13,30 @@
 
 
 namespace ParserUtils {
-	int	identifyKeyword(std::string line, bool &keywd_bracket);
+	int	identifyKeyword(const std::string &line, bool &keywd_bracket);
 
-	void	getParams(std::string str, std::vector<std::string> &params, int &bad_line);
+	void	getParams(std::string &str, std::vector<std::string> &params, int &bad_line);
 	
+	std::string	parseLine(std::string &rline, std::string s1, std::string s2);
+	
+	int	atoi(const std::string &str);
+
+	std::string	removeDelimiters(std::string &str);
+
+	int	countCharOccurs(char needle, const std::string &stack);
+
 	std::string removeMultipleSpaces(const std::string& str);
-
-	std::string	parseLine(std::string rline, std::string s1, std::string s2);
 	
-	int	atoi(std::string str);
+	bool	isValidPath(const std::string &path);
 
-	std::string	removeDelimiters(std::string str);
+	bool	isValidAuth(const std::string &auth);
 
-	int	countCharOccurs(char needle, std::string stack);
-	
-	bool	isValidPath(std::string path);
+	bool	isValidIp(const std::string &url);
 
-	bool	isValidAuth(std::string auth);
+	bool	isValidURL(const std::string &url);
 
-	bool	isValidIp(std::string url);
+	std::string	intToString(const int &number);
 
-	bool	isValidURL(std::string url);
-
-	std::string	intToString(int number);
-
-	bool	strAllSpaces(std::string line);
+	bool	strAllSpaces(const std::string &line);
 }
 #endif
