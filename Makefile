@@ -17,7 +17,7 @@ NAME        = webserv
 
 CXX         = c++
 CXXFLAGS    = -std=c++98 -Wall -Werror -Wextra -pedantic\
-	      #-D VERBOSE=true
+	      -D VERBOSE=true
               #-g -fsanitize=address -fsanitize=leak
 
 INCLUDES    = -I $(INCLUDE_DIR)

@@ -1,6 +1,14 @@
 #include "ServerConfig.hpp"
 #include "ParserUtils.hpp"
+
 #include <stdexcept>
+#include <map>
+#include <string>
+#include <vector>
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <cstdlib>
 
 /*
  *	Config file parser:
@@ -38,28 +46,28 @@ ServerCfg::~ServerCfg() { }
 
 
 
-/*	@isKeyword:
+/*	@identifyKeyword:
 *		Evaluates if given line contains a keyword and its respective '{' (or just the keyword)
 *		Returns error (5) for all other cases
 */
-int	ServerConfig::isKeyword(std::string line) {
-	int			value = 5;
+int	ServerConfig::identifyKeyword(std::string line) {
+	int			keyword = ERROR;
 	std::string		token, ntoken;
 	std::istringstream	iss(line);
 
 	std::getline(iss, token, ' ');
-	if (token.compare("server") == 0) value = 1;
-	else if (token.compare("cgi") == 0) value = 2;
-	else if (token.compare("mime") == 0) value = 3;
-	else if (token[0] == '#') return (4);
+	if (token.compare("server") == 0) keyword = SERVER;
+	else if (token.compare("cgi") == 0) keyword = CGI;
+	else if (token.compare("mime") == 0) keyword = MIME;
+	else if (token[0] == '#') return (COMMENT);
 
 	std::getline(iss, ntoken, ' ');
 
-	if (ntoken.compare(token) == 0) return (value);
+	if (ntoken.compare(token) == 0) return (keyword);
 	else if (ntoken[0] == '{') _keywd_bracket = true;
-	else if (!ntoken.empty() && ntoken[0] != '#') value = 5;
+	else if (!ntoken.empty() && ntoken[0] != '#') return (ERROR);
 
-	return (value);
+	return (keyword);
 }
 
 /*	@getParams:
@@ -144,31 +152,31 @@ ServerConfig::ServerConfig(const std::string& filepath) {
 	_fd_conf.open(filepath.c_str());
 	if (_fd_conf.is_open()) {
 		std::string	curr_line;
-		int		value;
+		int		keyword;
 		_bad_line = 0;
 		while (std::getline(_fd_conf, curr_line)) {
 			curr_line = ParserUtils::parseLine(curr_line, "	", " ");
 			_bad_line++;
 			if (curr_line.empty())
 				continue ;
-			value = isKeyword(curr_line);	
-			if (value == 1) {
+			keyword = identifyKeyword(curr_line);	
+			if (keyword == SERVER) {
 				try {
 					parseServer();
 				} catch (const std::exception &ex) {
 					std::cout << "Error: server parser: " << std::flush;
 					throw ;
 				}
-			} else if (value == 2) {
+			} else if (keyword == CGI) {
 				std::cout << "parse cgi" << std::endl;
-			} else if (value == 3) {
+			} else if (keyword == MIME) {
 				try {
 					parseMime();
 				} catch (const std::exception &ex) {
 					std::cout << "Error: mime parser: " << std::flush;
 					throw ;
 				}
-			} else if (value == 5) {
+			} else if (keyword == ERROR) {
 				throw std::runtime_error("Error: bad line[" + ParserUtils::intToString(_bad_line) + "]");
 			}
 		}

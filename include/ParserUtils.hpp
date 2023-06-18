@@ -1,10 +1,6 @@
 #ifndef __PARSERUTILS_HPP__
 #define __PARSERUTILS_HPP__
 
-# include <iostream>
-# include <sstream>
-# include <algorithm>
-# include <cctype>
 # include <string>
 
 /* ParserUtils:

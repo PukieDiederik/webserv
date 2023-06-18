@@ -1,5 +1,11 @@
 #include "ParserUtils.hpp"
 
+# include <iostream>
+# include <sstream>
+# include <algorithm>
+# include <cctype>
+# include <string>
+
 int	ParserUtils::atoi(std::string str) {
 	int	value = 0;
 	for (int i = 0; str[i] != '\0'; i++) {

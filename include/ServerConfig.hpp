@@ -3,15 +3,15 @@
 
 # include <map>
 # include <string>
-# include <vector>
 # include <iostream>
+# include <vector>
 # include <fstream>
-# include <sstream>
-# include <cstdlib>
 
-// check filepath
-# include <sys/types.h>
-# include <dirent.h>
+# define SERVER 1
+# define CGI 2
+# define MIME 3
+# define COMMENT 4
+# define ERROR 5
 
 # ifndef VERBOSE
 # define VERBOSE false
@@ -93,7 +93,7 @@ class ServerConfig {
 		/* current line counter */
 		int	_bad_line;
 
-		int	isKeyword(std::string line);
+		int	identifyKeyword(std::string line);
 		void	getParams(std::string, std::vector<std::string> &params);
 		
 		void	parseCgi();

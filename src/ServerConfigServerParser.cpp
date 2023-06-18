@@ -1,6 +1,12 @@
 #include "ServerConfig.hpp"
 #include "ParserUtils.hpp"
 
+#include <sstream>
+
+// check filepath
+# include <sys/types.h>
+# include <dirent.h>
+
 /*	@parseServerHost:
  *		Checks if host is already set, if so throws error
  *		Atoi's each of ipv4 value so to check if >= 0 && <= 255
