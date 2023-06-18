@@ -44,46 +44,20 @@ ServerCfg::ServerCfg() {
 ServerCfg::~ServerCfg() { }
 //ServerCfg ServerCfg::operator=(const ServerCfg& copy) { (void)copy; return *this; }
 
-
-
-/*	@identifyKeyword:
-*		Evaluates if given line contains a keyword and its respective '{' (or just the keyword)
-*		Returns error (5) for all other cases
-*/
-int	ServerConfig::identifyKeyword(std::string line) {
-	int			keyword = ERROR;
-	std::string		token, ntoken;
-	std::istringstream	iss(line);
-
-	std::getline(iss, token, ' ');
-	if (token.compare("server") == 0) keyword = SERVER;
-	else if (token.compare("cgi") == 0) keyword = CGI;
-	else if (token.compare("mime") == 0) keyword = MIME;
-	else if (token[0] == '#') return (COMMENT);
-
-	std::getline(iss, ntoken, ' ');
-
-	if (ntoken.compare(token) == 0) return (keyword);
-	else if (ntoken[0] == '{') _keywd_bracket = true;
-	else if (!ntoken.empty() && ntoken[0] != '#') return (ERROR);
-
-	return (keyword);
-}
-
-void	ServerConfig::parseMime(int &bad_line) {
+void	ServerConfig::parseMime(int &bad_line, bool &keywd_bracket, std::ifstream &fd_conf) {
 	std::string	curr_line;
 	std::string	token, ltoken;
 
-	while (!_keywd_bracket) {
-		std::getline(_fd_conf, curr_line); bad_line++;
+	while (!keywd_bracket) {
+		std::getline(fd_conf, curr_line); bad_line++;
 		curr_line = ParserUtils::parseLine(curr_line, "	", " ");
 		std::istringstream	iss_curr_line(curr_line);
 		std::getline(iss_curr_line, token, ' ');
 
 		if (token.compare("{") != 0 && token[0] != '#') throw std::runtime_error("Error: missing opening bracket: line " + ParserUtils::intToString(bad_line));
-		else if (token.compare("{") == 0) _keywd_bracket = true;
+		else if (token.compare("{") == 0) keywd_bracket = true;
 	}
-	while (std::getline(_fd_conf, curr_line)) {
+	while (std::getline(fd_conf, curr_line)) {
 		curr_line = ParserUtils::parseLine(curr_line, "	", " ");
 		bad_line++;
 		if (curr_line.empty()) continue ;
@@ -106,38 +80,41 @@ void	ServerConfig::parseMime(int &bad_line) {
 			std::getline(iss_curr_line, ltoken, ' ');
 			if (!(ltoken.empty()) && ltoken[0] != '#') throw std::runtime_error("Error: unexpected token: line: " + ParserUtils::intToString(bad_line));
 		}
-		else if (token.compare("}") == 0) { _keywd_bracket = false; return ; }
+		else if (token.compare("}") == 0) { keywd_bracket = false; return ; }
 		else if (token[0] == '#') continue ;
 		else
 			throw std::runtime_error("Error: bad server parameter: line: " + ParserUtils::intToString(bad_line));
 	}
-	if (_fd_conf.eof()) throw std::runtime_error("Error: missing closing bracket");
+	if (fd_conf.eof()) throw std::runtime_error("Error: missing closing bracket");
 }
 
 
 /*	@ServerConfig constructor:
  * 		Calls getline until keyword is found
- * 		Sets _keywd_bracket true
+ * 		Sets keywd_bracket true
  * 		Call respective block parser
- * 		Sets _keywd_bracket false
+ * 		Sets keywd_bracket false
 */
 ServerConfig::ServerConfig(const std::string& filepath) {
 	if (filepath.empty()) throw std::runtime_error("Error: bad config file");
 
-	_fd_conf.open(filepath.c_str());
-	if (_fd_conf.is_open()) {
+	std::ifstream	fd_conf;
+
+	fd_conf.open(filepath.c_str());
+	if (fd_conf.is_open()) {
 		std::string	curr_line;
 		int		keyword;
 		int		bad_line = 0;
-		while (std::getline(_fd_conf, curr_line)) {
+		bool		keywd_bracket = false;
+		while (std::getline(fd_conf, curr_line)) {
 			curr_line = ParserUtils::parseLine(curr_line, "	", " ");
 			bad_line++;
 			if (curr_line.empty())
 				continue ;
-			keyword = identifyKeyword(curr_line);	
+			keyword = ParserUtils::identifyKeyword(curr_line, keywd_bracket);	
 			if (keyword == SERVER) {
 				try {
-					parseServer(bad_line);
+					parseServer(bad_line, keywd_bracket, fd_conf);
 				} catch (const std::exception &ex) {
 					std::cout << "Error: server parser: " << std::flush;
 					throw ;
@@ -146,7 +123,7 @@ ServerConfig::ServerConfig(const std::string& filepath) {
 				std::cout << "parse cgi" << std::endl;
 			} else if (keyword == MIME) {
 				try {
-					parseMime(bad_line);
+					parseMime(bad_line, keywd_bracket, fd_conf);
 				} catch (const std::exception &ex) {
 					std::cout << "Error: mime parser: " << std::flush;
 					throw ;
@@ -157,7 +134,7 @@ ServerConfig::ServerConfig(const std::string& filepath) {
 		}
 	
 		if (bad_line == 0)  {
-			_fd_conf.close();
+			fd_conf.close();
 			throw std::runtime_error("Error: config file empty");
 		}
 

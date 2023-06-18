@@ -1,3 +1,4 @@
+#include "ServerConfig.hpp"
 #include "ParserUtils.hpp"
 
 # include <iostream>
@@ -13,6 +14,30 @@
  *		Populates a vector<string> with each param
 */
 namespace ParserUtils {
+	/*	@identifyKeyword:
+	*		Evaluates if given line contains a keyword and its respective '{' (or just the keyword)
+	*		Returns error (5) for all other cases
+	*/
+	int	identifyKeyword(std::string line, bool &keywd_bracket) {
+		int			keyword = ERROR;
+		std::string		token, ntoken;
+		std::istringstream	iss(line);
+
+		std::getline(iss, token, ' ');
+		if (token.compare("server") == 0) keyword = SERVER;
+		else if (token.compare("cgi") == 0) keyword = CGI;
+		else if (token.compare("mime") == 0) keyword = MIME;
+		else if (token[0] == '#') return (COMMENT);
+
+		std::getline(iss, ntoken, ' ');
+
+		if (ntoken.compare(token) == 0) return (keyword);
+		else if (ntoken[0] == '{') keywd_bracket = true;
+		else if (!ntoken.empty() && ntoken[0] != '#') return (ERROR);
+
+		return (keyword);
+	}
+
 	void	getParams(std::string str, std::vector<std::string> &params, int &bad_line) {
 		std::string 		param;
 

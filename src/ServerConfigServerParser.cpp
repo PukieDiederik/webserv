@@ -232,24 +232,22 @@ void	ServerConfig::parseServerRoot(std::string curr_line, ServerCfg &server_conf
  * 		Stops if '}' is found or EOF
 */
 
-void	ServerConfig::parseServer(int &bad_line) {
+void	ServerConfig::parseServer(int &bad_line, bool &keywd_bracket, std::ifstream &fd_conf) {
 	std::string	curr_line;
 	std::string	token, ntoken;
 
 	ServerCfg	server_conf;
-
-	_subkeywd_bracket = false;
 	
-	while (!_keywd_bracket) {
-		std::getline(_fd_conf, curr_line); bad_line++;
+	while (!keywd_bracket) {
+		std::getline(fd_conf, curr_line); bad_line++;
 		std::istringstream	iss_curr_line(curr_line);
 		std::getline(iss_curr_line, token, ' ');
 
 		if (token.compare("{") != 0 && token[0] != '#') throw std::runtime_error("Error: missing opening bracket: line " + ParserUtils::intToString(bad_line));
-		else if (token.compare("{") == '{') _keywd_bracket = true;
+		else if (token.compare("{") == '{') keywd_bracket = true;
 	}
 
-	while (std::getline(_fd_conf, curr_line)) {
+	while (std::getline(fd_conf, curr_line)) {
 		bad_line++;
 		if (curr_line.empty()) continue ;
 		curr_line = ParserUtils::parseLine(curr_line, "	", " ");
@@ -264,9 +262,9 @@ void	ServerConfig::parseServer(int &bad_line) {
 			else if (token.compare("error_pages") == 0) parseServerErrorPages(curr_line, server_conf, bad_line);
 			else if (token.compare("max_body_size") == 0) parseServerMaxBodySize(curr_line, server_conf, bad_line);
 			else if (token.compare("root") == 0) parseServerRoot(curr_line, server_conf, bad_line);
-			else if (token.compare("route") == 0) parseServerRoute(curr_line, server_conf, bad_line);
+			else if (token.compare("route") == 0) parseServerRoute(curr_line, server_conf, bad_line, fd_conf);
 			else if (token[0] == '#') continue ;
-			else if (token.compare("}") == 0) { _keywd_bracket = false; _servers.push_back(server_conf); return ; }
+			else if (token.compare("}") == 0) { keywd_bracket = false; _servers.push_back(server_conf); return ; }
 			else
 				throw std::runtime_error("Error: bad server parameter: line: " + ParserUtils::intToString(bad_line));
 		} catch (std::exception &ex) {
@@ -274,5 +272,5 @@ void	ServerConfig::parseServer(int &bad_line) {
 		}
 	}
 
-	if (_fd_conf.eof()) throw std::runtime_error("Error: missing closing bracket");
+	if (fd_conf.eof()) throw std::runtime_error("Error: missing closing bracket");
 }

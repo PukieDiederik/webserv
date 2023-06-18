@@ -13,6 +13,8 @@
 
 
 namespace ParserUtils {
+	int	identifyKeyword(std::string line, bool &keywd_bracket);
+
 	void	getParams(std::string str, std::vector<std::string> &params, int &bad_line);
 	
 	std::string removeMultipleSpaces(const std::string& str);

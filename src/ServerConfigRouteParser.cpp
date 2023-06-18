@@ -128,8 +128,9 @@ void	parseRedirect(RouteCfg &route_conf, std::istringstream &iss_c_line, int &ba
  *		Calls getline parsing each subkeywd to the RouteCfg object
  *
  */
-void	ServerConfig::parseServerRoute(std::string curr_line, ServerCfg &server_conf, int &bad_line) {
+void	ServerConfig::parseServerRoute(std::string curr_line, ServerCfg &server_conf, int &bad_line, std::ifstream &fd_conf) {
 	RouteCfg	route_conf;
+	bool		subkeywd_bracket = false;
 
 	std::istringstream	iss_curr_line(curr_line);
 	std::string		token, ltoken;
@@ -145,19 +146,19 @@ void	ServerConfig::parseServerRoute(std::string curr_line, ServerCfg &server_con
 	std::getline(iss_curr_line, ltoken, ' ');
 	if (!(ltoken.empty()) && ltoken[0] != '#' && ltoken.compare("{") != 0) {
 		throw std::runtime_error("Error: unexpected token: line: " + ParserUtils::intToString(bad_line));
-	} else if (ltoken.compare("{") == 0) _subkeywd_bracket = true;
+	} else if (ltoken.compare("{") == 0) subkeywd_bracket = true;
 
-	while (!_subkeywd_bracket) {
-		std::getline(_fd_conf, curr_line); bad_line++;
+	while (!subkeywd_bracket) {
+		std::getline(fd_conf, curr_line); bad_line++;
 		curr_line = ParserUtils::parseLine(curr_line, "	", " ");
 		std::istringstream	iss_curr_line(curr_line);
 		std::getline(iss_curr_line, token, ' ');
 
 		if (token.compare("{") != 0 && token[0] != '#') throw std::runtime_error("Error: missing opening bracket: line " + ParserUtils::intToString(bad_line));
-		else if (token.compare("{") == 0) _subkeywd_bracket = true;
+		else if (token.compare("{") == 0) subkeywd_bracket = true;
 	}
 
-	while (getline(_fd_conf, curr_line)) {
+	while (getline(fd_conf, curr_line)) {
 		curr_line = ParserUtils::parseLine(curr_line, "	", " ");
 		bad_line++;
 		if (curr_line.empty()) continue ;
@@ -167,7 +168,7 @@ void	ServerConfig::parseServerRoute(std::string curr_line, ServerCfg &server_con
 
 		std::getline(iss_c_line, ntoken, ' ');
 		if (ntoken.compare("}") == 0) {
-			_subkeywd_bracket = false; server_conf.routes.push_back(route_conf); return ;
+			subkeywd_bracket = false; server_conf.routes.push_back(route_conf); return ;
 		} else if (ntoken.compare("auto_index") == 0) {
 			parseAutoIndex(route_conf, iss_c_line, bad_line);
 		} else if (ntoken.compare("index") == 0) {
@@ -183,5 +184,5 @@ void	ServerConfig::parseServerRoute(std::string curr_line, ServerCfg &server_con
 		}
 
 	}
-	if (_fd_conf.eof()) throw std::runtime_error("Error: missing closing bracket in route_config");	
+	if (fd_conf.eof()) throw std::runtime_error("Error: missing closing bracket in route_config");	
 }
