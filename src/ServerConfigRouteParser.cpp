@@ -81,13 +81,54 @@ void	parseRoot(RouteCfg &route_conf, std::istringstream &iss_c_line, int &bad_li
 	if (!(ntoken.empty()) && ntoken[0] != '#') throw std::runtime_error("Error: unexpected token: line: " + ParserUtils::intToString(bad_line));
 }
 
+/*	@parseMethods:
+ *		Checks if multiple methods definitions
+ *		Parses and adds the root_path token to route_conf
+ *		Checks if any additional tokens in string, if not comments throws error
+ *
+ */
+void	parseMethods(RouteCfg &route_conf, std::istringstream &iss_c_line, int &bad_line) {
+	std::string	token, ntoken;
+
+	if (!(route_conf.accepted_methods.empty())) throw std::runtime_error("Error: multiple methods definitions: line: " + ParserUtils::intToString(bad_line));
+
+	std::getline(iss_c_line, token, ' ');
+	if (token[0] != '[' || token[token.length() - 1] != ']' || token.length() < 5) throw std::runtime_error("Error: invalid methods: line: " + ParserUtils::intToString(bad_line));
+	
+	ParserUtils::getParams(token, route_conf.accepted_methods, bad_line);
+
+	std::getline(iss_c_line, ntoken, ' ');
+	if (!(ntoken.empty()) && ntoken[0] != '#') throw std::runtime_error("Error: unexpected token: line: " + ParserUtils::intToString(bad_line));
+}
+
+/*	@parseRedirect:
+ *		Checks if multiple redirect definitions
+ *		Parses and adds the redirect token to route_conf
+ *		Checks if any additional tokens in string, if not comments throws error
+ *
+ */
+void	parseRedirect(RouteCfg &route_conf, std::istringstream &iss_c_line, int &bad_line) {
+	std::string	token, ntoken;
+
+	if (route_conf.is_redirect == true) throw std::runtime_error("Error: multiple redirection definitions: line: " + ParserUtils::intToString(bad_line));
+
+	std::getline(iss_c_line, token, ' ');
+	if (token[0] != '"' || token[token.length() - 1] != '"' || token.length() < 3) throw std::runtime_error("Error: invalid redirection: line: " + ParserUtils::intToString(bad_line));
+	token = ParserUtils::removeDelimiters(token);
+	if (ParserUtils::isValidURL(token)) { route_conf.is_redirect = true; route_conf.redirect_to = token; }
+	else
+		throw std::runtime_error("Error: invalid redirection: line: " + ParserUtils::intToString(bad_line));
+
+	std::getline(iss_c_line, ntoken, ' ');
+	if (!(ntoken.empty()) && ntoken[0] != '#') throw std::runtime_error("Error: unexpected token: line: " + ParserUtils::intToString(bad_line));
+}
+
 /*	@parseServerRoute:
  *		Looks for opening subkeywd_bracket ({)
  *		Calls getline parsing each subkeywd to the RouteCfg object
  *
  */
-void	ServerConfig::parseServerRoute(std::string curr_line, ServerCfg &server_conf) {
-	int bad_line = _bad_line; //edit _bad_line !!
+void	ServerConfig::parseServerRoute(std::string curr_line, ServerCfg &server_conf, int &bad_line) {
 	RouteCfg	route_conf;
 
 	std::istringstream	iss_curr_line(curr_line);
@@ -97,29 +138,28 @@ void	ServerConfig::parseServerRoute(std::string curr_line, ServerCfg &server_con
 	std::getline(iss_curr_line, token, ' ');
 
 	if (token[0] != '"' || token[token.size() - 1] != '"' || token.length() < 3 || token[1] != '/')
-		throw std::runtime_error("Error: invalid route_path: line: " + ParserUtils::intToString(_bad_line));
+		throw std::runtime_error("Error: invalid route_path: line: " + ParserUtils::intToString(bad_line));
 
 	route_conf.route_path = token;
 
 	std::getline(iss_curr_line, ltoken, ' ');
 	if (!(ltoken.empty()) && ltoken[0] != '#' && ltoken.compare("{") != 0) {
-		throw std::runtime_error("Error: unexpected token: line: " + ParserUtils::intToString(_bad_line));
+		throw std::runtime_error("Error: unexpected token: line: " + ParserUtils::intToString(bad_line));
 	} else if (ltoken.compare("{") == 0) _subkeywd_bracket = true;
 
 	while (!_subkeywd_bracket) {
-		std::getline(_fd_conf, curr_line); _bad_line++;
+		std::getline(_fd_conf, curr_line); bad_line++;
 		curr_line = ParserUtils::parseLine(curr_line, "	", " ");
 		std::istringstream	iss_curr_line(curr_line);
 		std::getline(iss_curr_line, token, ' ');
 
-		if (token.compare("{") != 0 && token[0] != '#') throw std::runtime_error("Error: missing opening bracket: line " + ParserUtils::intToString(_bad_line));
+		if (token.compare("{") != 0 && token[0] != '#') throw std::runtime_error("Error: missing opening bracket: line " + ParserUtils::intToString(bad_line));
 		else if (token.compare("{") == 0) _subkeywd_bracket = true;
 	}
 
-	// maybe take this loop apart into diff funcs :/
 	while (getline(_fd_conf, curr_line)) {
 		curr_line = ParserUtils::parseLine(curr_line, "	", " ");
-		_bad_line++;
+		bad_line++;
 		if (curr_line.empty()) continue ;
 
 		std::istringstream	iss_c_line(curr_line);
@@ -137,26 +177,9 @@ void	ServerConfig::parseServerRoute(std::string curr_line, ServerCfg &server_con
 		} else if (ntoken.compare("root") == 0) {
 			parseRoot(route_conf, iss_c_line, bad_line);
 		} else if (ntoken.compare("methods") == 0) {
-			if (!(route_conf.accepted_methods.empty())) throw std::runtime_error("Error: multiple methods definitions: line: " + ParserUtils::intToString(_bad_line));
-			std::getline(iss_c_line, ntoken, ' ');
-			if (ntoken[0] != '[' || ntoken[ntoken.length() - 1] != ']' || ntoken.length() < 5) throw std::runtime_error("Error: invalid methods: line: " + ParserUtils::intToString(_bad_line));
-			try { getParams(ntoken, route_conf.accepted_methods);
-			} catch (std::exception &ex) {
-				throw ;
-			}
-			std::getline(iss_c_line, nltoken, ' ');
-			if (!(nltoken.empty()) && nltoken[0] != '#') throw std::runtime_error("Error: unexpected token: line: " + ParserUtils::intToString(_bad_line));
+			parseMethods(route_conf, iss_c_line, bad_line);
 		} else if (ntoken.compare("redirect") == 0) {
-			if (route_conf.is_redirect == true) throw std::runtime_error("Error: multiple redirection definitions: line: " + ParserUtils::intToString(_bad_line));
-			std::getline(iss_c_line, ntoken, ' ');
-			if (ntoken[0] != '"' || ntoken[ntoken.length() - 1] != '"' || ntoken.length() < 3) throw std::runtime_error("Error: invalid redirection: line: " + ParserUtils::intToString(_bad_line));
-			ntoken = ParserUtils::removeDelimiters(ntoken);
-			if (ParserUtils::isValidURL(ntoken)) { route_conf.is_redirect = true; route_conf.redirect_to = ntoken; }
-			else
-				throw std::runtime_error("Error: invalid redirection: line: " + ParserUtils::intToString(_bad_line));
-			std::getline(iss_c_line, nltoken, ' ');
-			if (!(nltoken.empty()) && nltoken[0] != '#') throw std::runtime_error("Error: unexpected token: line: " + ParserUtils::intToString(_bad_line));
-			
+			parseRedirect(route_conf, iss_c_line, bad_line);
 		}
 
 	}

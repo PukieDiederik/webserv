@@ -90,22 +90,19 @@ class ServerConfig {
 		/* condif file file descriptor */
 		std::ifstream	_fd_conf;
 
-		/* current line counter */
-		int	_bad_line;
-
 		int	identifyKeyword(std::string line);
 		void	getParams(std::string, std::vector<std::string> &params);
 		
-		void	parseCgi();
-		void	parseMime();
-		void	parseServer();
-			void	parseServerHost(std::string, ServerCfg &);
-			void	parseServerPort(std::string, ServerCfg &);
-			void	parseServerNames(std::string, ServerCfg &);
-			void	parseServerErrorPages(std::string, ServerCfg &);
-			void	parseServerMaxBodySize(std::string, ServerCfg &);
-			void	parseServerRoot(std::string, ServerCfg &);
-			void	parseServerRoute(std::string curr_line, ServerCfg &);
+		void	parseCgi(int &bad_line);
+		void	parseMime(int &bad_line);
+		void	parseServer(int &bad_line);
+			void	parseServerHost(std::string, ServerCfg &, int &bad_line);
+			void	parseServerPort(std::string, ServerCfg &, int &bad_line);
+			void	parseServerNames(std::string, ServerCfg &, int &bad_line);
+			void	parseServerErrorPages(std::string, ServerCfg &, int &bad_line);
+			void	parseServerMaxBodySize(std::string, ServerCfg &, int &bad_line);
+			void	parseServerRoot(std::string, ServerCfg &, int &bad_line);
+			void	parseServerRoute(std::string curr_line, ServerCfg &, int &bad_line);
 
 		void	checker();
 	public:

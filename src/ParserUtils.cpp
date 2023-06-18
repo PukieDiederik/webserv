@@ -6,6 +6,31 @@
 # include <cctype>
 # include <string>
 
+/*	@getParams:
+ *		Checks if string is delimited by brackets ('[]') and removes them
+ *		Checks if each param is separated by a comma and removes them
+ *		Checks if each param is delimited by quotes and removes them
+ *		Populates a vector<string> with each param
+*/
+void	ParserUtils::getParams(std::string str, std::vector<std::string> &params, int &bad_line) {
+	std::string 		param;
+
+	if (str[0] != '[' || str[str.length() - 1] != ']' || str.size() < 5) throw std::runtime_error("Error: bad parameter config: line: " + ParserUtils::intToString(bad_line));
+	else (str = ParserUtils::removeDelimiters(str));
+
+	std::istringstream 	iss(str);
+
+	while (std::getline(iss, param, ',')) {
+		if (!param.empty()) {
+			if (param[0] != '\"' || param[param.length() - 1] != '\"' || param.size() < 3) {
+				throw std::runtime_error("Error: bad parameter config: line: " + ParserUtils::intToString(bad_line));
+				return ;
+			} else 	param = ParserUtils::removeDelimiters(param);
+			params.push_back(param);
+		}
+	}
+}
+
 int	ParserUtils::atoi(std::string str) {
 	int	value = 0;
 	for (int i = 0; str[i] != '\0'; i++) {

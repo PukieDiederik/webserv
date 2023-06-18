@@ -2,6 +2,7 @@
 #define __PARSERUTILS_HPP__
 
 # include <string>
+# include <vector>
 
 /* ParserUtils:
  * 	@atoi:
@@ -12,6 +13,8 @@
 
 
 namespace ParserUtils {
+	void	getParams(std::string str, std::vector<std::string> &params, int &bad_line);
+	
 	std::string removeMultipleSpaces(const std::string& str);
 
 	std::string	parseLine(std::string rline, std::string s1, std::string s2);
