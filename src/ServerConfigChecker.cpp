@@ -42,6 +42,7 @@ void	ServerConfig::checker() {
 		if (VERBOSE)
 			std::cout << "\tServer root dir:\n\t\t[" << (*it).root_dir << "]" << std::endl;
 
+		if ((*it).routes.empty()) throw std::runtime_error("server must have one route");
 		if (VERBOSE)
 			std::cout << "\tServer route(s):" << std::endl;
 		int j = 1;
@@ -66,7 +67,9 @@ void	ServerConfig::checker() {
 
 			if (!((*jit).auto_index) && (*jit).index.compare("notgiven") == 0) throw std::runtime_error("missing index config");
 			if ((*jit).auto_index && VERBOSE) std::cout << "\t\tRoute auto_index\n\t\t\t[yes]" << std::endl;
-			else if (VERBOSE)
+
+			if ((*jit).auto_index && (*jit).index.compare("notgiven") != 0) throw std::runtime_error("both auto_index and manual index set");
+			if (VERBOSE)
 				std::cout << "\t\tRoute index:\n\t\t\t[" << (*jit).index << "]" << std::endl;
 
 			if ((*jit).accepted_methods.empty()) {	
