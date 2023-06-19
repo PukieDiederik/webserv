@@ -199,7 +199,7 @@ void	ServerConfig::parseServerRoot(const std::string &curr_line, ServerCfg &serv
 	std::getline(iss_curr_line, token, ' ');
 	std::getline(iss_curr_line, token, ' ');
 
-	if (token[0] != '"' || token[token.size() - 1] != '"' || token.length() < 3 || token[1] != '/')
+	if (token[1] != '/')
 		throw std::runtime_error("Error: invalid root_dir path: line: " + ParserUtils::intToString(bad_line));
 
 	token = ParserUtils::removeDelimiters(token);

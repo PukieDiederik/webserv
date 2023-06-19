@@ -46,7 +46,7 @@ ServerCfg::~ServerCfg() { }
 
 void	ServerConfig::parseMime(int &bad_line, bool &keywd_bracket, std::ifstream &fd_conf) {
 	std::string	curr_line;
-	std::string	token, ltoken;
+	std::string	token, ltoken, nltoken;
 
 	while (!keywd_bracket) {
 		std::getline(fd_conf, curr_line); bad_line++;
@@ -68,17 +68,14 @@ void	ServerConfig::parseMime(int &bad_line, bool &keywd_bracket, std::ifstream &
 		std::vector<std::string>	file_extensions;
 		if (token.compare("mime_add") == 0) {
 			std::getline(iss_curr_line, token, ' ');
-			try { ParserUtils::getParams(token, file_extensions, bad_line);
-			} catch (std::exception &ex) {
-				throw ;
-			}
-			std::getline(iss_curr_line, token, ' ');
-			if (token[0] != '"' || token[token.length() - 1] != '"' || token.length() < 3) throw std::runtime_error("Error: bad mime config: line: " + ParserUtils::intToString(bad_line));
-			for (std::vector<std::string>::iterator it = file_extensions.begin(); it != file_extensions.end(); it++) {
-				_mime.insert(std::make_pair(*it, ParserUtils::removeDelimiters(token)));
-			}
+			ParserUtils::getParams(token, file_extensions, bad_line);
 			std::getline(iss_curr_line, ltoken, ' ');
-			if (!(ltoken.empty()) && ltoken[0] != '#') throw std::runtime_error("Error: unexpected token: line: " + ParserUtils::intToString(bad_line));
+			ltoken = ParserUtils::removeDelimiters(ltoken);
+			for (std::vector<std::string>::iterator it = file_extensions.begin(); it != file_extensions.end(); it++) {
+				_mime.insert(std::make_pair(*it, ltoken));
+			}
+			std::getline(iss_curr_line, nltoken, ' ');
+			if (!(nltoken.empty()) && nltoken[0] != '#') throw std::runtime_error("Error: unexpected token: line: " + ParserUtils::intToString(bad_line));
 		}
 		else if (token.compare("}") == 0) { keywd_bracket = false; return ; }
 		else if (token[0] == '#') continue ;

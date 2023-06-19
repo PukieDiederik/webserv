@@ -63,6 +63,10 @@ namespace ParserUtils {
 		}
 	}
 
+	/*	@atoi:
+	 *		Simple implementation of atoi, returns -42 if error ou negative value
+	 *
+	 */
 	int	atoi(const std::string &str) {
 		int	value = 0;
 		for (int i = 0; str[i] != '\0'; i++) {
@@ -72,7 +76,12 @@ namespace ParserUtils {
 		return (value);
 	}
 
+	/*	@removeDelimiters:
+	 *		Remove 1st and last char in given str
+	 *		Throws error if string_size < 3
+	 * */
 	std::string	removeDelimiters(std::string &str) {
+		if (str.size() < 3) throw std::runtime_error("Error: (func)removeDelimiters");
 		str = str.substr(1);
 		str = str.substr(0, str.length() -1);
 

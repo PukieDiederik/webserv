@@ -32,7 +32,6 @@ void	parseIndex(RouteCfg &route_conf, std::istringstream &iss_c_line, int &bad_l
 	if (route_conf.index.compare("notgiven") != 0) throw std::runtime_error("Error: multiple index definitions: line: " + ParserUtils::intToString(bad_line));
 
 	std::getline(iss_c_line, token, ' ');
-	if (token[0] != '"' || token[token.length() - 1] != '"' || token.length() < 3) throw std::runtime_error("Error: invalid index: line: " + ParserUtils::intToString(bad_line));
 
 	token = ParserUtils::removeDelimiters(token);
 	route_conf.index = token;
@@ -69,7 +68,6 @@ void	parseRoot(RouteCfg &route_conf, std::istringstream &iss_c_line, int &bad_li
 	if (route_conf.root.compare("nopath") != 0) throw std::runtime_error("Error: multiple root definitions: line: " + ParserUtils::intToString(bad_line));
 
 	std::getline(iss_c_line, token, ' ');
-	if (token[0] != '"' || token[token.length() - 1] != '"' || token.length() < 3) throw std::runtime_error("Error: invalid root path: line: " + ParserUtils::intToString(bad_line));
 	token = ParserUtils::removeDelimiters(token);
 	for (int i = 0; token[i] != '\0'; i++) {
 		if (token[i] == '/' && token[i + 1] == '/') throw std::runtime_error("Error: invalid root_path: line: " + ParserUtils::intToString(bad_line));
@@ -113,7 +111,6 @@ void	parseRedirect(RouteCfg &route_conf, std::istringstream &iss_c_line, int &ba
 	if (route_conf.is_redirect == true) throw std::runtime_error("Error: multiple redirection definitions: line: " + ParserUtils::intToString(bad_line));
 
 	std::getline(iss_c_line, token, ' ');
-	if (token[0] != '"' || token[token.length() - 1] != '"' || token.length() < 3) throw std::runtime_error("Error: invalid redirection: line: " + ParserUtils::intToString(bad_line));
 	token = ParserUtils::removeDelimiters(token);
 	if (ParserUtils::isValidURL(token)) { route_conf.is_redirect = true; route_conf.redirect_to = token; }
 	else
@@ -138,10 +135,10 @@ void	ServerConfig::parseServerRoute(std::string &curr_line, ServerCfg &server_co
 	std::getline(iss_curr_line, token, ' ');
 	std::getline(iss_curr_line, token, ' ');
 
-	if (token[0] != '"' || token[token.size() - 1] != '"' || token.length() < 3 || token[1] != '/')
+	if (token[1] != '/')
 		throw std::runtime_error("Error: invalid route_path: line: " + ParserUtils::intToString(bad_line));
 
-	route_conf.route_path = token;
+	route_conf.route_path = ParserUtils::removeDelimiters(token);
 
 	std::getline(iss_curr_line, ltoken, ' ');
 	if (!(ltoken.empty()) && ltoken[0] != '#' && ltoken.compare("{") != 0) {
