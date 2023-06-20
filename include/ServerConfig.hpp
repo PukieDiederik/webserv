@@ -83,7 +83,7 @@ class ServerConfig {
 
 	ServerConfig();
 	protected:// Parser utils
-		void	parseCgi(int &bad_line);
+		void	parseCgi(int &bad_line, bool &keywd_bracket, std::ifstream &fd_conf);
 		void	parseMime(int &bad_line, bool &keywd_bracket, std::ifstream &fd_conf);
 		void	parseServer(int &bad_line, bool &keywd_bracket, std::ifstream &fd_conf);
 			void	parseServerHost(const std::string &, ServerCfg &, int &bad_line);
