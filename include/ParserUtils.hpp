@@ -16,6 +16,8 @@ namespace ParserUtils {
 	int	identifyKeyword(const std::string &line, bool &keywd_bracket);
 
 	void	getParams(std::string &str, std::vector<std::string> &params, int &bad_line);
+
+	std::string	removeArraySpaces(std::string &str);
 	
 	std::string	parseLine(std::string &rline, std::string s1, std::string s2);
 	

@@ -123,23 +123,30 @@ namespace ParserUtils {
 		return result;
 	}
 
-	void	removeArraySpaces(std::string &str) {
-		bool	betweenQuotes = false;
-
-		for (int l = 0; str[l] != '\0'; l++) {
-			if (str[l] == '[') {
-				for (int i = l; str[i] != '\0' && str[i] != ']'; i++) {
-					if (str[i] == '"' && betweenQuotes) betweenQuotes = false;
-					else if (str[i] == '"') betweenQuotes = true;
-					else if ((str[i] == ' ' || str[i] == '	') && !(betweenQuotes)) {
-						int	j = 0, k = i;
-						while (str[k] == ' ' || str[k] == '	') { j++; k++; }
-						str.erase(i, j);
+	/*	@removeArraySpaces:
+	 *		Removes spaces from string if outside quotes and inside brackets ([])
+	 *
+	 * */
+	std::string	removeArraySpaces(std::string &str) {
+		bool	insideQuotes = false;
+		for (int i = 0; str[i] != '\0'; i++) {
+			if (str[i] == '[') {
+				for (; str[i] != '\0' && str[i] != ']'; i++) {
+					if (str[i] == '"' && insideQuotes) insideQuotes = false;
+					else if (str[i] == '"') insideQuotes = true;
+					else if ((str[i] == ' ' || str[i] == '	') && !(insideQuotes)) {
+						int	j = i, size = 0;
+						while (str[j] == ' ' || str[j] == '	') {
+							j++;
+							size++;
+						}
+						str.erase(i, size);
+						i--;
 					}
-					l = i;
 				}
 			}
 		}
+		return (str);
 	}
 
 	std::string	parseLine(std::string &rline, std::string s1, std::string s2) {

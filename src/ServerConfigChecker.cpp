@@ -98,10 +98,13 @@ void	ServerConfig::checker() {
 		if (VERBOSE && !(_cgi_cmds.empty())) {
 			std::cout << "\tServer cgi: " << std::endl;
 			for (std::map<std::string, char **>::iterator it = _cgi.begin(); it != _cgi.end(); it++) {
-				std::cout << "\t\t" << it->first << " -> " << std::flush;
-				for (int i = 0; (it->second)[i] != NULL; i++)
+				std::cout << "\t\t[" << it->first << "] -> [" << std::flush;
+				for (int i = 0; (it->second)[i] != NULL; i++) {
 					std::cout << (it->second)[i] << std::flush;
-				std::cout << std::endl;
+					if ((it->second)[i + 1] != NULL)
+						std::cout << " " << std::flush;
+				}
+				std::cout << "]" << std::endl;
 			}
 		}
 
