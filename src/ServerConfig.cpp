@@ -46,6 +46,7 @@ ServerCfg::~ServerCfg() { }
 //ServerCfg ServerCfg::operator=(const ServerCfg& copy) { (void)copy; return *this; }
 
 /*	@parseCgi:
+ *		Checks if a cgi block was already found, if so throws error
  *		Checks for opening and closing brackets, throws error if not found
  *		Reads line by line until token "cgi_add is found"
  *		Adds command to std::vector<char **> _cgi_cmds
@@ -53,6 +54,7 @@ ServerCfg::~ServerCfg() { }
  *
  * */
 void	ServerConfig::parseCgi(int &bad_line, bool &keywd_bracket, std::ifstream &fd_conf) {
+	if (!(_cgi_cmds.empty())) throw std::runtime_error("Error: multiple cgi blocks: line: " + ParserUtils::intToString(bad_line));
 	std::string	curr_line;
 	std::string	token, ltoken, nltoken;
 

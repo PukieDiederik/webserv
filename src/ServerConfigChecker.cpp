@@ -61,7 +61,11 @@ void	ServerConfig::checker() {
 
 			if (VERBOSE)
 				std::cout << "\t\tRoute cgi enabled:\n\t\t\t[" << std::flush; 
-			if ((*jit).cgi_enabled && VERBOSE) std::cout << "yes]" << std::endl;
+			if ((*jit).cgi_enabled && VERBOSE)
+			{
+				std::cout << "yes]" << std::endl;
+				if (_cgi_cmds.empty()) throw std::runtime_error("cgi enabled but missing cgi config");
+			}
 			else if (VERBOSE)
 				std::cout << "no]" << std::endl;
 
@@ -89,6 +93,16 @@ void	ServerConfig::checker() {
 				}
 			}
 
+		}
+
+		if (VERBOSE && !(_cgi_cmds.empty())) {
+			std::cout << "\tServer cgi: " << std::endl;
+			for (std::map<std::string, char **>::iterator it = _cgi.begin(); it != _cgi.end(); it++) {
+				std::cout << "\t\t" << it->first << " -> " << std::flush;
+				for (int i = 0; (it->second)[i] != NULL; i++)
+					std::cout << (it->second)[i] << std::flush;
+				std::cout << std::endl;
+			}
 		}
 
 		if (VERBOSE)
