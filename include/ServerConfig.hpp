@@ -38,9 +38,9 @@ struct RouteCfg {
 	std::vector<std::string>	accepted_methods;
 
 	RouteCfg();
-	//RouteCfg(const RouteCfg& copy);
+	RouteCfg(const RouteCfg& copy);
 	~RouteCfg();
-	//RouteCfg operator=(const RouteCfg& copy);
+	RouteCfg	&operator=(const RouteCfg& copy);
 
 };
 
@@ -61,9 +61,9 @@ struct ServerCfg {
 
 	// Constructors/Destructor
 	ServerCfg();
-	//ServerCfg(const ServerCfg& copy);
+	ServerCfg(const ServerCfg& copy);
 	~ServerCfg();
-	//ServerCfg operator=(const ServerCfg& copy);
+	ServerCfg	&operator=(const ServerCfg& copy);
 };
 
 class ServerConfig {

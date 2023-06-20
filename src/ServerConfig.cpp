@@ -31,9 +31,25 @@ RouteCfg::RouteCfg() {
 	this->auto_index = false;
 	this->index = "notgiven";
 }
-//RouteCfg::RouteCfg(const RouteCfg& copy) { (void)copy; }
+
+RouteCfg::RouteCfg(const RouteCfg& copy) {
+	*this = copy;
+}
+
 RouteCfg::~RouteCfg() { }
-//RouteCfg RouteCfg::operator=(const RouteCfg& copy) { (void)copy; return *this; }
+
+RouteCfg &RouteCfg::operator=(const RouteCfg& copy) {
+	this->route_path = copy.route_path;
+	this->is_redirect = copy.is_redirect;
+	this->redirect_to = copy.redirect_to;
+	this->root = copy.root;
+	this->cgi_enabled = copy.cgi_enabled;
+	this->auto_index = copy.auto_index;
+	this->index = copy.index;
+	this->accepted_methods = copy.accepted_methods;
+
+	return (*this);
+}
 
 ServerCfg::ServerCfg() {
 	this->host = "notdefined";
@@ -41,9 +57,24 @@ ServerCfg::ServerCfg() {
 	this->max_body_size = 0;
 	this->root_dir = "nopath";
 }
-//ServerCfg::ServerCfg(const ServerCfg& copy) { (void)copy; }
+
+ServerCfg::ServerCfg(const ServerCfg& copy) {
+	*this = copy;
+}
+
 ServerCfg::~ServerCfg() { }
-//ServerCfg ServerCfg::operator=(const ServerCfg& copy) { (void)copy; return *this; }
+
+ServerCfg	&ServerCfg::operator=(const ServerCfg& copy) {
+	this->host = copy.host;
+	this->port = copy.port;
+	this->server_names = copy.server_names;
+	this->error_pages = copy.error_pages;
+	this->max_body_size = copy.max_body_size;
+	this->root_dir = copy.root_dir;
+	this->routes = copy.routes;
+
+	return (*this);
+}
 
 /*	@ServerConfig constructor:
  * 		Calls getline until keyword is found
@@ -110,7 +141,7 @@ ServerConfig::ServerConfig(const std::string& filepath) {
 ServerConfig::ServerConfig(const ServerConfig& copy) { (void)copy; }
 
 ServerConfig::~ServerConfig() {
-	// deletion of cmds arrays
+	// Deletion of cmds arrays
 	for (std::vector<char **>::iterator it = _cgi_cmds.begin(); it != _cgi_cmds.end(); it++) {
 		for (int i = 0; (*it)[i] != NULL; i++)
 			delete[] (*it)[i];
