@@ -100,65 +100,39 @@ void	ServerConfig::parseServerNames(const std::string &curr_line, ServerCfg &ser
 	if (!(ltoken.empty()) && ltoken[0] != '#') throw std::runtime_error("Error: unexpected token: line: " + ParserUtils::intToString(bad_line)); 
 }
 
-/*	parserServerErrorPages:
- *		Calls @getParams to populate status_code_string
- *		Evaluates if status_code_string is valid, throw error if not, converts to short if it is
- *		Calls @getParams to populate page_path
- *		Evaluates if page_path if valid
- *		Checks if same number of status_codes and page_paths
- *		Populates dictionary with status_code -> page_path
+/*	@parseServerErrorPages:
+ *		Reads first token, must ve valid status code (>=100 && <= 599)
+ *		Checks if status code redefinition
+ *		Reads second token, evaluates if valid path
+ *		Populates dictionary _error_pages with one more entry (code->page_path)
  *		Checks if aditional tokens in string, if not comments throws error
+ *
  * */
 void	ServerConfig::parseServerErrorPages(const std::string &curr_line, ServerCfg &server_conf, int &bad_line) {
 	std::istringstream	iss_curr_line(curr_line);
-	std::string		token, ltoken, ctoken;
+	std::string		token, ltoken, nltoken;
 
-	std::vector<std::string>	status_code_string;
-	std::vector<short>		status_code;
-	std::vector<std::string>	page_path;
-
-	int				counter[2];
-	counter[0] = 0;
-	counter[1] = 0;
+	short			status_code;
+	std::string		page_path;
 
 	std::getline(iss_curr_line, token, ' ');
 	std::getline(iss_curr_line, token, ' ');
 
-	try { ParserUtils::getParams(token, status_code_string, bad_line);
-	} catch (std::exception &ex) {
-		throw ;
-	}
+	status_code = ParserUtils::atoi(token);
 
-	for (std::vector<std::string>::iterator it = status_code_string.begin(); it != status_code_string.end(); it++) {
-		short	st_cd = ParserUtils::atoi(*it);
-		if (st_cd < 100 || st_cd > 599) throw std::runtime_error("Error: invalid http_status_code: line: " + ParserUtils::intToString(bad_line));
-		status_code.push_back(st_cd);
-		counter[0]++;
-	}
-	
+	// validate status_code
+	if (status_code < 100 || status_code > 599) throw std::runtime_error("Error: invalid http_status_code: line: " + ParserUtils::intToString(bad_line));
+	// check if status code redefinition
+	if (server_conf.error_pages.count(status_code) > 0) throw std::runtime_error("Error: http_status_code redefinition: line: " + ParserUtils::intToString(bad_line));
+ 
 	std::getline(iss_curr_line, ltoken, ' ');
-	if (ltoken.empty()) throw std::runtime_error("Error: missing http_status_code_pages_path: line: " + ParserUtils::intToString(bad_line));
 
-	try { ParserUtils::getParams(ltoken, page_path, bad_line);
-	} catch (std::exception &ex) {
-		throw ;
-	}
+	if (!(ParserUtils::isValidPath(ParserUtils::removeDelimiters(ltoken)))) throw std::runtime_error("Error: invalid error_page path: line: " + ParserUtils::intToString(bad_line));
 
-	for (std::vector<std::string>::iterator it = page_path.begin(); it != page_path.end(); it++) {
-		if (!(ParserUtils::isValidPath(*it))) throw std::runtime_error("Error: invalid error_page path: line: " + ParserUtils::intToString(bad_line));
-		counter[1]++;
-	}
+	server_conf.error_pages.insert(std::make_pair(status_code, ltoken));
 
-	if (counter[0] != counter[1]) throw std::runtime_error("Error: not same number of http_status_codes and page_path: line "  + ParserUtils::intToString(bad_line));
-
-	std::vector<std::string>::iterator	st = page_path.begin();
-	for (std::vector<short>::iterator it = status_code.begin(); it != status_code.end(); it++) {
-		server_conf.error_pages.insert(std::make_pair(*it, *st));
-		st++;
-	}
-
-	std::getline(iss_curr_line, ctoken, ' ');
-	if (!(ctoken.empty()) && ctoken[0] != '#') throw std::runtime_error("Error: unexpected token: line: " + ParserUtils::intToString(bad_line)); 
+	std::getline(iss_curr_line, nltoken, ' ');
+	if (!(nltoken.empty()) && nltoken[0] != '#') throw std::runtime_error("Error: unexpected token: line: " + ParserUtils::intToString(bad_line)); 
 }
 
 /*	@parseServerMaxBodySize:
@@ -259,7 +233,7 @@ void	ServerConfig::parseServer(int &bad_line, bool &keywd_bracket, std::ifstream
 			if (token.compare("host") == 0) parseServerHost(curr_line, server_conf, bad_line);
 			else if (token.compare("port") == 0) parseServerPort(curr_line, server_conf, bad_line);
 			else if (token.compare("server_names") == 0) parseServerNames(curr_line, server_conf, bad_line);
-			else if (token.compare("error_pages") == 0) parseServerErrorPages(curr_line, server_conf, bad_line);
+			else if (token.compare("error_page") == 0) parseServerErrorPages(curr_line, server_conf, bad_line);
 			else if (token.compare("max_body_size") == 0) parseServerMaxBodySize(curr_line, server_conf, bad_line);
 			else if (token.compare("root") == 0) parseServerRoot(curr_line, server_conf, bad_line);
 			else if (token.compare("route") == 0) parseServerRoute(curr_line, server_conf, bad_line, fd_conf);
