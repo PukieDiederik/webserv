@@ -12,8 +12,8 @@
 #include <stdexcept>
 #include <fcntl.h>
 #include <sstream>
-#include <ctime>
 #include <queue>
+#include <sys/time.h>
 
 // Timeout in seconds
 #define TIMEOUT_TIME 15
@@ -121,7 +121,7 @@ struct event
     Server* server;
     int related_server_fd;
     // Should only be set if not a server
-    std::time_t timeout_at;
+    struct timeval timeout_at;
 };
 
 void Router::listen()
@@ -162,8 +162,12 @@ void Router::listen()
     {
         int next_timeout = -1;
         if (!timeouts.empty()) {
-            next_timeout = std::difftime(timeouts.front()->timeout_at, std::time(NULL)) * 1000 + 50;
+            struct timeval t;
+            gettimeofday(&t, NULL);
+            next_timeout = (timeouts.front()->timeout_at.tv_sec - t.tv_sec) * 1000 +
+                           (timeouts.front()->timeout_at.tv_usec - t.tv_usec) / 1000;
         }
+        std::cout << "next_timeout: " << next_timeout << std::endl;
         int num_events = epoll_wait(epoll_fd, events, MAX_EVENTS, next_timeout);
         if (num_events < 0)
             throw std::runtime_error("Error while waiting for events");
@@ -188,37 +192,39 @@ void Router::listen()
                     req_sstream.write(buffer, bytes_read);
                 }
 
-                HttpResponse res;
-
-                try {
-                    HttpRequest req(req_sstream.str());
-                    Server* serv = event_map[events[i].data.fd].server;
-                    res = serv->handleRequest(req);
-                }
-                catch (const std::exception& e)
+                if (!req_sstream.str().empty())
                 {
-                    std::cerr << "Could not parse request\n";
-                    res.set_status(400, "Bad request");
-                    res.set_header("Server", "42-webserv");
+                    HttpResponse res;
+
+                    try {
+                        HttpRequest req(req_sstream.str());
+                        Server* serv = event_map[events[i].data.fd].server;
+                        res = serv->handleRequest(req);
+                    }
+                    catch (const std::exception& e)
+                    {
+                        std::cerr << "Could not parse request\n";
+                        res.set_status(400, "Bad request");
+                        res.set_header("Server", "42-webserv");
+                    }
+
+                    std::string res_s = res.toString();
+                    out_buffer[client_socket] += res_s;
+
+                    struct event e;
+                    e.event.data.fd = client_socket;
+                    e.event.events = EPOLLIN | EPOLLOUT | EPOLLRDHUP | EPOLLHUP;
+                    e.is_server = false;
+                    e.server = event_map[events[i].data.fd].server;
+                    e.related_server_fd = events[i].data.fd;
+                    gettimeofday(&e.timeout_at, NULL);
+                    e.timeout_at.tv_sec += TIMEOUT_TIME;
+
+                    event_map[client_socket] = e;
+                    timeouts.push(&event_map[client_socket]);
+
+                    epoll_ctl(epoll_fd, EPOLL_CTL_ADD, e.event.data.fd, &event_map[client_socket].event);
                 }
-
-                std::string res_s = res.toString();
-                out_buffer[client_socket] += res_s;
-
-                struct event e;
-                e.event.data.fd = client_socket;
-                e.event.events = EPOLLIN | EPOLLOUT;
-                e.is_server = false;
-                e.server = event_map[events[i].data.fd].server;
-                e.related_server_fd = events[i].data.fd;
-                e.timeout_at = std::time(NULL) + TIMEOUT_TIME;
-
-                event_map[client_socket] = e;
-                timeouts.push(&event_map[client_socket]);
-                std::cout << e.timeout_at << std::endl;
-
-                epoll_ctl(epoll_fd, EPOLL_CTL_ADD, e.event.data.fd, &event_map[client_socket].event);
-
             }
             if (events[i].events & EPOLLOUT)
             {
@@ -239,15 +245,35 @@ void Router::listen()
                 out_buffer.erase(out_it);
 
                 // Update epoll
-                event_map[events[i].data.fd].event.events &= !EPOLLOUT; //TODO: fix this
+                event_map[events[i].data.fd].event.events &= ~EPOLLOUT; //TODO: fix this
                 epoll_ctl(epoll_fd, EPOLL_CTL_MOD, events[i].data.fd, &event_map[events[i].data.fd].event);
+            }
+            if (events[i].events & (EPOLLRDHUP | EPOLLHUP))
+            {
+                std::cout << "Socket closed, cleaning up" << std::endl;
+                epoll_ctl(epoll_fd, EPOLL_CTL_DEL, events[i].data.fd, &event_map[events[i].data.fd].event);
+                event_map.erase(events[i].data.fd);
+                out_buffer.erase(events[i].data.fd);
+            }
+            if (events[i].events & EPOLLHUP)
+            {
+                std::cout << "Found HUP" << std::endl;
             }
         }
 
-        std::cout << "hey";
+        struct timeval t;
+        gettimeofday(&t, NULL);
         // Remove timed out fds
-        while(!timeouts.empty() && timeouts.front()->timeout_at < std::time(NULL))
+        while(!timeouts.empty() && timeouts.front()->timeout_at.tv_sec <= t.tv_sec && timeouts.front()->timeout_at.tv_usec <= t.tv_usec)
         {
+            std::cout << "File descriptor (" << timeouts.front()->event.data.fd << ") timed out, Cleaning up." << std::endl;
+            if (!event_map.count(timeouts.front()->event.data.fd))
+            {
+                std::cout << "File descriptor (" << timeouts.front()->event.data.fd
+                          << ") has already been cleaned up, skipping" << std::endl;
+                timeouts.pop();
+                continue;
+            }
             std::cout << "File descriptor (" << timeouts.front()->event.data.fd << ") timed out, Cleaning up." << std::endl;
             epoll_ctl(epoll_fd, EPOLL_CTL_DEL, timeouts.front()->event.data.fd, &timeouts.front()->event);
             event_map.erase(timeouts.front()->event.data.fd);
