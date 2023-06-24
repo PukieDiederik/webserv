@@ -181,7 +181,9 @@ void Router::listen()
                 socklen_t client_sockaddr_len = sizeof(client_sockaddr);
                 std::memset(&client_sockaddr, 0, sizeof(client_sockaddr));
 
-                int client_socket = accept(events[i].data.fd, (struct sockaddr*)(&client_sockaddr), &client_sockaddr_len);
+                int client_socket = accept(events[i].data.fd,
+                                           (struct sockaddr*)(&client_sockaddr),
+                                           &client_sockaddr_len);
                 int bytes_read = recv(client_socket, buffer, sizeof(buffer), 0);
                 std::ostringstream req_sstream;
                 req_sstream.write(buffer, bytes_read);
@@ -238,14 +240,17 @@ void Router::listen()
                 // start writing
                 for (std::size_t s = 0; s < out_it->second.length(); s += bytes_send)
                 {
-                    bytes_send = send(events[i].data.fd, out_it->second.c_str() + i, out_it->second.length() - i, MSG_DONTWAIT);
+                    bytes_send = send(events[i].data.fd,
+                                      out_it->second.c_str() + i,
+                                      out_it->second.length() - i,
+                                      MSG_DONTWAIT);
                     if (bytes_send <= 0)
                         break; // Something errored
                 }
                 out_buffer.erase(out_it);
 
                 // Update epoll
-                event_map[events[i].data.fd].event.events &= ~EPOLLOUT; //TODO: fix this
+                event_map[events[i].data.fd].event.events &= ~EPOLLOUT;
                 epoll_ctl(epoll_fd, EPOLL_CTL_MOD, events[i].data.fd, &event_map[events[i].data.fd].event);
             }
             if (events[i].events & (EPOLLRDHUP | EPOLLHUP))
@@ -255,18 +260,16 @@ void Router::listen()
                 event_map.erase(events[i].data.fd);
                 out_buffer.erase(events[i].data.fd);
             }
-            if (events[i].events & EPOLLHUP)
-            {
-                std::cout << "Found HUP" << std::endl;
-            }
         }
 
         struct timeval t;
         gettimeofday(&t, NULL);
         // Remove timed out fds
-        while(!timeouts.empty() && timeouts.front()->timeout_at.tv_sec <= t.tv_sec && timeouts.front()->timeout_at.tv_usec <= t.tv_usec)
+        while(!timeouts.empty() && timeouts.front()->timeout_at.tv_sec <= t.tv_sec
+                                && timeouts.front()->timeout_at.tv_usec <= t.tv_usec)
         {
-            std::cout << "File descriptor (" << timeouts.front()->event.data.fd << ") timed out, Cleaning up." << std::endl;
+            std::cout << "File descriptor (" << timeouts.front()->event.data.fd
+                      << ") timed out, Cleaning up." << std::endl;
             if (!event_map.count(timeouts.front()->event.data.fd))
             {
                 std::cout << "File descriptor (" << timeouts.front()->event.data.fd
@@ -274,7 +277,8 @@ void Router::listen()
                 timeouts.pop();
                 continue;
             }
-            std::cout << "File descriptor (" << timeouts.front()->event.data.fd << ") timed out, Cleaning up." << std::endl;
+            std::cout << "File descriptor (" << timeouts.front()->event.data.fd
+                      << ") timed out, Cleaning up." << std::endl;
             epoll_ctl(epoll_fd, EPOLL_CTL_DEL, timeouts.front()->event.data.fd, &timeouts.front()->event);
             event_map.erase(timeouts.front()->event.data.fd);
             out_buffer.erase(timeouts.front()->event.data.fd);
