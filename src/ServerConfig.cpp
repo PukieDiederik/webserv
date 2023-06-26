@@ -22,11 +22,11 @@
 
 RouteCfg::RouteCfg() {
 	this->is_redirect = false;
-	this->redirect_to = "notset";
-	this->root = "nopath";
+	this->redirect_to = "";
+	this->root = "";
 	this->cgi_enabled = false;
 	this->auto_index = false;
-	this->index = "notgiven";
+	this->index = "";
 }
 
 RouteCfg::RouteCfg(const RouteCfg& copy) {
@@ -49,10 +49,10 @@ RouteCfg &RouteCfg::operator=(const RouteCfg& copy) {
 }
 
 ServerCfg::ServerCfg() {
-	this->host = "notdefined";
+	this->host = "";
 	this->port = -42;
 	this->max_body_size = 0;
-	this->root_dir = "nopath";
+	this->root_dir = "";
 }
 
 ServerCfg::ServerCfg(const ServerCfg& copy) {

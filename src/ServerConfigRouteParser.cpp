@@ -29,7 +29,7 @@ void	parseAutoIndex(RouteCfg &route_conf, std::istringstream &iss_c_line, int &b
 void	parseIndex(RouteCfg &route_conf, std::istringstream &iss_c_line, int &bad_line) {
 	std::string token, ntoken;
 
-	if (route_conf.index.compare("notgiven") != 0) throw std::runtime_error("Error: multiple index definitions: line: " + ParserUtils::intToString(bad_line));
+	if (!(route_conf.index.empty())) throw std::runtime_error("Error: multiple index definitions: line: " + ParserUtils::intToString(bad_line));
 
 	std::getline(iss_c_line, token, ' ');
 
@@ -65,7 +65,7 @@ void	parseEnableCgi(RouteCfg &route_conf, std::istringstream &iss_c_line, int &b
  */
 void	parseRoot(RouteCfg &route_conf, std::istringstream &iss_c_line, int &bad_line) {
 	std::string	token, ntoken;
-	if (route_conf.root.compare("nopath") != 0) throw std::runtime_error("Error: multiple root definitions: line: " + ParserUtils::intToString(bad_line));
+	if (!(route_conf.root.empty())) throw std::runtime_error("Error: multiple root definitions: line: " + ParserUtils::intToString(bad_line));
 
 	std::getline(iss_c_line, token, ' ');
 	token = ParserUtils::removeDelimiters(token);

@@ -54,7 +54,7 @@ void	ServerConfig::checker() {
 				std::cout << "\t\tRoute path:\n\t\t\t[" << (*jit).route_path << "]" << std::endl;
 			}
 
-			if ((*jit).is_redirect && (*jit).redirect_to.compare("notset") == 0) throw std::runtime_error("missing redirection config");
+			if ((*jit).is_redirect && (*jit).redirect_to.empty()) throw std::runtime_error("missing redirection config");
 		       	if ((*jit).is_redirect && VERBOSE) std::cout << "\t\tRoute redirection:\n\t\t\t[" << (*jit).redirect_to << "]" << std::endl;
 
 			if ((*jit).root.compare("nopath") != 0 && (*jit).route_path.compare("redirect") == 0) throw std::runtime_error("missing route root config");
@@ -71,10 +71,10 @@ void	ServerConfig::checker() {
 			else if (VERBOSE)
 				std::cout << "no]" << std::endl;
 
-			if (!((*jit).auto_index) && (*jit).index.compare("notgiven") == 0) throw std::runtime_error("missing index config");
+			if (!((*jit).auto_index) && (*jit).index.empty()) throw std::runtime_error("missing index config");
 			if ((*jit).auto_index && VERBOSE) std::cout << "\t\tRoute auto_index\n\t\t\t[yes]" << std::endl;
 
-			if ((*jit).auto_index && (*jit).index.compare("notgiven") != 0) throw std::runtime_error("both auto_index and manual index set");
+			if ((*jit).auto_index && !((*jit).index.empty())) throw std::runtime_error("both auto_index and manual index set");
 			if (VERBOSE)
 				std::cout << "\t\tRoute index:\n\t\t\t[" << (*jit).index << "]" << std::endl;
 

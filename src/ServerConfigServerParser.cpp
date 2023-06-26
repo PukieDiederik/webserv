@@ -14,7 +14,7 @@
  *
  * */
 void	ServerConfig::parseServerHost(const std::string &curr_line, ServerCfg &server_conf, int &bad_line) {
-	if (server_conf.host.compare("notdefined") != 0) throw std::runtime_error("Error: multiple host ipv4 config: line: " + ParserUtils::intToString(bad_line));
+	if (!(server_conf.host.empty())) throw std::runtime_error("Error: multiple host ipv4 config: line: " + ParserUtils::intToString(bad_line));
 
 	std::string		token, ntoken, ltoken;
 	std::istringstream	iss_curr_line(curr_line);
@@ -164,7 +164,7 @@ void	ServerConfig::parseServerMaxBodySize(const std::string &curr_line, ServerCf
  *		Checks if more token and present in line, if not comments throws error
  * */
 void	ServerConfig::parseServerRoot(const std::string &curr_line, ServerCfg &server_conf, int &bad_line) {
-	if (server_conf.root_dir.compare("nopath") != 0) throw std::runtime_error("Error: mutiple root_dir definitions: line: " + ParserUtils::intToString(bad_line));
+	if (!(server_conf.root_dir.empty())) throw std::runtime_error("Error: mutiple root_dir definitions: line: " + ParserUtils::intToString(bad_line));
 
 	std::istringstream	iss_curr_line(curr_line);
 	std::string		token, ltoken;
