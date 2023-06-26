@@ -1,6 +1,8 @@
 #include "ServerConfig.hpp"
 #include "ParserUtils.hpp"
 
+#include <iostream>
+
 void	ServerConfig::checker() {
 	if (VERBOSE)
 		std::cout << "\nServerConfig parsing done." << std::endl;

@@ -3,8 +3,6 @@
 
 # include <iostream>
 # include <sstream>
-# include <algorithm>
-# include <cctype>
 # include <string>
 
 namespace ParserUtils {

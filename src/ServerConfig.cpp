@@ -5,11 +5,8 @@
 #include <map>
 #include <string>
 #include <vector>
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <cstdlib>
 #include <cstring>
+#include <iostream>
 
 /*
  *	Config file parser:

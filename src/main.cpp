@@ -1,5 +1,7 @@
 #include "ServerConfig.hpp"
 
+#include <iostream>
+
 int main(int argc, char **argv) {
 	(void) argc;
 
