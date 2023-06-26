@@ -65,11 +65,13 @@ namespace ParserUtils {
 
 	/*	@atoi:
 	 *		Simple implementation of atoi, returns -42 if error ou negative value
+	 *		Stops if dot '.' is found
 	 *
 	 */
 	int	atoi(const std::string &str) {
 		int	value = 0;
 		for (int i = 0; str[i] != '\0'; i++) {
+			if (str[i] == '.' && i > 0) return (value);
 			if (str[i] < '0' || str[i] > '9') return (-42);
 			else { value *= 10; value += (str[i] - 48); }
 		}
@@ -200,15 +202,18 @@ namespace ParserUtils {
 	}
 
 	bool	isValidIp(const std::string &ip) {
+		int	value = -42;
+
 		if (ip.length() < 7 || ParserUtils::countCharOccurs('.', ip) != 3) return (false);
 
-		std::string		token, ntoken;
-		std::istringstream	iss_curr_line(ip);
-
-		for (int i = 0; i < 3; i++) {
-			std::getline(iss_curr_line, token, '.');
-			int	value = ParserUtils::atoi(token.c_str());
-	      		if ( value < 0 || value > 255) return (false);
+		for (int i = 0; ip[i] != '\0'; i++) {
+			if (ip[i] < '0' || ip[i] > '9') return (false);
+			value = ParserUtils::atoi(ip.c_str() + i);
+			if (value < 0 || value > 255) return (false);
+			std::cout << value << std::endl;
+			while (ip[i] != '.' && ip[i + 1] != '\0')
+				i++;
+			if (ip[i] == '.' && ip[i + 1] == '\0') return (false);
 		}
 		return (true);
 	}

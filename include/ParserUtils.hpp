@@ -4,14 +4,6 @@
 # include <string>
 # include <vector>
 
-/* ParserUtils:
- * 	@atoi:
- * 		Only handles positive numbers
- *	@removeDelimiters:
- *		Removes 1st and last char from given string
-*/
-
-
 namespace ParserUtils {
 	int	identifyKeyword(const std::string &line, bool &keywd_bracket);
 

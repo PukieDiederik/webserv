@@ -28,7 +28,6 @@ void	ServerConfig::parseServerHost(const std::string &curr_line, ServerCfg &serv
 		if (!(ltoken.empty()) && ltoken[0] != '#') throw std::runtime_error("Error: unexpected token: line: " + ParserUtils::intToString(bad_line)); 
 		return ;
 	}
-	if (token.length() < 8 || ParserUtils::countCharOccurs('.', token) != 3) throw ("Error: bad host config: line: " + ParserUtils::intToString(bad_line));
 
 	if (!(ParserUtils::isValidIp(token))) throw std::runtime_error("Error: invalid ipv4 address: line :" + ParserUtils::intToString(bad_line));
 	server_conf.host = token;
