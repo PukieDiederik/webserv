@@ -47,6 +47,7 @@ HttpResponse Server::handleRequest(const HttpRequest& req)
         if (::access(path.c_str(), F_OK) < 0)
         {
             // TODO: return 404 error page
+            res.set_header("Content-Length", "0");
             res.set_status(404, "File Not Found");
             return res;
         }
