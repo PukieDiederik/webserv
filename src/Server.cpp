@@ -24,7 +24,6 @@ Server& Server::operator=(const Server& copy)
 HttpResponse Server::handleRequest(const HttpRequest& req)
 {
     HttpResponse res;
-    res.set_header("Server", "42-webserv");
     // TODO: handle request
     if (req.method() == "GET")
     {
@@ -44,8 +43,6 @@ HttpResponse Server::handleRequest(const HttpRequest& req)
             return res;
         }
         std::string path = match.second->root + "/" + req.target().substr(match.second->name.length());
-        std::cout << path << std::endl;
-        std::cout << ::access(path.c_str(), O_PATH) << std::endl;
 
         if (::access(path.c_str(), F_OK) < 0)
         {

@@ -151,8 +151,8 @@ void remove_timeout(std::deque<event*>& timeouts, event* e)
 void Router::listen()
 {
     int epoll_fd = epoll_create(1); // Size is ignored
-    // Map which stores all epoll events using fd as a file descriptor
-    std::map<int, struct event> event_map;
+    std::map<int, struct event> event_map; // Map which stores all event information using fd as a key
+    std::deque<event*> timeouts; // For managing timeouts of client sockets
 
     if (epoll_fd < 0)
         throw std::runtime_error("Could not create epoll");
@@ -177,11 +177,9 @@ void Router::listen()
 
     struct epoll_event events[MAX_EVENTS];
     std::map<int, std::string> out_buffer; // Holds everything that needs to be written to a file descriptor
-    char buffer[BUFFER_SIZE];
-    std::deque<event*> timeouts;
+    char buffer[BUFFER_SIZE]; // Buffer for reading input
 
-    std::cout << "CPS: " << CLOCKS_PER_SEC << std::endl;
-
+    // Start infinite listening loop
     while (true)
     {
         int next_timeout = -1;
@@ -189,8 +187,10 @@ void Router::listen()
         if (!timeouts.empty()) {
             struct timeval t;
             gettimeofday(&t, NULL);
+
             next_timeout = (timeouts.front()->timeout_at.tv_sec - t.tv_sec) * 1000 +
                            (timeouts.front()->timeout_at.tv_usec - t.tv_usec) / 1000;
+
             // Makes sure that we don't get some weird timing where it waits forever when it shouldn't
             if (next_timeout < 0)
                 next_timeout = 0;
@@ -210,6 +210,8 @@ void Router::listen()
                 if(event_map[events[i].data.fd].is_server)
                 {
                     std::cout << "New connection found" << std::endl;
+
+                    // Create client socket
                     struct sockaddr_in client_sockaddr;
                     socklen_t client_sockaddr_len = sizeof(client_sockaddr);
                     std::memset(&client_sockaddr, 0, sizeof(client_sockaddr));
@@ -221,64 +223,76 @@ void Router::listen()
                     if (fcntl(client_socket, F_SETFL, O_NONBLOCK) < 0)
                         throw std::runtime_error("Could not set socket fd to non blocking");
 
+                    // Fill in information about client socket
                     struct event e;
                     e.event.data.fd = client_socket;
-                    e.event.events = EPOLLIN | EPOLLRDHUP | EPOLLHUP;
+                    e.event.events = EPOLLIN | EPOLLRDHUP | EPOLLHUP; // Listen for inputs and socket closures
                     e.is_server = false;
                     e.server = event_map[events[i].data.fd].server;
                     e.related_server_fd = events[i].data.fd;
 
-                    event_map[client_socket] = e;
-                    update_timeout(timeouts, &event_map[client_socket]);
+                    event_map[client_socket] = e; // Add it to the list of events
+                    update_timeout(timeouts, &event_map[client_socket]); // Add it to list of timeouts
 
+                    // Add client socket to epoll
                     epoll_ctl(epoll_fd, EPOLL_CTL_ADD, e.event.data.fd, &event_map[e.event.data.fd].event);
+                    std::cout << "Created client socket with fd: " << client_socket << std::endl;
                 }
                 // If it's a client socket we should process the request
                 else {
-                    std::cout << "handling new request on: " << events[i].data.fd << std::endl;
-
+                    // Start reading data
                     int bytes_read = recv(events[i].data.fd, buffer, sizeof(buffer), 0);
-                    std::ostringstream req_sstream;
+                    std::ostringstream req_sstream; // stringstream used for storing everything until all is read
                     req_sstream.write(buffer, bytes_read);
+
                     while (bytes_read > 0) {
-                        std::cout << bytes_read << std::endl;
                         bytes_read = recv(events[i].data.fd, &buffer, sizeof(buffer), 0);
                         req_sstream.write(buffer, bytes_read);
                     }
 
+                    // If the data was actually read
                     if (!req_sstream.str().empty()) {
+                        std::cout << "handling new request on: " << events[i].data.fd << std::endl;
+
                         HttpResponse res;
 
                         try {
+                            // Try creating a request, if failed it will not add anything to
                             HttpRequest req(req_sstream.str());
-                            Server *serv = event_map[events[i].data.fd].server;
-                            res = serv->handleRequest(req);
+                            res = event_map[events[i].data.fd].server->handleRequest(req);
                         }
                         catch (const std::exception &e) {
                             std::cerr << "Could not parse request\n";
                             res.set_status(400, "Bad request");
-                            res.set_header("Server", "42-webserv");
+                            res.set_header("Content-Length", "0");
                         }
+                        // Add the server header
+                        res.set_header("Server", "42-webserv");
 
+                        // Add the server to out_buffer to later be sent
                         std::string res_s = res.toString();
                         out_buffer[events[i].data.fd] += res_s;
                         update_timeout(timeouts, &event_map[events[i].data.fd]);
 
+                        // Update epoll to start listening to EPOLLOUT events
+                        // (won't do anything if it was already listening for EPOLLOUT events)
                         event_map[events[i].data.fd].event.events |= EPOLLOUT;
                         epoll_ctl(epoll_fd, EPOLL_CTL_MOD, events[i].data.fd, &event_map[events[i].data.fd].event);
                     }
                 }
             }
+            // If the socket is ready for write operations
             if (events[i].events & EPOLLOUT)
             {
                 std::map<int, std::string>::iterator out_it;
 
+                // Make sure there is stuff in the out_buffer for this file descriptor
                 out_it = out_buffer.find(events[i].data.fd);
                 if (out_it == out_buffer.end())
                     continue;
 
                 int bytes_send = 0;
-                // start writing
+                // start writing on the socket
                 for (std::size_t s = 0; s < out_it->second.length(); s += bytes_send)
                 {
                     bytes_send = send(events[i].data.fd,
@@ -288,16 +302,19 @@ void Router::listen()
                     if (bytes_send <= 0)
                         break; // Something errored
                 }
+                // Remove the out_buffer for this socket
                 out_buffer.erase(out_it);
 
                 // Update epoll
                 event_map[events[i].data.fd].event.events &= ~EPOLLOUT;
                 epoll_ctl(epoll_fd, EPOLL_CTL_MOD, events[i].data.fd, &event_map[events[i].data.fd].event);
+
                 update_timeout(timeouts, &event_map[events[i].data.fd]);
             }
             if (events[i].events & (EPOLLRDHUP | EPOLLHUP))
             {
-                std::cout << "Socket closed, cleaning up" << std::endl;
+                std::cout << "Socket closed: " << events[i].data.fd << std::endl;
+                // Remove the socket from all data
                 epoll_ctl(epoll_fd, EPOLL_CTL_DEL, events[i].data.fd, &event_map[events[i].data.fd].event);
                 remove_timeout(timeouts, &event_map[events[i].data.fd]);
                 event_map.erase(events[i].data.fd);
@@ -315,13 +332,11 @@ void Router::listen()
                       << ") timed out, Cleaning up." << std::endl;
             if (!event_map.count(timeouts.front()->event.data.fd))
             {
-                std::cout << "File descriptor (" << timeouts.front()->event.data.fd
-                          << ") has already been cleaned up, skipping" << std::endl;
+                std::cerr << "Could not find socket: " << timeouts.front()->event.data.fd;
                 timeouts.pop_front();
                 continue;
             }
-            std::cout << "File descriptor (" << timeouts.front()->event.data.fd
-                      << ") timed out, Cleaning up." << std::endl;
+            // Remove the socket from all data
             epoll_ctl(epoll_fd, EPOLL_CTL_DEL, timeouts.front()->event.data.fd, &timeouts.front()->event);
             event_map.erase(timeouts.front()->event.data.fd);
             out_buffer.erase(timeouts.front()->event.data.fd);
