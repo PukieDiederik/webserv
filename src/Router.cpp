@@ -176,46 +176,23 @@ void Router::listen()
         {
             if (events[i].events & EPOLLIN)
             {
-                std::cout << "handling new request on: " << events[i].data.fd << std::endl;
-                struct sockaddr_in client_sockaddr;
-                socklen_t client_sockaddr_len = sizeof(client_sockaddr);
-                std::memset(&client_sockaddr, 0, sizeof(client_sockaddr));
-
-                int client_socket = accept(events[i].data.fd,
-                                           (struct sockaddr*)(&client_sockaddr),
-                                           &client_sockaddr_len);
-                int bytes_read = recv(client_socket, buffer, sizeof(buffer), 0);
-                std::ostringstream req_sstream;
-                req_sstream.write(buffer, bytes_read);
-
-                while (bytes_read > 0)
+                if(event_map[events[i].data.fd].is_server)
                 {
-                    bytes_read = recv(client_sockaddr_len, &buffer, sizeof(buffer), 0);
-                    req_sstream.write(buffer, bytes_read);
-                }
+                    std::cout << "New connection found" << std::endl;
+                    struct sockaddr_in client_sockaddr;
+                    socklen_t client_sockaddr_len = sizeof(client_sockaddr);
+                    std::memset(&client_sockaddr, 0, sizeof(client_sockaddr));
 
-                if (!req_sstream.str().empty())
-                {
-                    HttpResponse res;
+                    int client_socket = accept(events[i].data.fd,
+                                               (struct sockaddr*)(&client_sockaddr),
+                                               &client_sockaddr_len);
 
-                    try {
-                        HttpRequest req(req_sstream.str());
-                        Server* serv = event_map[events[i].data.fd].server;
-                        res = serv->handleRequest(req);
-                    }
-                    catch (const std::exception& e)
-                    {
-                        std::cerr << "Could not parse request\n";
-                        res.set_status(400, "Bad request");
-                        res.set_header("Server", "42-webserv");
-                    }
-
-                    std::string res_s = res.toString();
-                    out_buffer[client_socket] += res_s;
+                    if (fcntl(client_socket, F_SETFL, O_NONBLOCK) < 0)
+                        throw std::runtime_error("Could not set socket fd to non blocking");
 
                     struct event e;
                     e.event.data.fd = client_socket;
-                    e.event.events = EPOLLIN | EPOLLOUT | EPOLLRDHUP | EPOLLHUP;
+                    e.event.events = EPOLLIN | EPOLLRDHUP | EPOLLHUP;
                     e.is_server = false;
                     e.server = event_map[events[i].data.fd].server;
                     e.related_server_fd = events[i].data.fd;
@@ -225,7 +202,41 @@ void Router::listen()
                     event_map[client_socket] = e;
                     timeouts.push(&event_map[client_socket]);
 
-                    epoll_ctl(epoll_fd, EPOLL_CTL_ADD, e.event.data.fd, &event_map[client_socket].event);
+                    epoll_ctl(epoll_fd, EPOLL_CTL_ADD, e.event.data.fd, &event_map[e.event.data.fd].event);
+                }
+                else {
+                    std::cout << "handling new request on: " << events[i].data.fd << std::endl;
+
+                    int bytes_read = recv(events[i].data.fd, buffer, sizeof(buffer), 0);
+                    std::ostringstream req_sstream;
+                    req_sstream.write(buffer, bytes_read);
+                    while (bytes_read > 0) {
+                        std::cout << bytes_read << std::endl;
+                        bytes_read = recv(events[i].data.fd, &buffer, sizeof(buffer), 0);
+                        req_sstream.write(buffer, bytes_read);
+                    }
+
+                    if (!req_sstream.str().empty()) {
+                        HttpResponse res;
+
+                        try {
+                            HttpRequest req(req_sstream.str());
+                            Server *serv = event_map[events[i].data.fd].server;
+                            res = serv->handleRequest(req);
+                        }
+                        catch (const std::exception &e) {
+                            std::cerr << "Could not parse request\n";
+                            res.set_status(400, "Bad request");
+                            res.set_header("Server", "42-webserv");
+                        }
+
+                        std::string res_s = res.toString();
+                        out_buffer[events[i].data.fd] += res_s;
+                        timeouts.push(&event_map[events[i].data.fd]);
+
+                        event_map[events[i].data.fd].event.events |= EPOLLOUT;
+                        epoll_ctl(epoll_fd, EPOLL_CTL_MOD, events[i].data.fd, &event_map[events[i].data.fd].event);
+                    }
                 }
             }
             if (events[i].events & EPOLLOUT)
