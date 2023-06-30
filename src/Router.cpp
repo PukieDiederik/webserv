@@ -19,17 +19,17 @@
 // Timeout in seconds
 #define TIMEOUT_TIME 15
 
-Router::Router(ServerConfig& cfg) : _cfg(cfg), _socket_fds(NULL)
+Router::Router(ServerConfig& cfg) : _cfg(cfg)
 {
     // TODO: This should be removed, this is just for testing purposes REJECT PR IF THIS IS PRESENT
     ServerCfg s1;
     ServerCfg s2;
     s1.port = 9991;
-    s2.port = 9992;
+    s2.port = 9991;
     s1.server_names.push_back("www.test.com");
     s1.server_names.push_back("sub.website.nl");
     s2.server_names.push_back("www.test.com");
-    s2.server_names.push_back("sub.website.nl");
+    s2.server_names.push_back("localhost");
     s1.root_dir = "/data/programming/webserv";
     s2.root_dir = "/data/programming/webserv";
 
@@ -54,9 +54,6 @@ Router::Router(ServerConfig& cfg) : _cfg(cfg), _socket_fds(NULL)
     _cfg = c;
 
     // Create servers
-    _socket_fds = new int[_cfg.servers.size()];
-    std::memset(_socket_fds, -1, sizeof(int) * _cfg.servers.size());
-
     // Loop over each server
     for (std::size_t i = 0; i < _cfg.servers.size(); ++i)
     {
@@ -64,26 +61,29 @@ Router::Router(ServerConfig& cfg) : _cfg(cfg), _socket_fds(NULL)
         _servers.push_back(Server(_cfg.servers[i], _cfg));
 
         // Start listening to ports
-        struct sockaddr_in sa;
-        sa.sin_family = AF_INET;
-        sa.sin_port = ntohs(_servers.back().cfg().port);
+        if (!_socket_fds.count(_servers.back().cfg().port)) // If the port hasn't been opened yet, try to open it
+        {
+            struct sockaddr_in sa;
+            sa.sin_family = AF_INET;
+            sa.sin_port = ntohs(_servers.back().cfg().port);
 //        sa.sin_addr.s_addr = (127 << 24) | (0 << 16) | (0 << 8) | (1);
 
-        if(!inet_pton(AF_INET, "127.0.0.1", &sa.sin_addr.s_addr)) //TODO replace this with host once implemented
-            throw std::runtime_error("Could not parse IP");
+            if (!inet_pton(AF_INET, "127.0.0.1", &sa.sin_addr.s_addr)) //TODO replace this with host once implemented
+                throw std::runtime_error("Could not parse IP");
 
-        if ((_socket_fds[i] = socket(AF_INET, SOCK_STREAM, 0)) < 0)
-            throw std::runtime_error("Could not create socket");
+            if ((_socket_fds[_servers.back().cfg().port] = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+                throw std::runtime_error("Could not create socket");
 
-        if (fcntl(_socket_fds[i], F_SETFL, O_NONBLOCK) < 0)
-            throw std::runtime_error("Could not set socket fd to non blocking");
+            if (fcntl(_socket_fds[_servers.back().cfg().port], F_SETFL, O_NONBLOCK) < 0)
+                throw std::runtime_error("Could not set socket fd to non blocking");
 
-        if (bind(_socket_fds[i], (struct sockaddr *)&sa, sizeof(sa)) < 0)
-            throw std::runtime_error("Could not open ports");
+            if (bind(_socket_fds[_servers.back().cfg().port], (struct sockaddr *) &sa, sizeof(sa)) < 0)
+                throw std::runtime_error("Could not open ports");
 
 #if DEBUG==1
-        std::cout << "Bound to port: " << _servers.back().cfg().port << std::endl;
+            std::cout << "Bound to port: " << _servers.back().cfg().port << std::endl;
 #endif
+        }
     }
 
     // Start listening to ports
@@ -93,19 +93,9 @@ Router::Router(const Router& copy) :_cfg(copy._cfg) { }
 
 Router::~Router()
 {
-    if (_socket_fds)
+    for(std::size_t i = 0; i < _cfg.servers.size(); ++i)
     {
-        for(std::size_t i = 0; i < _cfg.servers.size(); ++i)
-        {
-            if (_socket_fds[i] >= 0)
-            {
-#if DEBUG==1
-                std::cout << "Closing fd: " << _socket_fds[i] << std::endl;
-#endif
-                close(_socket_fds[i]);
-            }
-        }
-        delete[] _socket_fds;
+        close(_socket_fds[i]);
     }
 }
 
@@ -120,7 +110,7 @@ struct event
     struct epoll_event event;
     bool is_server;
     Server* server;
-    int related_server_fd;
+    int port;
     // Should only be set if not a server
     struct timeval timeout_at;
 };
@@ -157,22 +147,28 @@ void Router::listen()
     if (epoll_fd < 0)
         throw std::runtime_error("Could not create epoll");
 
-
+    // Create all events
     for (std::size_t i = 0; i < _servers.size(); ++i)
     {
         // Add socket to epoll
         struct event e;
-        e.event.data.fd = _socket_fds[i];
+        e.event.data.fd = _socket_fds[_servers[i].cfg().port];
         e.event.events = EPOLLIN;
         e.is_server = true;
+        e.port = _servers[i].cfg().port;
         e.server = &_servers[i];
-        e.related_server_fd = _socket_fds[i];
-        event_map[_socket_fds[i]] = e;
-        if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, e.event.data.fd, &event_map[_socket_fds[i]].event))
+        event_map[_socket_fds[_servers[i].cfg().port]] = e;
+    }
+
+    // Add all sockets to epoll
+    for (std::map<int, int>::iterator i = _socket_fds.begin(); i != _socket_fds.end(); ++i)
+    {
+        if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, i->second,
+                      &event_map[i->second].event))
             throw std::runtime_error("Could not add epoll_event to epoll");
 
         // Start listening for data
-        ::listen(_socket_fds[i], SOMAXCONN);
+        ::listen(i->second, SOMAXCONN);
     }
 
     struct epoll_event events[MAX_EVENTS];
@@ -211,6 +207,9 @@ void Router::listen()
                 {
                     std::cout << "New connection found" << std::endl;
 
+                    // Check which server it is from:
+
+
                     // Create client socket
                     struct sockaddr_in client_sockaddr;
                     socklen_t client_sockaddr_len = sizeof(client_sockaddr);
@@ -228,8 +227,9 @@ void Router::listen()
                     e.event.data.fd = client_socket;
                     e.event.events = EPOLLIN | EPOLLRDHUP | EPOLLHUP; // Listen for inputs and socket closures
                     e.is_server = false;
-                    e.server = event_map[events[i].data.fd].server;
-                    e.related_server_fd = events[i].data.fd;
+                    e.server = NULL; // Can only be set after the first request
+                    e.port = event_map[events[i].data.fd].port;
+//                    e.server = event_map[events[i].data.fd].server;
 
                     event_map[client_socket] = e; // Add it to the list of events
                     update_timeout(timeouts, &event_map[client_socket]); // Add it to list of timeouts
@@ -259,6 +259,34 @@ void Router::listen()
                         try {
                             // Try creating a request, if failed it will not add anything to
                             HttpRequest req(req_sstream.str());
+                            // Figure out which server this request belongs to
+                            if (event_map[events[i].data.fd].server == NULL)
+                            {
+                                std::string host = req.host();
+                                if (host.find(':'))
+                                    host = host.substr(0, host.find(':')); // Remove port if provided
+                                for (std::size_t j = 0; j < _servers.size(); ++j)
+                                {
+                                    if (_servers[j].cfg().port != event_map[events[i].data.fd].port)
+                                        continue;
+                                    // If none has been found yet
+                                    if (event_map[events[i].data.fd].server == NULL)
+                                    {
+                                        event_map[events[i].data.fd].server = &_servers[j]; // Set as default
+                                        if(std::find(_servers[j].cfg().server_names.begin(),
+                                                     _servers[j].cfg().server_names.end(),
+                                                     host) != _servers[j].cfg().server_names.end())
+                                            break; // If we already found the correct server, no need to search further
+                                    }
+                                    else if(std::find(_servers[j].cfg().server_names.begin(),
+                                                     _servers[j].cfg().server_names.end(),
+                                                     host) != _servers[j].cfg().server_names.end())
+                                    {
+                                        event_map[events[i].data.fd].server = &_servers[j];
+                                        break;
+                                    }
+                                }
+                            }
                             res = event_map[events[i].data.fd].server->handleRequest(req);
                         }
                         catch (const std::exception &e) {

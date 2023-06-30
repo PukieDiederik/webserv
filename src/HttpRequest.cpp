@@ -96,4 +96,5 @@ std::string& HttpRequest::target() { return _target; }
 const std::string& HttpRequest::target() const { return _target; }
 
 const std::string& HttpRequest::method() const { return _method; }
+const std::string& HttpRequest::host() const { return header("Host"); }
 
