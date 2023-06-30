@@ -11,9 +11,8 @@
 class HttpMessage {
 public:
     typedef std::map<std::string, std::string> headers_t;
-private:
-    headers_t _headers;
 protected:
+    headers_t _headers;
     int _major_version;
     int _minor_version;
 

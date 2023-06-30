@@ -70,9 +70,12 @@ HttpRequest::HttpRequest(const std::string& in) : HttpMessage()
             rest = rest.substr(line.length() + 1);
             line = trimSpace(line);
         }
+
+        if (!_headers.count("Host"))
+            throw ParsingException("'Host' header was not provided");
     }
 
-    // Remove newline which seperates headers and body
+    // Remove newline which separates headers and body
     rest = rest.substr(1);
 
     _body = rest;
