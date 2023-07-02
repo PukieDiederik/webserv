@@ -20,43 +20,54 @@ Server& Server::operator=(const Server& copy)
     return *this;
 }
 
+// Helper functions
+RouteCfg* find_route(const HttpRequest& req, std::vector<RouteCfg>& routes)
+{
+    std::pair<int, RouteCfg*> route_match(0, NULL);
+
+    for(std::vector<RouteCfg>::iterator i = routes.begin(); i != routes.end(); ++i)
+    {
+        std::string::size_type p = req.target().find(i->name);
+        if (p == 0 && i->name.length() > route_match.first)
+            route_match = std::pair<int, RouteCfg*>(i->name.length(), &(*i));
+    }
+
+    return route_match.second;
+}
+
 // Will take a request and handle it, which includes calling cgi
 HttpResponse Server::handleRequest(const HttpRequest& req)
 {
     HttpResponse res;
-    // TODO: handle request
+    RouteCfg* route = find_route(req, _cfg.routes);
+    std::string path;
+
+    // Check if a valid route has been found
+    if (!route) {
+        // TODO: return 404 error page
+        res.set_status(404, "File Not Found");
+        return res;
+    }
+
+    // Get and check path
+    path = route->root + "/" + req.target().substr(route->name.length());
+    if (::access(path.c_str(), F_OK) < 0)
+    {
+        // TODO: return 404 error page
+        res.set_status(404, "File Not Found");
+        return res;
+    }
+    if (::access(path.c_str(), O_RDONLY) < 0)
+    {
+        // TODO: return 403 error page
+        res.set_status(403, "Forbidden");
+        return res;
+    }
+
+    // TODO: check for CGI
+
     if (req.method() == "GET")
     {
-        std::pair<int, RouteCfg*> match(0, NULL);
-        // Get correct route
-        for(std::vector<RouteCfg>::iterator i = _cfg.routes.begin(); i != _cfg.routes.end(); ++i)
-        {
-            std::string::size_type p = req.target().find(i->name);
-            if (p == 0)
-                match = std::pair<int, RouteCfg*>(i->name.length(), &(*i));
-
-        }
-        if (match.first == 0) // If no match is found
-        {
-            // TODO: return 404 error page
-            res.set_status(404, "File Not Found");
-            return res;
-        }
-        std::string path = match.second->root + "/" + req.target().substr(match.second->name.length());
-
-        if (::access(path.c_str(), F_OK) < 0)
-        {
-            // TODO: return 404 error page
-            res.set_header("Content-Length", "0");
-            res.set_status(404, "File Not Found");
-            return res;
-        }
-        if (::access(path.c_str(), O_RDONLY) < 0)
-        {
-            // TODO: return 403 error page
-            res.set_status(403, "Forbidden");
-            return res;
-        }
 
         std::ifstream file(path.c_str());
         std::string buff(BUFFER_SIZE, '\0');
@@ -73,9 +84,8 @@ HttpResponse Server::handleRequest(const HttpRequest& req)
         std::ostringstream ss;
         ss << res.body().length();
         res.set_status(200, "OK");
-        res.set_header("Content-Length", ss.str());
-        res.set_header("Content-Type", "text/plain");
         //TODO add MIME type
+        res.set_header("Content-Type", "text/plain");
     }
     return res;
 }
