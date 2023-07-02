@@ -44,3 +44,15 @@ const std::string& HttpResponse::body() const { return this->_body; }
 
 int HttpResponse::get_status() const { return _status_code; }
 const std::string& HttpResponse::get_status_message() const { return _status_message; }
+
+std::string HttpResponse::toString()
+{
+    std::stringstream cl;
+    cl << _body.length();
+    _headers["Content-Length"] = cl.str();
+
+    std::stringstream result;
+    result << toStringStart() << toStringHeaders() << "\r\n" << toStringBody();
+
+    return result.str();
+}

@@ -33,5 +33,7 @@ public:
 
     int get_status() const;
     const std::string& get_status_message() const;
+
+    virtual std::string toString();
 };
 #endif

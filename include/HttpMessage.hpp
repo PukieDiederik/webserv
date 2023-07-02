@@ -44,7 +44,7 @@ public:
     const std::string& body() const;
 
     // This will convert it back to a text based http message
-    virtual std::string toString() const;
+    virtual std::string toString();
 };
 
 #endif
