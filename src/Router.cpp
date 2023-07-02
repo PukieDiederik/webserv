@@ -39,7 +39,7 @@ Router::Router(ServerConfig& cfg) : _cfg(cfg)
     r1.name = "/";
     r1.root = s1.root_dir + "/include";
     r2.name = "/";
-    r2.root = s1.root_dir + "/src";
+    r2.root = s2.root_dir + "/src";
 
     r1.auto_index = true;
     r2.auto_index = true;
@@ -169,7 +169,7 @@ void clear_fd(int fd, int epoll_fd,
 
 Server* find_server_from_port(int port, std::vector<Server>& servers, HttpRequest& req)
 {
-    Server* s;
+    Server* s = NULL;
     std::string host = req.host();
 
     if (host.find(':'))
