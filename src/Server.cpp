@@ -23,7 +23,7 @@ Server& Server::operator=(const Server& copy)
 // Helper functions
 RouteCfg* find_route(const HttpRequest& req, std::vector<RouteCfg>& routes)
 {
-    std::pair<int, RouteCfg*> route_match(0, NULL);
+    std::pair<std::size_t, RouteCfg*> route_match(0, NULL);
 
     for(std::vector<RouteCfg>::iterator i = routes.begin(); i != routes.end(); ++i)
     {
