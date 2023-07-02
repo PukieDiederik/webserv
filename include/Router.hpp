@@ -11,6 +11,8 @@
 class Router {
 private:
     ServerConfig _cfg;
+    typedef std::map<int, int> _socket_fds_t;
+
     std::map<int, int> _socket_fds; // Key = port, Value = socket fd
 
     std::vector<Server> _servers;

@@ -105,6 +105,8 @@ Router& Router::operator=(const Router& copy)
     return *this;
 }
 
+
+// Helper functions
 struct event
 {
     struct epoll_event event;
@@ -113,6 +115,10 @@ struct event
     int port; // The port it is open on, only needs to be set if this is a server
     struct timeval timeout_at; // Timeout for non-server sockets
 };
+
+typedef std::deque<event*> timeouts_t;
+typedef std::map<int, struct event> event_map_t;
+typedef std::map<int, std::string> out_buffer_t;
 
 struct event create_event(int fd, uint32_t events, bool is_server, int port, Server *server){
     struct event e;
@@ -127,14 +133,14 @@ struct event create_event(int fd, uint32_t events, bool is_server, int port, Ser
 
 
 // Creates or updates the timeout of an event
-void update_timeout(std::deque<event*>& timeouts, event* e)
+void update_timeout(timeouts_t& timeouts, event* e)
 {
     // Set the timeout time
     gettimeofday(&e->timeout_at, NULL);
     e->timeout_at.tv_sec += TIMEOUT_TIME;
 
     // Erase timeout if it already exists
-    std::deque<event*>::iterator i = std::find(timeouts.begin(), timeouts.end(), e);
+    timeouts_t::iterator i = std::find(timeouts.begin(), timeouts.end(), e);
     if (i != timeouts.end())
         timeouts.erase(i);
 
@@ -142,28 +148,39 @@ void update_timeout(std::deque<event*>& timeouts, event* e)
     timeouts.push_back(e);
 }
 
-void remove_timeout(std::deque<event*>& timeouts, event* e)
+void remove_timeout(timeouts_t& timeouts, event* e)
 {
-    std::deque<event*>::iterator i = std::find(timeouts.begin(), timeouts.end(), e);
+    timeouts_t::iterator i = std::find(timeouts.begin(), timeouts.end(), e);
     if (i != timeouts.end())
         timeouts.erase(i);
+}
+
+void clear_fd(int fd, int epoll_fd,
+              event_map_t& event_map,
+              timeouts_t& timeouts,
+              out_buffer_t& out_buffer)
+{
+    epoll_ctl(epoll_fd, EPOLL_CTL_DEL, fd, &event_map[fd].event);
+    remove_timeout(timeouts, &event_map[fd]);
+    event_map.erase(fd);
+    out_buffer.erase(fd);
 }
 
 void Router::listen()
 {
     int epoll_fd; // Size is ignored
-    std::map<int, struct event> event_map; // Map which stores all event information using fd as a key
-    std::deque<event*> timeouts; // For managing timeouts of client sockets
+    event_map_t event_map; // Map which stores all event information using fd as a key
+    timeouts_t timeouts; // For managing timeouts of client sockets
 
     struct epoll_event events[MAX_EVENTS];
-    std::map<int, std::string> out_buffer; // Holds everything that needs to be written to a file descriptor
+    out_buffer_t out_buffer; // Holds everything that needs to be written to a file descriptor
     char buffer[BUFFER_SIZE]; // Buffer for reading input
 
     if ((epoll_fd = epoll_create(1)) < 0)
         throw std::runtime_error("Could not create epoll");
 
     // Setup sockets with epoll
-    for (std::map<int, int>::iterator i = _socket_fds.begin(); i != _socket_fds.end(); ++i)
+    for (_socket_fds_t::iterator i = _socket_fds.begin(); i != _socket_fds.end(); ++i)
     {
         // Create server event
         event_map[i->second] = create_event(i->second,
@@ -189,8 +206,8 @@ void Router::listen()
             struct timeval t;
             gettimeofday(&t, NULL);
 
-            next_timeout = (timeouts.front()->timeout_at.tv_sec - t.tv_sec) * 1000 +
-                           (timeouts.front()->timeout_at.tv_usec - t.tv_usec) / 1000;
+            next_timeout = (int)((timeouts.front()->timeout_at.tv_sec - t.tv_sec) * 1000 +
+                                 (timeouts.front()->timeout_at.tv_usec - t.tv_usec) / 1000);
 
             // Makes sure that we don't get some weird timing where it waits forever when it shouldn't
             if (next_timeout < 0)
@@ -339,20 +356,18 @@ void Router::listen()
 
                 update_timeout(timeouts, &event_map[events[i].data.fd]);
             }
+            // On socket closure
             if (events[i].events & (EPOLLRDHUP | EPOLLHUP))
             {
                 std::cout << "Socket closed: " << events[i].data.fd << std::endl;
-                // Remove the socket from all data
-                epoll_ctl(epoll_fd, EPOLL_CTL_DEL, events[i].data.fd, &event_map[events[i].data.fd].event);
-                remove_timeout(timeouts, &event_map[events[i].data.fd]);
-                event_map.erase(events[i].data.fd);
-                out_buffer.erase(events[i].data.fd);
+                // Clear up socket data
+                clear_fd(events[i].data.fd, epoll_fd, event_map, timeouts, out_buffer);
             }
         }
 
+        // Remove timed-out fds
         struct timeval t;
         gettimeofday(&t, NULL);
-        // Remove timed out fds
         while(!timeouts.empty() && timeouts.front()->timeout_at.tv_sec <= t.tv_sec
                                 && timeouts.front()->timeout_at.tv_usec <= t.tv_usec)
         {
@@ -360,15 +375,12 @@ void Router::listen()
                       << ") timed out, Cleaning up." << std::endl;
             if (!event_map.count(timeouts.front()->event.data.fd))
             {
-                std::cerr << "Could not find socket: " << timeouts.front()->event.data.fd;
+                std::cerr << "Could not find socket: " << timeouts.front()->event.data.fd << "\n";
                 timeouts.pop_front();
                 continue;
             }
-            // Remove the socket from all data
-            epoll_ctl(epoll_fd, EPOLL_CTL_DEL, timeouts.front()->event.data.fd, &timeouts.front()->event);
-            event_map.erase(timeouts.front()->event.data.fd);
-            out_buffer.erase(timeouts.front()->event.data.fd);
-            timeouts.pop_front();
+            // Clear up socket data
+            clear_fd(timeouts.front()->event.data.fd, epoll_fd, event_map, timeouts, out_buffer);
         }
     }
     close(epoll_fd);
