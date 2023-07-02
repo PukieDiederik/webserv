@@ -109,11 +109,22 @@ struct event
 {
     struct epoll_event event;
     bool is_server;
-    Server* server;
-    int port;
-    // Should only be set if not a server
-    struct timeval timeout_at;
+    Server* server; // Server it is related to if not a serving socket itself
+    int port; // The port it is open on, only needs to be set if this is a server
+    struct timeval timeout_at; // Timeout for non-server sockets
 };
+
+struct event create_event(int fd, uint32_t events, bool is_server, int port, Server *server){
+    struct event e;
+    e.event.data.fd = fd;
+    e.event.events = events;
+    e.is_server = is_server;
+    e.port = port;
+    e.server = server;
+
+    return e;
+}
+
 
 // Creates or updates the timeout of an event
 void update_timeout(std::deque<event*>& timeouts, event* e)
@@ -140,29 +151,27 @@ void remove_timeout(std::deque<event*>& timeouts, event* e)
 
 void Router::listen()
 {
-    int epoll_fd = epoll_create(1); // Size is ignored
+    int epoll_fd; // Size is ignored
     std::map<int, struct event> event_map; // Map which stores all event information using fd as a key
     std::deque<event*> timeouts; // For managing timeouts of client sockets
 
-    if (epoll_fd < 0)
+    struct epoll_event events[MAX_EVENTS];
+    std::map<int, std::string> out_buffer; // Holds everything that needs to be written to a file descriptor
+    char buffer[BUFFER_SIZE]; // Buffer for reading input
+
+    if ((epoll_fd = epoll_create(1)) < 0)
         throw std::runtime_error("Could not create epoll");
 
-    // Create all events
-    for (std::size_t i = 0; i < _servers.size(); ++i)
-    {
-        // Add socket to epoll
-        struct event e;
-        e.event.data.fd = _socket_fds[_servers[i].cfg().port];
-        e.event.events = EPOLLIN;
-        e.is_server = true;
-        e.port = _servers[i].cfg().port;
-        e.server = &_servers[i];
-        event_map[_socket_fds[_servers[i].cfg().port]] = e;
-    }
-
-    // Add all sockets to epoll
+    // Setup sockets with epoll
     for (std::map<int, int>::iterator i = _socket_fds.begin(); i != _socket_fds.end(); ++i)
     {
+        // Create server event
+        event_map[i->second] = create_event(i->second,
+                                           EPOLLIN,
+                                           true,
+                                           i->first,
+                                           NULL);
+        // Add event to epoll
         if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, i->second,
                       &event_map[i->second].event))
             throw std::runtime_error("Could not add epoll_event to epoll");
@@ -171,11 +180,7 @@ void Router::listen()
         ::listen(i->second, SOMAXCONN);
     }
 
-    struct epoll_event events[MAX_EVENTS];
-    std::map<int, std::string> out_buffer; // Holds everything that needs to be written to a file descriptor
-    char buffer[BUFFER_SIZE]; // Buffer for reading input
-
-    // Start infinite listening loop
+    // Start listening in infinite loop
     while (true)
     {
         int next_timeout = -1;
@@ -207,9 +212,6 @@ void Router::listen()
                 {
                     std::cout << "New connection found" << std::endl;
 
-                    // Check which server it is from:
-
-
                     // Create client socket
                     struct sockaddr_in client_sockaddr;
                     socklen_t client_sockaddr_len = sizeof(client_sockaddr);
@@ -222,14 +224,12 @@ void Router::listen()
                     if (fcntl(client_socket, F_SETFL, O_NONBLOCK) < 0)
                         throw std::runtime_error("Could not set socket fd to non blocking");
 
-                    // Fill in information about client socket
-                    struct event e;
-                    e.event.data.fd = client_socket;
-                    e.event.events = EPOLLIN | EPOLLRDHUP | EPOLLHUP; // Listen for inputs and socket closures
-                    e.is_server = false;
-                    e.server = NULL; // Can only be set after the first request
-                    e.port = event_map[events[i].data.fd].port;
-//                    e.server = event_map[events[i].data.fd].server;
+                    // Create event for client socket
+                    struct event e = create_event(client_socket,
+                                                  EPOLLIN | EPOLLRDHUP | EPOLLHUP,
+                                                  false,
+                                                  event_map[events[i].data.fd].port,
+                                                  NULL);
 
                     event_map[client_socket] = e; // Add it to the list of events
                     update_timeout(timeouts, &event_map[client_socket]); // Add it to list of timeouts
