@@ -21,7 +21,7 @@
 
 Router::Router(ServerConfig& cfg) : _cfg(cfg)
 {
-    // TODO: This should be removed, this is just for testing purposes REJECT PR IF THIS IS PRESENT
+    // TODO: This should be removed, this is just for testing purposes. REJECT PR IF THIS IS PRESENT
     ServerCfg s1;
     ServerCfg s2;
     s1.port = 9991;
@@ -61,8 +61,7 @@ Router::Router(ServerConfig& cfg) : _cfg(cfg)
         _servers.push_back(Server(_cfg.servers[i], _cfg));
 
         // Start listening to ports
-        if (!_socket_fds.count(_servers.back().cfg().port)) // If the port hasn't been opened yet, try to open it
-        {
+        if (!_socket_fds.count(_servers.back().cfg().port)) { // If the port hasn't been opened yet, try to open it
             struct sockaddr_in sa;
             sa.sin_family = AF_INET;
             sa.sin_port = ntohs(_servers.back().cfg().port);
@@ -148,6 +147,7 @@ void update_timeout(timeouts_t& timeouts, event* e)
     timeouts.push_back(e);
 }
 
+// Removes an event from the timeouts
 void remove_timeout(timeouts_t& timeouts, event* e)
 {
     timeouts_t::iterator i = std::find(timeouts.begin(), timeouts.end(), e);
@@ -155,6 +155,7 @@ void remove_timeout(timeouts_t& timeouts, event* e)
         timeouts.erase(i);
 }
 
+// Clears data associated with the given fd
 void clear_fd(int fd, int epoll_fd,
               event_map_t& event_map,
               timeouts_t& timeouts,
@@ -166,9 +167,39 @@ void clear_fd(int fd, int epoll_fd,
     out_buffer.erase(fd);
 }
 
+Server* find_server_from_port(int port, std::vector<Server>& servers, HttpRequest& req)
+{
+    Server* s;
+    std::string host = req.host();
+
+    if (host.find(':'))
+        host = host.substr(0, host.find(':')); // Remove port if provided
+
+    for (std::size_t j = 0; j < servers.size(); ++j)
+    {
+        if (servers[j].cfg().port != port)
+            continue;
+        // If none has been found yet
+        if (s == NULL) {
+            s = &servers[j]; // Set as default
+            if(std::find(servers[j].cfg().server_names.begin(),
+                         servers[j].cfg().server_names.end(),
+                         host) != servers[j].cfg().server_names.end())
+                break; // If we already found the correct server, no need to search further
+        }
+        else if(std::find(servers[j].cfg().server_names.begin(),
+                          servers[j].cfg().server_names.end(),
+                          host) != servers[j].cfg().server_names.end()) {
+            s = &servers[j];
+            break;
+        }
+    }
+    return s;
+}
+
 void Router::listen()
 {
-    int epoll_fd; // Size is ignored
+    int epoll_fd;
     event_map_t event_map; // Map which stores all event information using fd as a key
     timeouts_t timeouts; // For managing timeouts of client sockets
 
@@ -222,11 +253,9 @@ void Router::listen()
         // Go through each event
         for (int i = 0; i < num_events; ++i)
         {
-            if (events[i].events & EPOLLIN)
-            {
+            if (events[i].events & EPOLLIN) {
                 // If it is a server socket we should create a client socket
-                if(event_map[events[i].data.fd].is_server)
-                {
+                if (event_map[events[i].data.fd].is_server) {
                     std::cout << "New connection found" << std::endl;
 
                     // Create client socket
@@ -267,7 +296,7 @@ void Router::listen()
                         req_sstream.write(buffer, bytes_read);
                     }
 
-                    // If the data was actually read
+                    // On socket closure we usually get an EPOLLIN event, this only runs on a normal request
                     if (!req_sstream.str().empty()) {
                         std::cout << "handling new request on: " << events[i].data.fd << std::endl;
 
@@ -277,32 +306,11 @@ void Router::listen()
                             // Try creating a request, if failed it will not add anything to
                             HttpRequest req(req_sstream.str());
                             // Figure out which server this request belongs to
-                            if (event_map[events[i].data.fd].server == NULL)
-                            {
-                                std::string host = req.host();
-                                if (host.find(':'))
-                                    host = host.substr(0, host.find(':')); // Remove port if provided
-                                for (std::size_t j = 0; j < _servers.size(); ++j)
-                                {
-                                    if (_servers[j].cfg().port != event_map[events[i].data.fd].port)
-                                        continue;
-                                    // If none has been found yet
-                                    if (event_map[events[i].data.fd].server == NULL)
-                                    {
-                                        event_map[events[i].data.fd].server = &_servers[j]; // Set as default
-                                        if(std::find(_servers[j].cfg().server_names.begin(),
-                                                     _servers[j].cfg().server_names.end(),
-                                                     host) != _servers[j].cfg().server_names.end())
-                                            break; // If we already found the correct server, no need to search further
-                                    }
-                                    else if(std::find(_servers[j].cfg().server_names.begin(),
-                                                     _servers[j].cfg().server_names.end(),
-                                                     host) != _servers[j].cfg().server_names.end())
-                                    {
-                                        event_map[events[i].data.fd].server = &_servers[j];
-                                        break;
-                                    }
-                                }
+                            if (event_map[events[i].data.fd].server == NULL) {
+                                event_map[events[i].data.fd].server = find_server_from_port(
+                                    event_map[events[i].data.fd].port,
+                                    _servers,
+                                    req);
                             }
                             res = event_map[events[i].data.fd].server->handleRequest(req);
                         }
@@ -327,8 +335,7 @@ void Router::listen()
                 }
             }
             // If the socket is ready for write operations
-            if (events[i].events & EPOLLOUT)
-            {
+            if (events[i].events & EPOLLOUT) {
                 std::map<int, std::string>::iterator out_it;
 
                 // Make sure there is stuff in the out_buffer for this file descriptor
@@ -357,8 +364,7 @@ void Router::listen()
                 update_timeout(timeouts, &event_map[events[i].data.fd]);
             }
             // On socket closure
-            if (events[i].events & (EPOLLRDHUP | EPOLLHUP))
-            {
+            if (events[i].events & (EPOLLRDHUP | EPOLLHUP)) {
                 std::cout << "Socket closed: " << events[i].data.fd << std::endl;
                 // Clear up socket data
                 clear_fd(events[i].data.fd, epoll_fd, event_map, timeouts, out_buffer);
