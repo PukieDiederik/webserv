@@ -27,9 +27,9 @@ RouteCfg* find_route(const HttpRequest& req, std::vector<RouteCfg>& routes)
 
     for(std::vector<RouteCfg>::iterator i = routes.begin(); i != routes.end(); ++i)
     {
-        std::string::size_type p = req.target().find(i->name);
-        if (p == 0 && i->name.length() > route_match.first)
-            route_match = std::pair<int, RouteCfg*>(i->name.length(), &(*i));
+        std::string::size_type p = req.target().find(i->route_path);
+        if (p == 0 && i->route_path.length() > route_match.first)
+            route_match = std::pair<int, RouteCfg*>(i->route_path.length(), &(*i));
     }
 
     return route_match.second;
@@ -50,7 +50,7 @@ HttpResponse Server::handleRequest(const HttpRequest& req)
     }
 
     // Get and check path
-    path = route->root + "/" + req.target().substr(route->name.length());
+    path = route->root + "/" + req.target().substr(route->route_path.length());
     if (::access(path.c_str(), F_OK) < 0)
     {
         // TODO: return 404 error page

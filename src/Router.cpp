@@ -21,44 +21,12 @@
 
 Router::Router(ServerConfig& cfg) : _cfg(cfg)
 {
-    // TODO: This should be removed, this is just for testing purposes. REJECT PR IF THIS IS PRESENT
-    ServerCfg s1;
-    ServerCfg s2;
-    s1.port = 9991;
-    s2.port = 9991;
-    s1.server_names.push_back("www.test.com");
-    s1.server_names.push_back("sub.website.nl");
-    s2.server_names.push_back("www.test.com");
-    s2.server_names.push_back("localhost");
-    s1.root_dir = "/data/programming/webserv";
-    s2.root_dir = "/data/programming/webserv";
-
-    RouteCfg r1;
-    RouteCfg r2;
-
-    r1.name = "/";
-    r1.root = s1.root_dir + "/include";
-    r2.name = "/";
-    r2.root = s2.root_dir + "/src";
-
-    r1.auto_index = true;
-    r2.auto_index = true;
-
-    s1.routes.push_back(r1);
-    s2.routes.push_back(r2);
-
-    ServerConfig c("test");
-    c.servers.push_back(s1);
-    c.servers.push_back(s2);
-
-    _cfg = c;
-
     // Create servers
     // Loop over each server
-    for (std::size_t i = 0; i < _cfg.servers.size(); ++i)
+    for (std::size_t i = 0; i < _cfg._servers.size(); ++i)
     {
         // Create server objects
-        _servers.push_back(Server(_cfg.servers[i], _cfg));
+        _servers.push_back(Server(_cfg._servers[i], _cfg));
 
         // Start listening to ports
         if (!_socket_fds.count(_servers.back().cfg().port)) { // If the port hasn't been opened yet, try to open it
@@ -79,9 +47,7 @@ Router::Router(ServerConfig& cfg) : _cfg(cfg)
             if (bind(_socket_fds[_servers.back().cfg().port], (struct sockaddr *) &sa, sizeof(sa)) < 0)
                 throw std::runtime_error("Could not open ports");
 
-#if DEBUG==1
             std::cout << "Bound to port: " << _servers.back().cfg().port << std::endl;
-#endif
         }
     }
 
@@ -92,7 +58,7 @@ Router::Router(const Router& copy) :_cfg(copy._cfg) { }
 
 Router::~Router()
 {
-    for(std::size_t i = 0; i < _cfg.servers.size(); ++i)
+    for(std::size_t i = 0; i < _cfg._servers.size(); ++i)
     {
         close(_socket_fds[i]);
     }
@@ -199,6 +165,7 @@ Server* find_server_from_port(int port, std::vector<Server>& servers, HttpReques
 
 void Router::listen()
 {
+    std::cout << "Got in listening" << std::endl;
     int epoll_fd;
     event_map_t event_map; // Map which stores all event information using fd as a key
     timeouts_t timeouts; // For managing timeouts of client sockets
@@ -227,6 +194,7 @@ void Router::listen()
         // Start listening for data
         ::listen(i->second, SOMAXCONN);
     }
+    std::cout << "Got in created events" << std::endl;
 
     // Start listening in infinite loop
     while (true)

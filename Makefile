@@ -4,8 +4,9 @@ SHELL       = /bin/zsh
 FNAMES      = main.cpp\
 			  Server.cpp Router.cpp\
 			  HttpMessage.cpp HttpResponse.cpp HttpRequest.cpp\
-			  ParsingUtils.cpp ParsingException.cpp\
-			  ServerConfig.cpp
+ 			  ServerConfig.cpp ServerConfigCgiParser.cpp ServerConfigMimeParser.cpp\
+ 			  ServerConfigServerParser.cpp ServerConfigRouteParser.cpp ServerConfigChecker.cpp\
+ 			  ParserUtils.cpp ParsingException.cpp ParsingUtils.cpp
 
 SRCS        = $(addprefix $(SRCS_DIR)/,$(FNAMES))
 OBJS        = $(addprefix $(OBJS_DIR)/,$(notdir $(FNAMES:.cpp=.o)))
@@ -20,8 +21,8 @@ DEPS_DIR    = $(OBJS_DIR)
 NAME        = webserv
 
 CXX         = c++
-CXXFLAGS    = -Wall -Werror -Wextra -std=c++98 -pedantic\
-              #-g -fsanitize=address -fsanitize=leak
+CXXFLAGS    = -std=c++98 -Wall -Werror -Wextra -pedantic -D VERBOSE=true
+	      #-g -fsanitize=address -fsanitize=leak
 
 INCLUDES    = -I $(INCLUDE_DIR)
 LIBS        =
