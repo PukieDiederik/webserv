@@ -2,6 +2,7 @@
 SHELL       = /bin/zsh
 
 FNAMES      = main.cpp\
+			  Server.cpp Router.cpp\
 			  HttpMessage.cpp HttpResponse.cpp HttpRequest.cpp\
  			  ServerConfig.cpp ServerConfigCgiParser.cpp ServerConfigMimeParser.cpp\
  			  ServerConfigServerParser.cpp ServerConfigRouteParser.cpp ServerConfigChecker.cpp\
@@ -49,7 +50,7 @@ all: $(NAME)
 
 $(OBJS_DIR)/%.o: $(SRCS_DIR)/%.cpp | $(OBJS_DIR)
 	@$(ECHO) "$(GREEN)>>>>> Compiling $(RESET)$(notdir $<)$(GREEN) -> $(RESET)$(notdir $@)$(RESET)"
-	@$(CXX) $(CXXFLAGS) -MMD -MP -c $(INCLUDES) $< -o $@
+	@$(CXX) $(CXXFLAGS) -D DEBUG=1 -MMD -MP -c $(INCLUDES) $< -o $@
 
 $(OBJS_DIR):
 	@mkdir $(OBJS_DIR)

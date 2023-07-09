@@ -11,9 +11,8 @@
 class HttpMessage {
 public:
     typedef std::map<std::string, std::string> headers_t;
-private:
-    headers_t _headers;
 protected:
+    headers_t _headers;
     int _major_version;
     int _minor_version;
 
@@ -45,7 +44,7 @@ public:
     const std::string& body() const;
 
     // This will convert it back to a text based http message
-    virtual std::string toString() const;
+    virtual std::string toString();
 };
 
 #endif

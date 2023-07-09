@@ -20,9 +20,10 @@
 struct RouteCfg {
 	//Route path
 	std::string	route_path;
+
 	// Redirects
 	bool	is_redirect;
-    	std::string	redirect_to;
+    std::string	redirect_to;
 
 	// This will be an absolute path
 	std::string	root;

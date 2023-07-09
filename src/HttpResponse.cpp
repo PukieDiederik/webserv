@@ -28,7 +28,6 @@ HttpResponse& HttpResponse::set_version(int major, int minor)
     this->_minor_version = minor;
     return *this;
 }
-HttpResponse& HttpResponse::set_body(const std::string& body) { this->_body = body; return *this; }
 
 HttpResponse& HttpResponse::set_header(const std::string& name, const std::string& value)
 { this->add_header(name, value); return *this; }
@@ -40,5 +39,20 @@ HttpResponse& HttpResponse::set_status(int code ) { _status_code = code; return 
 HttpResponse& HttpResponse::set_status(int code, const std::string& message)
 {_status_code = code; _status_message = message; return *this; }
 
+std::string& HttpResponse::body() { return this->_body; }
+const std::string& HttpResponse::body() const { return this->_body; }
+
 int HttpResponse::get_status() const { return _status_code; }
 const std::string& HttpResponse::get_status_message() const { return _status_message; }
+
+std::string HttpResponse::toString()
+{
+    std::stringstream cl;
+    cl << _body.length();
+    _headers["Content-Length"] = cl.str();
+
+    std::stringstream result;
+    result << toStringStart() << toStringHeaders() << "\r\n" << toStringBody();
+
+    return result.str();
+}

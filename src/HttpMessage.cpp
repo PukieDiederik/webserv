@@ -55,7 +55,7 @@ std::string HttpMessage::toStringHeaders() const
 }
 std::string HttpMessage::toStringBody() const { return _body;}
 
-std::string HttpMessage::toString() const
+std::string HttpMessage::toString()
 {
     std::stringstream result;
 

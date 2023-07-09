@@ -1,4 +1,6 @@
 #include "ServerConfig.hpp"
+#include "Router.hpp"
+#include <exception>
 
 #include <iostream>
 
@@ -13,8 +15,15 @@ int main(int argc, char **argv) {
 	std::cout << "\nIf any possible errors do occur: \n" << std::endl;
 	try {
 		ServerConfig sc(argv[1]);
-	} catch (const std::exception &ex) {
+
+        // Start listening
+        Router r(sc);
+
+        std::cout << "Started listening" << std::endl;
+        r.listen();
+    } catch (const std::exception &ex) {
 		std::cout << ex.what() << std::endl;
 	}
+
 	return (0);
 }
