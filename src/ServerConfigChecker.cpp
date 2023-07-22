@@ -78,6 +78,7 @@ void	ServerConfig::checker() {
 			if (VERBOSE)
 				std::cout << "\t\tRoute index:\n\t\t\t[" << (*jit).index << "]" << std::endl;
 
+			// ADD all available methods // TODO: should remove ?
 			if ((*jit).accepted_methods.empty()) {	
 				(*jit).accepted_methods.push_back("GET");
 				(*jit).accepted_methods.push_back("POST");
@@ -90,8 +91,6 @@ void	ServerConfig::checker() {
 				for (std::vector<std::string>::iterator vit = (*jit).accepted_methods.begin(); vit != (*jit).accepted_methods.end(); vit++) {
 					if (VERBOSE)
 						std::cout << "\t\t\t[" << *vit << "]" << std::endl;
-					if ((*vit).compare("GET") != 0 && (*vit).compare("POST") != 0 && (*vit).compare("PATCH") != 0 && (*vit).compare("PUT") != 0 )
-						throw std::runtime_error("Error: invalid route method");
 				}
 			}
 
