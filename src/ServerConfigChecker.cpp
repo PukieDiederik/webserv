@@ -1,6 +1,7 @@
 #include "ServerConfig.hpp"
 #include "ParserUtils.hpp"
 
+#include <cstdlib>
 #include <iostream>
 
 void	ServerConfig::checker() {
@@ -71,7 +72,7 @@ void	ServerConfig::checker() {
 			else if (VERBOSE)
 				std::cout << "no]" << std::endl;
 
-			if (!((*jit).auto_index) && (*jit).index.empty()) throw std::runtime_error("missing index config");
+			if ( !((*jit).auto_index ) && (*jit).index.empty() && !((*jit).is_redirect) ) throw std::runtime_error("missing index config");
 			if ((*jit).auto_index && VERBOSE) std::cout << "\t\tRoute auto_index\n\t\t\t[yes]" << std::endl;
 
 			if ((*jit).auto_index && !((*jit).index.empty())) throw std::runtime_error("both auto_index and manual index set");
@@ -79,13 +80,7 @@ void	ServerConfig::checker() {
 				std::cout << "\t\tRoute index:\n\t\t\t[" << (*jit).index << "]" << std::endl;
 
 			// ADD all available methods // TODO: should remove ?
-			if ((*jit).accepted_methods.empty()) {	
-				(*jit).accepted_methods.push_back("GET");
-				(*jit).accepted_methods.push_back("POST");
-				(*jit).accepted_methods.push_back("PATCH");
-				(*jit).accepted_methods.push_back("PUT");
-			}
-			else {
+			if (!((*jit).accepted_methods.empty())) {	
 				if (VERBOSE)
 					std::cout << "\t\tRoute accepted methods:" << std::endl;
 				for (std::vector<std::string>::iterator vit = (*jit).accepted_methods.begin(); vit != (*jit).accepted_methods.end(); vit++) {
@@ -93,9 +88,7 @@ void	ServerConfig::checker() {
 						std::cout << "\t\t\t[" << *vit << "]" << std::endl;
 				}
 			}
-
 		}
-
 		if (VERBOSE && !(_cgi_cmds.empty())) {
 			std::cout << "\tServer cgi: " << std::endl;
 			for (std::map<std::string, char **>::iterator it = _cgi.begin(); it != _cgi.end(); it++) {
