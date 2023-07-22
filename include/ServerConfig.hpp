@@ -19,22 +19,23 @@
 // Has config about routes
 struct RouteCfg {
 	//Route path
-	std::string	route_path;
+	std::string			route_path;
 
 	// Redirects
-	bool	is_redirect;
-    std::string	redirect_to;
+	bool				is_redirect;
+	std::string			redirect_to;
 
 	// This will be an absolute path
-	std::string	root;
+	std::string			root;
 
-	bool	cgi_enabled;
+	bool				cgi_enabled;
 
-	bool	auto_index;
+	bool				auto_index;
+	
 	// This should raise an error if not given and autoindex is false
-	std::string index;
+	std::string			index;
+	
 	// If this is empty it will accept any method
- 
 	std::vector<std::string>	accepted_methods;
 
 	RouteCfg();
@@ -46,18 +47,18 @@ struct RouteCfg {
 
 // Has config about server blocks
 struct ServerCfg {
-	std::string	host;
-	short		port;
+	std::string			host;
+	short				port;
 	std::vector<std::string>	server_names;
 
 	// First argument is the error code, the second argument is the path to a file.
  
 	std::map<short, std::string>	error_pages;
-	int	max_body_size;
+	int				max_body_size;
 
 	// This should be an absolute path
-	std::string	root_dir;
-	std::vector<RouteCfg>	routes;
+	std::string			root_dir;
+	std::vector<RouteCfg>		routes;
 
 	// Constructors/Destructor
 	ServerCfg();
@@ -71,14 +72,14 @@ class ServerConfig {
 		// A list of commands which will be used in 'cgi'. Having one collecion
 		// store all of these will prevent us from having to store many duplicate
 		// commands. This vector will store null terminated arrays.
-		std::vector<char **> _cgi_cmds;
+		std::vector<char **>			_cgi_cmds;
 		// The first argument is the file extension, the second is a pointer to
 		// an argv array for the command to launch.
-		std::map<std::string, char**> _cgi;
+		std::map<std::string, char**>		_cgi;
 
 		// This will store mime types and their respective content-type. The first
 		// argument is a file extensions, and the second argument is a content-type
-		std::map<std::string, std::string> _mime;
+		std::map<std::string, std::string>	_mime;
     
 
 		ServerConfig();
