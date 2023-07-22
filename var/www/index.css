@@ -72,15 +72,19 @@ ul li {
 	width: 100%;
 	padding: 12px 24px;
 	border-radius: 8px;
-
 }
+/* END: Standard */
 
+
+/* BEGIN: Running Button */
 .running-container {
 	position: relative;
+	min-height: 200px;
+	max-height: 65vh;
 	height: 800px;
-    width: 100%;
-    border: 4px solid rgb(140, 240, 200);
-    border-radius: 8px;
+	width: 100%;
+	border: 4px solid rgb(140, 240, 200);
+	border-radius: 8px;
 }
 
 .running-button {
@@ -94,8 +98,10 @@ ul li {
 	width: 120px;
 	padding: 12px 24px;
 	border-radius: 8px;
+	transition: 0.35s;
+	cursor: pointer;
 }
-/* END: Standard */
+/* END: Running Button */
 
 
 /* BEGIN: Error Pages */
