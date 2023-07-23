@@ -35,37 +35,6 @@ RouteCfg* find_route(const HttpRequest& req, std::vector<RouteCfg>& routes)
     return route_match.second;
 }
 
-std::string getMimeType(const std::string& filename) {
-    std::map<std::string, std::string> mimeTypes;
-
-    mimeTypes[".pdf"] =  "application/pdf";
-
-    mimeTypes[".mp3"] =  "audio/mpeg";
-
-    mimeTypes[".jpeg"] = "image/jpeg";
-    mimeTypes[".jpg"] =  "image/jpeg";
-    mimeTypes[".png"] =  "image/png";
-    mimeTypes[".svg"] =  "image/svg+xml";
-
-    mimeTypes[".css"] =  "text/css";
-    mimeTypes[".html"] = "text/html";
-    mimeTypes[".htm"] =  "text/html";
-    mimeTypes[".js"] =   "text/javascript";
-
-    mimeTypes[".mp4"] =  "video/mp4";
-
-    size_t dotPos = filename.rfind('.');
-    if (dotPos != std::string::npos) {
-        std::string extension = filename.substr(dotPos);
-        std::map<std::string, std::string>::const_iterator it = mimeTypes.find(extension);
-        if (it != mimeTypes.end()) {
-            return it->second;
-        }
-    }
-
-    return "application/octet-stream";
-}
-
 // Will take a request and handle it, which includes calling cgi
 HttpResponse Server::handleRequest(const HttpRequest& req)
 {
@@ -115,7 +84,7 @@ HttpResponse Server::handleRequest(const HttpRequest& req)
         std::ostringstream ss;
         ss << res.body().length();
         res.set_status(200, "OK");
-        res.set_header("Content-Type", getMimeType(path));
+        res.set_header("Content-Type", ServerConfig::getMimeType(path));
     }
     return res;
 }
