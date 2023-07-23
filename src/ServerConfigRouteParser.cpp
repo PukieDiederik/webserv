@@ -2,6 +2,7 @@
 #include "ParserUtils.hpp"
 
 #include <sstream>
+#include <iostream>
 
 
 /*	@parseAutoIndex:

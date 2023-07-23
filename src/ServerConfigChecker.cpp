@@ -60,8 +60,14 @@ void	ServerConfig::checker() {
 			if ((*jit).is_redirect && (*jit).redirect_to.empty()) throw std::runtime_error("missing redirection config");
 		       	if ((*jit).is_redirect && VERBOSE) std::cout << "\t\tRoute redirection:\n\t\t\t[" << (*jit).redirect_to << "]" << std::endl;
 
-			// Issue 
-			if ((*jit).root.compare("nopath") != 0 && (*jit).route_path.compare("redirect") == 0) throw std::runtime_error("missing route root config");
+			// Issue #29
+			if ((*jit).root.empty() && (*jit).route_path.compare("redirect") != 0)  {
+				// if root tag was not given, then the route_root = server_root
+				(*jit).root = (*it).root_dir;
+			} else if ( (*jit).root[0] != '/' ) {
+				(*jit).root = (*it).root_dir + "/" + (*jit).root;
+			}
+
 			if (VERBOSE)
 				std::cout << "\t\tRoute root:\n\t\t\t[" << (*jit).root << "]" << std::endl;
 
