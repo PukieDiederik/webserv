@@ -60,8 +60,7 @@ HttpResponse Server::handleRequest(const HttpRequest& req)
     }
 
     // Get and check path
-    //path = route->root + "/" + req.target().substr(route->route_path.length());
-    path = "/var/www/index.html";
+    path = route->root + "/" + req.target().substr(route->route_path.length());
     if (::access(path.c_str(), F_OK) < 0)
     {
         // TODO: return 404 error page

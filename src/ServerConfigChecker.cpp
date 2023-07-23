@@ -58,6 +58,7 @@ void	ServerConfig::checker() {
 			if ((*jit).is_redirect && (*jit).redirect_to.empty()) throw std::runtime_error("missing redirection config");
 		       	if ((*jit).is_redirect && VERBOSE) std::cout << "\t\tRoute redirection:\n\t\t\t[" << (*jit).redirect_to << "]" << std::endl;
 
+			// Issue 
 			if ((*jit).root.compare("nopath") != 0 && (*jit).route_path.compare("redirect") == 0) throw std::runtime_error("missing route root config");
 			if (VERBOSE)
 				std::cout << "\t\tRoute root:\n\t\t\t[" << (*jit).root << "]" << std::endl;
@@ -88,11 +89,12 @@ void	ServerConfig::checker() {
 				}
 			} else { // If not accepted methods are set, set all available
 				(*jit).accepted_methods.push_back("GET");
-    			(*jit).accepted_methods.push_back("POST");
-    			(*jit).accepted_methods.push_back("PUT");
-    			(*jit).accepted_methods.push_back("PATCH");
-    			(*jit).accepted_methods.push_back("DELETE");
-			    (*jit).accepted_methods.push_back("HEAD");
+    				(*jit).accepted_methods.push_back("POST");
+    				(*jit).accepted_methods.push_back("PUT");
+    				(*jit).accepted_methods.push_back("PATCH");
+    				(*jit).accepted_methods.push_back("DELETE");
+				(*jit).accepted_methods.push_back("HEAD");
+				// More to be set
 			}
 		}
 		if (VERBOSE && !(_cgi_cmds.empty())) {
