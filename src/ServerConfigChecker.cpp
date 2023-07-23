@@ -8,13 +8,15 @@ void	ServerConfig::checker() {
 	if (VERBOSE)
 		std::cout << "\nServerConfig parsing done." << std::endl;
 	int	i = 1;
-	if (_servers.empty())
-		throw std::runtime_error("no server config found in config file.");
+	
+	if ( _servers.empty() ) throw std::runtime_error("no server config found in config file.");
+
 	for (std::vector<ServerCfg>::iterator it = _servers.begin(); it != _servers.end(); it++) {
-		if (VERBOSE)
+		if ( VERBOSE )
 			std::cout << "\nServer[" << i++ << "]:" << std::endl;
 		
-		if ((*it).host.compare("notdefined") == 0) throw std::runtime_error("missing ipv4 (hostname) config");
+		if ( (*it).host.empty() ) throw std::runtime_error("missing ipv4 (hostname) config");
+		
 		if (VERBOSE)
 			std::cout << "\tServer host:\n\t\t[" << (*it).host << "]" << std::endl;
 
@@ -88,13 +90,13 @@ void	ServerConfig::checker() {
 						std::cout << "\t\t\t[" << *vit << "]" << std::endl;
 				}
 			} else { // If not accepted methods are set, set all available
-				(*jit).accepted_methods.push_back("GET");
+					(*jit).accepted_methods.push_back("GET");
     				(*jit).accepted_methods.push_back("POST");
     				(*jit).accepted_methods.push_back("PUT");
     				(*jit).accepted_methods.push_back("PATCH");
     				(*jit).accepted_methods.push_back("DELETE");
-				(*jit).accepted_methods.push_back("HEAD");
-				// More to be set
+					(*jit).accepted_methods.push_back("HEAD");
+					// More to be set
 			}
 		}
 		if (VERBOSE && !(_cgi_cmds.empty())) {
