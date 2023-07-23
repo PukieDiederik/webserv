@@ -41,7 +41,7 @@ void	ServerConfig::checker() {
 		if (VERBOSE)
 			std::cout << "\tServer max_body_size:\n\t\t[" << (*it).max_body_size << "]" << std::endl;
 
-		if ((*it).root_dir.compare("nopath") == 0) throw std::runtime_error("missing root dir config");
+		if ((*it).root_dir.empty()) throw std::runtime_error("missing root dir config");
 		if (VERBOSE)
 			std::cout << "\tServer root dir:\n\t\t[" << (*it).root_dir << "]" << std::endl;
 
@@ -79,7 +79,6 @@ void	ServerConfig::checker() {
 			if (VERBOSE)
 				std::cout << "\t\tRoute index:\n\t\t\t[" << (*jit).index << "]" << std::endl;
 
-			// ADD all available methods // TODO: should remove ?
 			if (!((*jit).accepted_methods.empty())) {	
 				if (VERBOSE)
 					std::cout << "\t\tRoute accepted methods:" << std::endl;
@@ -87,6 +86,13 @@ void	ServerConfig::checker() {
 					if (VERBOSE)
 						std::cout << "\t\t\t[" << *vit << "]" << std::endl;
 				}
+			} else { // If not accepted methods are set, set all available
+				(*jit).accepted_methods.push_back("GET");
+    			(*jit).accepted_methods.push_back("POST");
+    			(*jit).accepted_methods.push_back("PUT");
+    			(*jit).accepted_methods.push_back("PATCH");
+    			(*jit).accepted_methods.push_back("DELETE");
+			    (*jit).accepted_methods.push_back("HEAD");
 			}
 		}
 		if (VERBOSE && !(_cgi_cmds.empty())) {

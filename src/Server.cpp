@@ -38,6 +38,13 @@ RouteCfg* find_route(const HttpRequest& req, std::vector<RouteCfg>& routes)
     return route_match.second;
 }
 
+bool    check_request_method(RouteCfg* route, const std::string method) {
+    for (size_t i = 0; i < route->accepted_methods.size(); i++)
+        if (method == route->accepted_methods[i])
+            return true;
+    return false;
+}
+
 // Will take a request and handle it, which includes calling cgi
 HttpResponse Server::handleRequest(const HttpRequest& req)
 {
@@ -53,7 +60,8 @@ HttpResponse Server::handleRequest(const HttpRequest& req)
     }
 
     // Get and check path
-    path = route->root + "/" + req.target().substr(route->route_path.length());
+    //path = route->root + "/" + req.target().substr(route->route_path.length());
+    path = "/var/www/index.html";
     if (::access(path.c_str(), F_OK) < 0)
     {
         // TODO: return 404 error page
@@ -64,6 +72,12 @@ HttpResponse Server::handleRequest(const HttpRequest& req)
     {
         // TODO: return 403 error page
         res.set_status(403, "Forbidden");
+        return res;
+    }
+
+    // Check if requested method is available
+    if ( check_request_method( route, req.method() ) ) {
+        res.set_status( 405, "Method Not Allowed" );
         return res;
     }
 
