@@ -15,6 +15,7 @@ void	ServerConfig::checker() {
 		if ( VERBOSE )
 			std::cout << "\nServer[" << i++ << "]:" << std::endl;
 		
+		// Issue #27
 		if ( (*it).host.empty() ) throw std::runtime_error("missing ipv4 (hostname) config");
 		
 		if (VERBOSE)
@@ -43,6 +44,7 @@ void	ServerConfig::checker() {
 		if (VERBOSE)
 			std::cout << "\tServer max_body_size:\n\t\t[" << (*it).max_body_size << "]" << std::endl;
 
+		// Issue #27
 		if ((*it).root_dir.empty()) throw std::runtime_error("missing root dir config");
 		if (VERBOSE)
 			std::cout << "\tServer root dir:\n\t\t[" << (*it).root_dir << "]" << std::endl;
@@ -61,7 +63,7 @@ void	ServerConfig::checker() {
 		       	if ((*jit).is_redirect && VERBOSE) std::cout << "\t\tRoute redirection:\n\t\t\t[" << (*jit).redirect_to << "]" << std::endl;
 
 			// Issue #29
-			if ((*jit).root.empty() && (*jit).route_path.compare("redirect") != 0)  {
+			if ( (*jit).root.empty() )  {
 				// if root tag was not given, then the route_root = server_root
 				(*jit).root = (*it).root_dir;
 			} else if ( (*jit).root[0] != '/' ) {
