@@ -157,7 +157,8 @@ HttpResponse Server::handleRequest(const HttpRequest& req)
             	res.set_status(500, "error");
                 return res;
         }
-        //dir_listing = list_dir( path );
+        // TODO: return dir_listing = list_dir( path );
+        return res;
     }
 
     if (::access(path.c_str(), F_OK) < 0)
