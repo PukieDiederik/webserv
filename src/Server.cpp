@@ -39,10 +39,10 @@ RouteCfg* find_route(const HttpRequest& req, std::vector<RouteCfg>& routes)
 }
 
 /*
-*   @check_request_method:
+*   @is_accepted_method:
 *    Checks if the requested method is accepted by the route
 */
-bool    check_request_method(RouteCfg* route, const std::string method) {
+bool    is_accepted_method(RouteCfg* route, const std::string method) {
     for (size_t i = 0; i < route->accepted_methods.size(); i++)
         if (method == route->accepted_methods[i])
             return true;
@@ -57,14 +57,19 @@ bool    check_request_method(RouteCfg* route, const std::string method) {
 */
 std::string	index_path(const HttpRequest& req, RouteCfg* route)
 {
+    // Request is equal to relative path ('.') + root path + route path
     std::string	request = "." + route->root + route->route_path;
 
     if ( route->auto_index ) {
+        // If target is '' or '/' , return request as it is
         if ( req.target() == "/" ) return request;
+        // If route_path == '/', return request as it is + target (what file the request is requesting)
         if ( route->route_path == "/") return request + req.target().substr(1, req.target().size() - 1);
 
+        // If none of the above, return relative root path + requested file (which already has route path)
         return "." + route->root + req.target();
     }
+    // If index was set, return request + predifined index
 	return request + "/" + route->index;
 }
 
@@ -97,9 +102,8 @@ HttpResponse Server::handleRequest(const HttpRequest& req)
         return res;
     }
 
-    std::cout << req.method() << std::endl;
     // Check if requested method is available
-    if ( !(check_request_method( route, req.method() ) ) )  {
+    if ( !(is_accepted_method( route, req.method() ) ) )  {
         res.set_status( 405, "Method Not Allowed" );
         return res;
     }
