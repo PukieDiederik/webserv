@@ -57,18 +57,15 @@ bool    check_request_method(RouteCfg* route, const std::string method) {
 */
 std::string	index_path(const HttpRequest& req, RouteCfg* route)
 {
-    std::cout << route->route_path << std::endl;
-    std::string	request = "." + route->root + "/" + route->route_path;
-    std::string target = req.target().substr(route->route_path.length());
+    std::string	request = "." + route->root + route->route_path;
 
-	// Issue #30
     if ( route->auto_index ) {
-        if ( req.target() == "/" ) {
-	        return request;
-        }
-        return request + target;
+        if ( req.target() == "/" ) return request;
+        if ( route->route_path == "/") return request + req.target().substr(1, req.target().size() - 1);
+
+        return "." + route->root + req.target();
     }
-	return request + route->index;
+	return request + "/" + route->index;
 }
 
 // Will take a request and handle it, which includes calling cgi
