@@ -7,6 +7,7 @@
 #include <fcntl.h>
 #include <fstream>
 #include <sstream>
+#include <algorithm>
 
 Server::Server( ServerCfg& cfg, ServerConfig& gen_cfg ) :_cfg( cfg ), _gen_cfg( gen_cfg ) {
 }
@@ -42,23 +43,24 @@ RouteCfg* find_route(const HttpRequest& req, std::vector<RouteCfg>& routes)
 *   @is_accepted_method:
 *    Checks if the requested method is accepted by the route
 */
-bool    is_accepted_method(RouteCfg* route, const std::string method) {
-    for (size_t i = 0; i < route->accepted_methods.size(); i++)
-        if (method == route->accepted_methods[i])
-            return true;
-    return false;
+bool is_accepted_method(RouteCfg* route, const std::string method) {
+    return std::find(route->accepted_methods.begin(), route->accepted_methods.end(), method) != route->accepted_methods.end();
 }
 
 /*
-*   @index_path:
+*   @get_path:
 *       If auto_index is true, returns user request
 *       If not, return predefined index
 *
 */
-std::string	index_path(const HttpRequest& req, RouteCfg* route)
+std::string	get_path(const HttpRequest& req, RouteCfg* route)
 {
+    // If root ends in '/', remove last char
+    if (!route->root.empty() && route->root[route->root.size() - 1] == '/')
+        route->root = route->root.substr(0, route->root.size() - 1);
+
     // Request is equal to relative path ('.') + root path + route path
-    std::string	request = "." + route->root + route->route_path;
+    std::string	request = route->root + route->route_path;
 
     if ( route->auto_index ) {
         // If target is '' or '/' , return request as it is
@@ -67,7 +69,7 @@ std::string	index_path(const HttpRequest& req, RouteCfg* route)
         if ( route->route_path == "/") return request + req.target().substr(1, req.target().size() - 1);
 
         // If none of the above, return relative root path + requested file (which already has route path)
-        return "." + route->root + req.target();
+        return route->root + req.target();
     }
     // If index was set, return request + predifined index
 	return request + "/" + route->index;
@@ -87,7 +89,7 @@ HttpResponse Server::handleRequest(const HttpRequest& req)
         return res;
     }
 
-    path = index_path(req, route);
+    path = get_path(req, route);
 
     if (::access(path.c_str(), F_OK) < 0)
     {
