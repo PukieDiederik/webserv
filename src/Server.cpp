@@ -57,11 +57,11 @@ bool    check_request_method(RouteCfg* route, const std::string method) {
 */
 std::string	index_path(const HttpRequest& req, RouteCfg* route)
 {
-    std::string	request = "." + route->root + "/";
+    std::cout << route->route_path << std::endl;
+    std::string	request = "." + route->root + "/" + route->route_path;
     std::string target = req.target().substr(route->route_path.length());
 
 	// Issue #30
-
     if ( route->auto_index ) {
         if ( req.target() == "/" ) {
 	        return request;

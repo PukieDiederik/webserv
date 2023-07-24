@@ -23,7 +23,7 @@ void	parseAutoIndex(RouteCfg &route_conf, std::istringstream &iss_c_line, int &b
 
 /*	@parseIndex:
  *		Checks if multiple index definitions
- *		Parses and adds the index token to route_conf
+ *		Parses and checks if is valid token to route_conf
  *		Checks if any additional tokens in string, if not comments throws error
  *
  */
@@ -35,6 +35,7 @@ void	parseIndex(RouteCfg &route_conf, std::istringstream &iss_c_line, int &bad_l
 	std::getline(iss_c_line, token, ' ');
 
 	token = ParserUtils::removeDelimiters(token);
+
 	route_conf.index = token;
 
 	std::getline(iss_c_line, ntoken, ' ');
