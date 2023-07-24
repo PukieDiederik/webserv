@@ -38,11 +38,37 @@ RouteCfg* find_route(const HttpRequest& req, std::vector<RouteCfg>& routes)
     return route_match.second;
 }
 
+/*
+*   @check_request_method:
+*    Checks if the requested method is accepted by the route
+*/
 bool    check_request_method(RouteCfg* route, const std::string method) {
     for (size_t i = 0; i < route->accepted_methods.size(); i++)
         if (method == route->accepted_methods[i])
             return true;
     return false;
+}
+
+/*
+*   @index_path:
+*       If auto_index is true, returns user request
+*       If not, return predefined index
+*
+*/
+std::string	index_path(const HttpRequest& req, RouteCfg* route)
+{
+    std::string	request = "." + route->root + "/";
+    std::string target = req.target().substr(route->route_path.length());
+
+	// Issue #30
+
+    if ( route->auto_index ) {
+        if ( req.target() == "/" ) {
+	        return request;
+        }
+        return request + target;
+    }
+	return request + route->index;
 }
 
 // Will take a request and handle it, which includes calling cgi
@@ -59,8 +85,8 @@ HttpResponse Server::handleRequest(const HttpRequest& req)
         return res;
     }
 
-    // Get and check path
-    path = route->root + "/" + req.target().substr(route->route_path.length());
+    path = index_path(req, route);
+
     if (::access(path.c_str(), F_OK) < 0)
     {
         // TODO: return 404 error page
@@ -74,8 +100,9 @@ HttpResponse Server::handleRequest(const HttpRequest& req)
         return res;
     }
 
+    std::cout << req.method() << std::endl;
     // Check if requested method is available
-    if ( check_request_method( route, req.method() ) ) {
+    if ( !(check_request_method( route, req.method() ) ) )  {
         res.set_status( 405, "Method Not Allowed" );
         return res;
     }
