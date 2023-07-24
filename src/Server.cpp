@@ -47,32 +47,95 @@ bool is_accepted_method(RouteCfg* route, const std::string method) {
     return std::find(route->accepted_methods.begin(), route->accepted_methods.end(), method) != route->accepted_methods.end();
 }
 
+// POSIX for @is_file, @is_directory and @list_dir
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <dirent.h>
+
+/*
+*   @is_file:
+*       Checks if given path points to a file
+*       Path must not end in '/'
+*/
+bool    is_file( const std::string& path ) {
+    // Path must not end in '/'
+    if ( path[path.size() - 1] == '/' ) return false;
+
+    struct stat buf;
+    
+    // Any error returns false
+    if ( stat(path.c_str(), &buf) != 0 ) return false;
+
+    // Check if is a file
+    return S_ISREG(buf.st_mode);
+}
+
+/*
+*   @is_directory:
+*/
+bool is_directory(const std::string& path) {
+    struct stat buf;
+    
+    // Any error returns false
+    if ( stat(path.c_str(), &buf) != 0 ) return false;
+    
+    // Check if is a dir
+    return S_ISDIR(buf.st_mode);
+}
+
+std::vector<std::string>    list_dir( const std::string& path ) {
+    std::vector<std::string>    dir_listing;
+
+    DIR* dir;
+    struct dirent* ent;
+
+    dir = opendir( path.c_str() );
+    
+    if ( dir != NULL ) {
+        while ( ( ent = readdir( dir ) ) != NULL ) {
+            dir_listing.push_back( ent->d_name );
+        }
+        closedir(dir);
+    }
+    return dir_listing;
+}
+
+#include <iostream>
 /*
 *   @get_path:
 *       If auto_index is true, returns user request
 *       If not, return predefined index
 *
 */
-std::string	get_path(const HttpRequest& req, RouteCfg* route)
-{
+int get_path(const HttpRequest& req, RouteCfg* route, std::string& path ) {
     // If root ends in '/', remove last char
     if (!route->root.empty() && route->root[route->root.size() - 1] == '/')
         route->root = route->root.substr(0, route->root.size() - 1);
 
     // Request is equal to relative path ('.') + root path + route path
-    std::string	request = route->root + route->route_path;
+    path = route->root + req.target();
 
-    if ( route->auto_index ) {
-        // If target is '' or '/' , return request as it is
-        if ( req.target() == "/" ) return request;
-        // If route_path == '/', return request as it is + target (what file the request is requesting)
-        if ( route->route_path == "/") return request + req.target().substr(1, req.target().size() - 1);
-
-        // If none of the above, return relative root path + requested file (which already has route path)
-        return route->root + req.target();
+    // if is a file return request
+    if ( is_file( path ) ) {
+        return 0;
     }
-    // If index was set, return request + predifined index
-	return request + "/" + route->index;
+    else if ( is_directory( path ) ) {
+        std::vector<std::string>    dir_listing = list_dir( path );
+        
+        // If index.html exists in said folder, return request
+        std::vector<std::string>::iterator it = std::find(dir_listing.begin(), dir_listing.end(), "index.html");
+        if ( it != dir_listing.end() ) {
+            if (!route->route_path.empty() && route->route_path[route->route_path.size() - 1] == '/')
+                route->route_path = route->route_path.substr(0, route->route_path.size() - 1);
+            path = route->root + route->route_path + "/" + "index.html";
+            return 0;
+        } else if ( route->auto_index ) { // else if (auto_index on), return list of contents
+            return 1;
+        }
+    }
+
+    path = "";
+    return 2;
 }
 
 // Will take a request and handle it, which includes calling cgi
@@ -89,7 +152,13 @@ HttpResponse Server::handleRequest(const HttpRequest& req)
         return res;
     }
 
-    path = get_path(req, route);
+    if ( get_path( req, route, path ) > 0) {
+        if ( path.empty() ) {
+            	res.set_status(500, "error");
+                return res;
+        }
+        //dir_listing = list_dir( path );
+    }
 
     if (::access(path.c_str(), F_OK) < 0)
     {
@@ -105,9 +174,12 @@ HttpResponse Server::handleRequest(const HttpRequest& req)
     }
 
     // Check if requested method is available
-    if ( !(is_accepted_method( route, req.method() ) ) )  {
-        res.set_status( 405, "Method Not Allowed" );
-        return res;
+    if ( !(route->accepted_methods.empty()) ) {
+        if ( !(is_accepted_method( route, req.method() ) ) )  {
+            // TODO: return 405 error page
+            res.set_status( 405, "Method Not Allowed" );
+            return res;
+        }
     }
 
     // TODO: check for CGI

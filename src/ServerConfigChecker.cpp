@@ -97,14 +97,6 @@ void	ServerConfig::checker() {
 					if (VERBOSE)
 						std::cout << "\t\t\t[" << *vit << "]" << std::endl;
 				}
-			} else { // If not accepted methods are set, set all available
-					(*jit).accepted_methods.push_back("GET");
-    				(*jit).accepted_methods.push_back("POST");
-    				(*jit).accepted_methods.push_back("PUT");
-    				(*jit).accepted_methods.push_back("PATCH");
-    				(*jit).accepted_methods.push_back("DELETE");
-					(*jit).accepted_methods.push_back("HEAD");
-					// More to be set
 			}
 		}
 		if (VERBOSE && !(_cgi_cmds.empty())) {
