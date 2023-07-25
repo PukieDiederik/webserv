@@ -252,5 +252,5 @@ std::string ServerConfig::getMimeType(const std::string& filename) {
         }
     }
 
-    return "plain/text";
+    return "text/plain";
 }
