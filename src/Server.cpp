@@ -8,6 +8,12 @@
 #include <fstream>
 #include <sstream>
 #include <algorithm>
+#include <string>
+
+// POSIX for @is_file, @is_directory and @list_dir
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <dirent.h>
 
 Server::Server( ServerCfg& cfg, ServerConfig& gen_cfg ) :_cfg( cfg ), _gen_cfg( gen_cfg ) {
 }
@@ -47,10 +53,6 @@ bool is_accepted_method(RouteCfg* route, const std::string method) {
     return std::find(route->accepted_methods.begin(), route->accepted_methods.end(), method) != route->accepted_methods.end();
 }
 
-// POSIX for @is_file, @is_directory and @list_dir
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <dirent.h>
 
 /*
 *   @is_file:
@@ -83,6 +85,10 @@ bool is_directory(const std::string& path) {
     return S_ISDIR(buf.st_mode);
 }
 
+/*
+*   @list_dir:
+*       Returns a vector of strings with all files/folders inside a dir
+*/
 std::vector<std::string>    list_dir( const std::string& path ) {
     std::vector<std::string>    dir_listing;
 
@@ -138,6 +144,53 @@ int get_path(const HttpRequest& req, RouteCfg* route, std::string& path ) {
     return 2;
 }
 
+/*
+*   @replace_occurrence:
+*       Replace all uccurrences of str2 by str3 in str1
+*/
+int replace_occurrence( std::string& str, const std::string& occurr, const std::string& replacement) {
+    size_t start_pos = 0;
+    int i = 0;
+
+    while( ( start_pos = str.find( occurr, start_pos)) != std::string::npos ) {
+        str.replace( start_pos, occurr.length(), replacement );
+        start_pos += replacement.length();
+        i++;
+    }
+    
+    return i;
+}
+
+HttpResponse    list_dir_res( HttpResponse& res, const HttpRequest& req, std::string path) {
+        res.body().clear();
+        
+        std::ifstream   file( DIRLISTING );
+        std::string     line_buff;
+
+        if ( !file.is_open() ) {
+            // TODO: return 500 error page
+            res.set_status(500, "Internal Server Error");
+            return res;
+        }
+        
+        std::string                 items;
+        std::vector<std::string>    dir_listing = list_dir( path );
+        for (size_t i = 0; i < dir_listing.size(); i++)
+            items.append( "<li><a href=\"" + req.target() + "/" + dir_listing[i] + "\">" + dir_listing[i] + "</a></li>" );
+
+        // Replace all occurs of [DIR] & [ITEMS] with dir name and dir listing
+        while( std::getline( file, line_buff) ) {
+            replace_occurrence( line_buff, "[DIR]", req.target() );
+            replace_occurrence( line_buff, "[ITEMS]", items);
+            res.body().append( line_buff );
+        }
+
+        res.set_status(200, "OK");
+        res.set_header("Content-Type", "text/html");
+        file.close();
+        return res;
+}
+
 // Will take a request and handle it, which includes calling cgi
 HttpResponse Server::handleRequest(const HttpRequest& req)
 {
@@ -152,14 +205,8 @@ HttpResponse Server::handleRequest(const HttpRequest& req)
         return res;
     }
 
-    if ( get_path( req, route, path ) > 0) {
-        if ( path.empty() ) {
-            	res.set_status(500, "error");
-                return res;
-        }
-        // TODO: return dir_listing = list_dir( path );
-        return res;
-    }
+    // If req not a file nor index.html found return dir listing
+    if ( get_path( req, route, path ) > 0 && !path.empty() ) return list_dir_res( res, req, path);
 
     if (::access(path.c_str(), F_OK) < 0)
     {
