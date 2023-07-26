@@ -6,7 +6,7 @@ FNAMES      = main.cpp\
 			  HttpMessage.cpp HttpResponse.cpp HttpRequest.cpp\
  			  ServerConfig.cpp ServerConfigCgiParser.cpp ServerConfigMimeParser.cpp\
  			  ServerConfigServerParser.cpp ServerConfigRouteParser.cpp ServerConfigChecker.cpp\
- 			  ParserUtils.cpp ParsingException.cpp ParsingUtils.cpp
+ 			  ParserUtils.cpp ParsingException.cpp ServerUtils.cpp
 
 SRCS        = $(addprefix $(SRCS_DIR)/,$(FNAMES))
 OBJS        = $(addprefix $(OBJS_DIR)/,$(notdir $(FNAMES:.cpp=.o)))
