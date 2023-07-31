@@ -79,7 +79,7 @@ class ServerConfig {
 		// This will store mime types and their respective content-type. The first
 		// argument is a file extensions, and the second argument is a content-type
 		std::map<std::string, std::string> _mime;
-    
+
 
 		ServerConfig();
 	protected:// Parser utils
@@ -104,6 +104,10 @@ class ServerConfig {
  		~ServerConfig();
 
 		ServerConfig& operator=(const ServerConfig& copy);
+
+		static std::string getMimeType(const std::string& filename);
+
+		static const std::map<std::string, std::string>	mimeTypes;
 };
 
 #endif

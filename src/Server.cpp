@@ -84,8 +84,7 @@ HttpResponse Server::handleRequest(const HttpRequest& req)
         std::ostringstream ss;
         ss << res.body().length();
         res.set_status(200, "OK");
-        //TODO add MIME type
-        res.set_header("Content-Type", "text/plain");
+        res.set_header("Content-Type", ServerConfig::getMimeType(path));
     }
     return res;
 }

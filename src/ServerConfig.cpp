@@ -216,3 +216,41 @@ ServerConfig& ServerConfig::operator=(const ServerConfig& copy)
     _servers = copy._servers;
     return *this;
 }
+
+// To populate the 'mimeTypes' variable
+std::map<std::string, std::string> createMimeTypes() {
+	std::map<std::string, std::string> mimeTypes;
+
+	mimeTypes[".pdf"] =  "application/pdf";
+
+	mimeTypes[".mp3"] =  "audio/mpeg";
+
+	mimeTypes[".jpeg"] = "image/jpeg";
+	mimeTypes[".jpg"] =  "image/jpeg";
+	mimeTypes[".png"] =  "image/png";
+	mimeTypes[".svg"] =  "image/svg+xml";
+
+	mimeTypes[".css"] =  "text/css";
+	mimeTypes[".html"] = "text/html";
+	mimeTypes[".htm"] =  "text/html";
+	mimeTypes[".js"] =   "text/javascript";
+
+	mimeTypes[".mp4"] =  "video/mp4";
+
+	return mimeTypes;
+}
+
+const std::map<std::string, std::string> ServerConfig::mimeTypes = createMimeTypes();
+
+std::string ServerConfig::getMimeType(const std::string& filename) {
+    size_t dotPos = filename.rfind('.');
+    if (dotPos != std::string::npos) {
+        std::string extension = filename.substr(dotPos);
+        std::map<std::string, std::string>::const_iterator it = mimeTypes.find(extension);
+        if (it != mimeTypes.end()) {
+            return it->second;
+        }
+    }
+
+    return "text/plain";
+}
