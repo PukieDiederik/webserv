@@ -22,7 +22,7 @@
 Router::Router()
 {
 
-    ServerConfig& cfg = ServerConfig::getInstance();
+    const ServerConfig& cfg = ServerConfig::getInstance();
     // Create servers
     // Loop over each server
     for (std::size_t i = 0; i < cfg._servers.size(); ++i)

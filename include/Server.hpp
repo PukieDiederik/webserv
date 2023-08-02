@@ -15,7 +15,7 @@ private:
     Server();
 public:
     // Will take a server config to set up this server, and a general config for stuff like CGI and mime types
-    Server(ServerCfg& cfg);
+    Server(const ServerCfg& cfg);
     Server(const Server& copy);
 
     ~Server();

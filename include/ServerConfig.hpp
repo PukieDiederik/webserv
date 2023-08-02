@@ -114,7 +114,7 @@ class ServerConfig {
 		static std::string getMimeType(const std::string& filename);
 
         static void initialize(const std::string& filepath);
-        static ServerConfig& getInstance();
+        static const ServerConfig& getInstance();
 };
 
 #endif

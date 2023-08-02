@@ -228,7 +228,7 @@ std::string ServerConfig::getMimeType(const std::string& filename) {
     // Extract file extension based on the period found
     std::string extension = filename.substr(dotPos);
 
-    ServerConfig& sc = ServerConfig::getInstance();
+    const ServerConfig& sc = ServerConfig::getInstance();
     ServerConfig::mime_tab_t::const_iterator it = sc._mime.find(extension);
     if (it != sc._mime.end())
         return it->second;
@@ -241,7 +241,7 @@ void ServerConfig::initialize(const std::string &filepath)
 {
     ServerConfig::_instance = ServerConfig(filepath);
 }
-ServerConfig& ServerConfig::getInstance()
+const ServerConfig& ServerConfig::getInstance()
 {
     return ServerConfig::_instance;
 }
