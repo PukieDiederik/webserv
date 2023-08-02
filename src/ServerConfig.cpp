@@ -142,6 +142,8 @@ ServerCfg	&ServerCfg::operator=(const ServerCfg& copy) {
  * 		Call respective block parser
  * 		Sets keywd_bracket false
 */
+
+ServerConfig::ServerConfig() {}
 ServerConfig::ServerConfig(const std::string& filepath) {
 	if (filepath.empty()) throw std::runtime_error("Error: bad config file");
 
@@ -253,4 +255,15 @@ std::string ServerConfig::getMimeType(const std::string& filename) {
     }
 
     return "text/plain";
+}
+
+ServerConfig ServerConfig::_instance;
+
+void ServerConfig::initialize(const std::string &filepath)
+{
+    ServerConfig::_instance = ServerConfig(filepath);
+}
+ServerConfig& ServerConfig::getInstance()
+{
+    return ServerConfig::_instance;
 }
