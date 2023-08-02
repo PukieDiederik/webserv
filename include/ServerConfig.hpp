@@ -12,6 +12,8 @@
 # define COMMENT 4
 # define ERROR 5
 
+# define MIME_DEFAULT "text/plain"
+
 # ifndef VERBOSE
 # define VERBOSE false
 # endif
@@ -67,6 +69,8 @@ struct ServerCfg {
 };
 
 class ServerConfig {
+    public:
+        typedef std::map<std::string, std::string> mime_tab_t;
 	private:
         static ServerConfig _instance;
 
@@ -80,7 +84,7 @@ class ServerConfig {
 
 		// This will store mime types and their respective content-type. The first
 		// argument is a file extensions, and the second argument is a content-type
-		std::map<std::string, std::string> _mime;
+		mime_tab_t _mime;
 
         // Constructors/Destructors
 		ServerConfig();
@@ -108,8 +112,6 @@ class ServerConfig {
 		ServerConfig& operator=(const ServerConfig& copy);
 
 		static std::string getMimeType(const std::string& filename);
-
-		static const std::map<std::string, std::string>	mimeTypes;
 
         static void initialize(const std::string& filepath);
         static ServerConfig& getInstance();
