@@ -142,6 +142,8 @@ ServerCfg	&ServerCfg::operator=(const ServerCfg& copy) {
  * 		Call respective block parser
  * 		Sets keywd_bracket false
 */
+
+ServerConfig::ServerConfig() {}
 ServerConfig::ServerConfig(const std::string& filepath) {
 	if (filepath.empty()) throw std::runtime_error("Error: bad config file");
 
@@ -217,40 +219,29 @@ ServerConfig& ServerConfig::operator=(const ServerConfig& copy)
     return *this;
 }
 
-// To populate the 'mimeTypes' variable
-std::map<std::string, std::string> createMimeTypes() {
-	std::map<std::string, std::string> mimeTypes;
-
-	mimeTypes[".pdf"] =  "application/pdf";
-
-	mimeTypes[".mp3"] =  "audio/mpeg";
-
-	mimeTypes[".jpeg"] = "image/jpeg";
-	mimeTypes[".jpg"] =  "image/jpeg";
-	mimeTypes[".png"] =  "image/png";
-	mimeTypes[".svg"] =  "image/svg+xml";
-
-	mimeTypes[".css"] =  "text/css";
-	mimeTypes[".html"] = "text/html";
-	mimeTypes[".htm"] =  "text/html";
-	mimeTypes[".js"] =   "text/javascript";
-
-	mimeTypes[".mp4"] =  "video/mp4";
-
-	return mimeTypes;
-}
-
-const std::map<std::string, std::string> ServerConfig::mimeTypes = createMimeTypes();
-
 std::string ServerConfig::getMimeType(const std::string& filename) {
     size_t dotPos = filename.rfind('.');
-    if (dotPos != std::string::npos) {
-        std::string extension = filename.substr(dotPos);
-        std::map<std::string, std::string>::const_iterator it = mimeTypes.find(extension);
-        if (it != mimeTypes.end()) {
-            return it->second;
-        }
-    }
+    // Check if filename contains a period
+    if (dotPos == std::string::npos)
+        return MIME_DEFAULT;
 
-    return "text/plain";
+    // Extract file extension based on the period found
+    std::string extension = filename.substr(dotPos);
+
+    const ServerConfig& sc = ServerConfig::getInstance();
+    ServerConfig::mime_tab_t::const_iterator it = sc._mime.find(extension);
+    if (it != sc._mime.end())
+        return it->second;
+    return MIME_DEFAULT;
+}
+
+ServerConfig ServerConfig::_instance;
+
+void ServerConfig::initialize(const std::string &filepath)
+{
+    ServerConfig::_instance = ServerConfig(filepath);
+}
+const ServerConfig& ServerConfig::getInstance()
+{
+    return ServerConfig::_instance;
 }

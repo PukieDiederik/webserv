@@ -8,15 +8,14 @@
 #include <fstream>
 #include <sstream>
 
-Server::Server(ServerCfg& cfg, ServerConfig& gen_cfg) :_cfg(cfg), _gen_cfg(gen_cfg) { }
-Server::Server(const Server& copy) :_cfg(copy._cfg), _gen_cfg(copy._gen_cfg) { }
+Server::Server(const ServerCfg& cfg) :_cfg(cfg) { }
+Server::Server(const Server& copy) :_cfg(copy._cfg){ }
 
 Server::~Server() { }
 
 Server& Server::operator=(const Server& copy)
 {
     _cfg = copy._cfg;
-    _gen_cfg = copy._gen_cfg;
     return *this;
 }
 
