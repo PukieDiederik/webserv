@@ -12,6 +12,8 @@ std::string HttpRequest::toStringStart() const
     return result.str();
 }
 
+HttpRequest::HttpRequest() { }
+
 HttpRequest::HttpRequest(const std::string& in) : HttpMessage()
 {
     std::istringstream is(in);
