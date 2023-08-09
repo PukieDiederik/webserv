@@ -2,14 +2,18 @@
 #include "ServerConfig.hpp"
 #include "HttpRequest.hpp"
 #include "HttpResponse.hpp"
+#include "ServerUtils.hpp"
 #include <iostream>
 #include <unistd.h>
 #include <fcntl.h>
 #include <fstream>
 #include <sstream>
+#include <algorithm>
+#include <string>
 
-Server::Server(const ServerCfg& cfg) :_cfg(cfg) { }
-Server::Server(const Server& copy) :_cfg(copy._cfg){ }
+Server::Server( ServerCfg& cfg, ServerConfig& gen_cfg ) :_cfg( cfg ), _gen_cfg( gen_cfg ) {}
+
+Server::Server( const Server& copy ) :_cfg( copy._cfg ), _gen_cfg( copy._gen_cfg ) {}
 
 Server::~Server() { }
 
@@ -34,6 +38,38 @@ RouteCfg* find_route(const HttpRequest& req, std::vector<RouteCfg>& routes)
     return route_match.second;
 }
 
+HttpResponse    list_dir_res( HttpResponse& res, const HttpRequest& req, std::string path) {
+        res.body().clear();
+        
+        std::ifstream   file( DIRLISTING );
+        std::string     line_buff;
+
+        if ( !file.is_open() ) {
+            // TODO: return 500 error page
+            res.set_status(500, "Internal Server Error");
+            return res;
+        }
+        
+        std::string                 items;
+        std::vector<std::string>    dir_listing = list_dir( path );
+        for ( size_t i = 0; i < dir_listing.size(); i++ )
+            items.append( "<li><a href=\"" + req.target() + "/" + dir_listing[i] + "\">" + dir_listing[i] + "</a></li>" );
+
+        // Replace all occurs of [DIR] & [ITEMS] with dir name and dir listing
+        while( std::getline( file, line_buff) ) {
+            replace_occurrence( line_buff, "[DIR]", req.target() );
+            replace_occurrence( line_buff, "[ITEMS]", items);
+            res.body().append( line_buff );
+        }
+
+        res.set_status( 200, "OK" );
+        res.set_header( "Content-Type", "text/html" );
+        file.close();
+        return res;
+}
+
+
+
 // Will take a request and handle it, which includes calling cgi
 HttpResponse Server::handleRequest(const HttpRequest& req)
 {
@@ -48,8 +84,8 @@ HttpResponse Server::handleRequest(const HttpRequest& req)
         return res;
     }
 
-    // Get and check path
-    path = route->root + "/" + req.target().substr(route->route_path.length());
+    path = get_path( req, route);
+
     if (::access(path.c_str(), F_OK) < 0)
     {
         // TODO: return 404 error page
@@ -63,10 +99,27 @@ HttpResponse Server::handleRequest(const HttpRequest& req)
         return res;
     }
 
+    // Check if requested method is available
+    if ( !(route->accepted_methods.empty()) ) {
+        if ( !(is_accepted_method( route, req.method() ) ) )  {
+            // TODO: return 405 error page
+            res.set_status( 405, "Method Not Allowed" );
+            return res;
+        }
+    }
+
     // TODO: check for CGI
 
     if (req.method() == "GET")
     {
+    	switch ( index_path( req, route, path) ) {
+	    case 1:
+		return list_dir_res( res, req, path);
+	    case 2:
+		// TODO: return 404 error page
+		res.set_status( 405, "Not Found" );
+		return res;
+	}
 
         std::ifstream file(path.c_str());
         std::string buff(BUFFER_SIZE, '\0');
@@ -83,6 +136,7 @@ HttpResponse Server::handleRequest(const HttpRequest& req)
         std::ostringstream ss;
         ss << res.body().length();
         res.set_status(200, "OK");
+
         res.set_header("Content-Type", ServerConfig::getMimeType(path));
     }
     return res;

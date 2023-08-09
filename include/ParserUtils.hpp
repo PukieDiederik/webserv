@@ -33,4 +33,8 @@ namespace ParserUtils {
 
 	bool	strAllSpaces(const std::string &line);
 }
+
+// Parsing utils from file "ParsingUtils.hpp"
+std::string trimSpace(std::string s);
+
 #endif
