@@ -87,7 +87,7 @@ class ServerConfig {
 
 		// This will store mime types and their respective content-type. The first
 		// argument is a file extensions, and the second argument is a content-type
-		std::map<std::string, std::string>	_mime;
+		mime_tab_t _mime;
     
 
         // Constructors/Destructors

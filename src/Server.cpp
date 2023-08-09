@@ -11,9 +11,10 @@
 #include <algorithm>
 #include <string>
 
-Server::Server( const ServerCfg& cfg ) : _cfg( cfg ) {}
 
-Server::Server( const Server& copy ) : _cfg( copy._cfg ) {}
+Server::Server(const ServerCfg& cfg) :_cfg(cfg) {}
+
+Server::Server(const Server& copy) :_cfg(copy._cfg) {}
 
 Server::~Server() { }
 
@@ -85,6 +86,7 @@ HttpResponse Server::handleRequest(const HttpRequest& req)
     }
 
     path = get_path( req, route);
+    path = path.replace(0,8,"var/www/");
 
     if (::access(path.c_str(), F_OK) < 0)
     {
