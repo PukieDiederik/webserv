@@ -14,10 +14,10 @@ int main(int argc, char **argv) {
 
 	std::cout << "\nIf any possible errors do occur: \n" << std::endl;
 	try {
-		ServerConfig sc(argv[1]);
+		ServerConfig::initialize(argv[1]);
 
         // Start listening
-        Router r(sc);
+        Router r;
 
         std::cout << "Started listening" << std::endl;
         r.listen();

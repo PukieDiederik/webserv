@@ -85,6 +85,8 @@ ServerCfg	&ServerCfg::operator=(const ServerCfg& copy) {
  * 			success:
  * 			error: throws corresponding error
 */
+
+ServerConfig::ServerConfig() {}
 ServerConfig::ServerConfig(const std::string& filepath) {
 	if (filepath.empty()) throw std::runtime_error("Error: bad config file");
 
@@ -157,4 +159,31 @@ ServerConfig& ServerConfig::operator=(const ServerConfig& copy)
     _mime = copy._mime;
     _servers = copy._servers;
     return *this;
+}
+
+std::string ServerConfig::getMimeType(const std::string& filename) {
+    size_t dotPos = filename.rfind('.');
+    // Check if filename contains a period
+    if (dotPos == std::string::npos)
+        return MIME_DEFAULT;
+
+    // Extract file extension based on the period found
+    std::string extension = filename.substr(dotPos);
+
+    const ServerConfig& sc = ServerConfig::getInstance();
+    ServerConfig::mime_tab_t::const_iterator it = sc._mime.find(extension);
+    if (it != sc._mime.end())
+        return it->second;
+    return MIME_DEFAULT;
+}
+
+ServerConfig ServerConfig::_instance;
+
+void ServerConfig::initialize(const std::string &filepath)
+{
+    ServerConfig::_instance = ServerConfig(filepath);
+}
+const ServerConfig& ServerConfig::getInstance()
+{
+    return ServerConfig::_instance;
 }

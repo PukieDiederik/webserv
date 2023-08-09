@@ -19,14 +19,16 @@
 // Timeout in seconds
 #define TIMEOUT_TIME 15
 
-Router::Router(ServerConfig& cfg) : _cfg(cfg)
+Router::Router()
 {
+
+    const ServerConfig& cfg = ServerConfig::getInstance();
     // Create servers
     // Loop over each server
-    for (std::size_t i = 0; i < _cfg._servers.size(); ++i)
+    for (std::size_t i = 0; i < cfg._servers.size(); ++i)
     {
         // Create server objects
-        _servers.push_back(Server(_cfg._servers[i], _cfg));
+        _servers.push_back(Server(cfg._servers[i]));
 
         // Start listening to ports
         if (!_socket_fds.count(_servers.back().cfg().port)) { // If the port hasn't been opened yet, try to open it
@@ -54,22 +56,13 @@ Router::Router(ServerConfig& cfg) : _cfg(cfg)
     // Start listening to ports
 }
 
-Router::Router(const Router& copy) :_cfg(copy._cfg) { }
-
 Router::~Router()
 {
-    for(std::size_t i = 0; i < _cfg._servers.size(); ++i)
+    for(std::size_t i = 0; i < ServerConfig::getInstance()._servers.size(); ++i)
     {
         close(_socket_fds[i]);
     }
 }
-
-Router& Router::operator=(const Router& copy)
-{
-    _cfg = copy._cfg;
-    return *this;
-}
-
 
 // Helper functions
 struct event

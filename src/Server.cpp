@@ -20,7 +20,6 @@ Server::~Server() { }
 Server& Server::operator=(const Server& copy)
 {
     _cfg = copy._cfg;
-    _gen_cfg = copy._gen_cfg;
     return *this;
 }
 
@@ -137,8 +136,8 @@ HttpResponse Server::handleRequest(const HttpRequest& req)
         std::ostringstream ss;
         ss << res.body().length();
         res.set_status(200, "OK");
-        //TODO add MIME type
-        res.set_header("Content-Type", "text/html");
+
+        res.set_header("Content-Type", ServerConfig::getMimeType(path));
     }
     return res;
 }

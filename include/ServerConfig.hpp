@@ -14,6 +14,7 @@
 # define COMMENT 4
 # define ERROR 5
 
+# define MIME_DEFAULT "text/plain"
 
 # ifndef VERBOSE
 # define VERBOSE false
@@ -71,7 +72,11 @@ struct ServerCfg {
 };
 
 class ServerConfig {
+    public:
+        typedef std::map<std::string, std::string> mime_tab_t;
 	private:
+        static ServerConfig _instance;
+
 		// A list of commands which will be used in 'cgi'. Having one collecion
 		// store all of these will prevent us from having to store many duplicate
 		// commands. This vector will store null terminated arrays.
@@ -85,7 +90,11 @@ class ServerConfig {
 		std::map<std::string, std::string>	_mime;
     
 
+        // Constructors/Destructors
 		ServerConfig();
+        ServerConfig(const std::string& filepath); // will take a file to parse
+        ServerConfig(const ServerConfig& copy);
+
 	protected:// Parser utils
 		void	parseCgi(int &bad_line, bool &keywd_bracket, std::ifstream &fd_conf);
 		void	parseMime(int &bad_line, bool &keywd_bracket, std::ifstream &fd_conf);
@@ -101,13 +110,15 @@ class ServerConfig {
 		void	checker();
 	public:
 		std::vector<ServerCfg>	_servers;
-		// Constructors/Destructors
-		ServerConfig(const std::string& filepath); // will take a file to parse
-		ServerConfig(const ServerConfig& copy);
 
  		~ServerConfig();
 
 		ServerConfig& operator=(const ServerConfig& copy);
+
+		static std::string getMimeType(const std::string& filename);
+
+        static void initialize(const std::string& filepath);
+        static const ServerConfig& getInstance();
 };
 
 #endif
