@@ -86,7 +86,6 @@ HttpResponse Server::handleRequest(const HttpRequest& req)
     }
 
     path = get_path( req, route);
-    path = path.replace(0,8,"var/www/");
 
     if (::access(path.c_str(), F_OK) < 0)
     {
