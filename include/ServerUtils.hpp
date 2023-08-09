@@ -5,7 +5,8 @@
 #include "HttpRequest.hpp"
 #include <string>
 
-int		get_path( const HttpRequest& req, RouteCfg* route, std::string& path );
+std::string	get_path( const HttpRequest& req, RouteCfg* route );
+int		index_path( const HttpRequest& req, RouteCfg* route, std::string& path );
 int		replace_occurrence( std::string& str, const std::string& occurr, const std::string& replacement);
 bool	is_accepted_method( RouteCfg* route, const std::string method );
 bool    is_file( const std::string& path );

@@ -1,5 +1,4 @@
 #include "ServerUtils.hpp"
-
 #include <vector>
 #include <string>
 #include <sys/types.h>
@@ -9,21 +8,36 @@
 #include "ServerConfig.hpp"
 #include "HttpRequest.hpp"
 #include "HttpResponse.hpp"
+#include <iostream>
 
 /*
-*   @get_path:
+ *	get_path:
+ *		Retrieves path from request
+ * */
+std::string	get_path( const HttpRequest& req, RouteCfg* route ) {
+	std::string	path;
+
+	// Check if route->root end in '/' => rmv it
+	std::string	route_root = route->root;
+	if ( !route_root.empty() && route_root[route_root.size() - 1] == '/')
+		route_root = route_root.substr( 0, route_root.size() - 1 );
+
+	// Remove dup from path (route->root & req.target() both have route_path)
+	std::string	req_target = req.target();
+	size_t	pos = req_target.find( route->route_path );
+	if ( pos != std::string::npos )
+		req_target.erase( pos, route->route_path.length() );
+	path = route_root + req_target;
+	return path;
+}
+
+/*
+*   @get_path_index:
 *       If auto_index is true, returns user request
 *       If not, return predefined index
 *
 */
-int get_path( const HttpRequest& req, RouteCfg* route, std::string& path ) {
-    // If root ends in '/', remove last char
-    if ( !route->root.empty() && route->root[route->root.size() - 1] == '/' )
-        route->root = route->root.substr(0, route->root.size() - 1);
-
-    // Request is equal to relative path ('.') + root path + route path
-    path = route->root + req.target();
-
+int	index_path( const HttpRequest& req, RouteCfg* route, std::string& path ) {
     // if is a file return request
     if ( is_file( path ) ) {
         return 0;
@@ -34,16 +48,17 @@ int get_path( const HttpRequest& req, RouteCfg* route, std::string& path ) {
         // If index.html exists in said folder, return request
         std::vector<std::string>::iterator it = std::find(dir_listing.begin(), dir_listing.end(), "index.html");
         if ( it != dir_listing.end() ) {
-            if (!route->route_path.empty() && route->route_path[route->route_path.size() - 1] == '/')
-                route->route_path = route->route_path.substr(0, route->route_path.size() - 1);
-            path = route->root + route->route_path + "/" + "index.html";
-            return 0;
+		std::string	part_path = route->route_path;
+		if ( !route->route_path.empty() && route->route_path[route->route_path.size() - 1] == '/' )
+			part_path = route->route_path.substr(0, route->route_path.size() - 1);
+		// Remove dup when root is defined in route
+		path = route->root + part_path + "/" + "index.html";
+		return 0;
         } else if ( route->auto_index ) { // else if (auto_index on), return list of contents
             return 1;
         }
     }
 
-    path = "";
     return 2;
 }
 

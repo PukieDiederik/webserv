@@ -69,6 +69,8 @@ HttpResponse    list_dir_res( HttpResponse& res, const HttpRequest& req, std::st
         return res;
 }
 
+
+
 // Will take a request and handle it, which includes calling cgi
 HttpResponse Server::handleRequest(const HttpRequest& req)
 {
@@ -83,8 +85,7 @@ HttpResponse Server::handleRequest(const HttpRequest& req)
         return res;
     }
 
-    // If req not a file nor index.html found return dir listing
-    if ( get_path( req, route, path ) > 0 && !path.empty() ) return list_dir_res( res, req, path);
+    path = get_path( req, route);
 
     if (::access(path.c_str(), F_OK) < 0)
     {
@@ -112,6 +113,14 @@ HttpResponse Server::handleRequest(const HttpRequest& req)
 
     if (req.method() == "GET")
     {
+    	switch ( index_path( req, route, path) ) {
+	    case 1:
+		return list_dir_res( res, req, path);
+	    case 2:
+		// TODO: return 404 error page
+		res.set_status( 405, "Not Found" );
+		return res;
+	}
 
         std::ifstream file(path.c_str());
         std::string buff(BUFFER_SIZE, '\0');

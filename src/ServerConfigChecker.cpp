@@ -63,11 +63,13 @@ void	ServerConfig::checker() {
 		    if ((*jit).is_redirect && VERBOSE) std::cout << "\t\tRoute redirection:\n\t\t\t[" << (*jit).redirect_to << "]" << std::endl;
 
 			// Issue #29
+		    std::cout << (*jit).root << std::endl;
+			if ( !(ParserUtils::isValidPath( (*jit).root ) ) ) throw std::runtime_error("invalid route root path");
 			if ( (*jit).root.empty() )  {
 				// if root tag was not given, then the route_root = server_root
 				(*jit).root = (*it).root_dir;
 			} else if ( (*jit).root[0] != '/' ) {
-				(*jit).root = (*it).root_dir + "/" + (*jit).root;
+				(*jit).root = (*it).root_dir + (*jit).root;
 			}
 
 			if (VERBOSE)
