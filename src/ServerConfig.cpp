@@ -168,7 +168,7 @@ std::string ServerConfig::getMimeType(const std::string& filename) {
         return MIME_DEFAULT;
 
     // Extract file extension based on the period found
-    std::string extension = filename.substr(dotPos);
+    std::string extension = filename.substr(dotPos + 1);
 
     const ServerConfig& sc = ServerConfig::getInstance();
     ServerConfig::mime_tab_t::const_iterator it = sc._mime.find(extension);
