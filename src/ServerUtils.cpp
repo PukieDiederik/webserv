@@ -27,7 +27,8 @@ std::string	get_path( const HttpRequest& req, RouteCfg* route ) {
 	size_t	pos = req_target.find( route->route_path );
 	if ( pos != std::string::npos )
 		req_target.erase( pos, route->route_path.length() );
-	path = route_root + req_target;
+	path = route_root + "/" + req_target;
+
 	return path;
 }
 
@@ -46,13 +47,15 @@ int	index_path( const HttpRequest& req, RouteCfg* route, std::string& path ) {
         std::vector<std::string>    dir_listing = list_dir( path );
         
         // If index.html exists in said folder, return request
-        std::vector<std::string>::iterator it = std::find(dir_listing.begin(), dir_listing.end(), "index.html");
+        std::vector<std::string>::iterator it = std::find(dir_listing.begin(), dir_listing.end(), route->index);
+
         if ( it != dir_listing.end() ) {
 		std::string	part_path = route->route_path;
 		if ( !route->route_path.empty() && route->route_path[route->route_path.size() - 1] == '/' )
 			part_path = route->route_path.substr(0, route->route_path.size() - 1);
 		// Remove dup when root is defined in route
-		path = route->root + part_path + "/" + "index.html";
+		path = route->root + part_path + route->index;
+
 		return 0;
         } else if ( route->auto_index ) { // else if (auto_index on), return list of contents
             return 1;
