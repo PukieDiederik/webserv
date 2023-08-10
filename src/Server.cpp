@@ -114,7 +114,7 @@ HttpResponse	response_head( const HttpRequest& req, std::string path, HttpRespon
 			return res;
 	    	case INVALIDPATH:
 			// TODO: return 404 error page
-			res.set_status( 404, "Filemaster  Not Found" );
+			res.set_status( 404, "File Not Found" );
 			return res;
 	}
     return res;
@@ -135,9 +135,6 @@ HttpResponse Server::handleRequest(const HttpRequest& req)
     }
 
     path = get_path( req, route);
-    std::cout << "route path: " << route->route_path << std::endl;
-    std::cout << "route root: " << route->root << std::endl;
-    std::cout << "path in server: " << path << std::endl;
 
     if (!is_directory( path ) && ::access(path.c_str(), F_OK) < 0)
     {

@@ -25,11 +25,6 @@ std::string	remove_slash_dups( std::string str) {
 std::string	get_path( const HttpRequest& req, RouteCfg* route ) {
 	std::string	path;
 
-	// Check if route->root end in '/' => rmv it
-	//std::string	route_root = route->root;
-	//if ( !route_root.empty() && route_root[route_root.size() - 1] == '/')
-	//	route_root = route_root.substr( 0, route_root.size() - 1 );
-
 	// Remove dup from path (route->root & req.target() both have route_path)
 	std::string	req_target = req.target();
 	size_t	pos = req_target.find( route->route_path );
