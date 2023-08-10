@@ -11,6 +11,9 @@
 #include <algorithm>
 #include <string>
 
+# define VALIDPATH 0
+# define AUTOINDEX 1
+# define INVALIDPATH 2
 
 Server::Server(const ServerCfg& cfg) :_cfg(cfg) {}
 
@@ -69,7 +72,53 @@ HttpResponse    list_dir_res( HttpResponse& res, const HttpRequest& req, std::st
         return res;
 }
 
+HttpResponse	response_get( const HttpRequest& req, std::string path, HttpResponse& res, RouteCfg* route ) {
+    	switch ( index_path( req, route, path) ) {
+	    case AUTOINDEX:
+		return list_dir_res( res, req, path);
+	    case INVALIDPATH:
+		// TODO: return 404 error page
+		res.set_status( 404, "File Not Found" );
+		return res;
+	}
 
+        std::ifstream file(path.c_str());
+        std::string buff(BUFFER_SIZE, '\0');
+        if (!file.is_open())
+        {
+            // TODO: return 500 error page
+            res.set_status(500, "Internal Server Error");
+            return res;
+        }
+
+        while(file.read(&buff[0], BUFFER_SIZE).gcount() > 0)
+            res.body().append(buff, 0, file.gcount());
+
+        std::ostringstream ss;
+        ss << res.body().length();
+        res.set_status(200, "OK");
+
+        res.set_header("Content-Type", ServerConfig::getMimeType(path));
+    return res;
+}
+
+HttpResponse	response_head( const HttpRequest& req, std::string path, HttpResponse& res, RouteCfg* route ) {
+    	switch ( index_path( req, route, path) ) {
+		case VALIDPATH:
+			res.set_status(200, "OK");
+			res.set_header("Content-type", ServerConfig::getMimeType( path ));
+			return res;
+	    	case AUTOINDEX:
+			res.set_status(200, "OK");
+			res.set_header("Content-type", ServerConfig::getMimeType( DIRLISTING ));
+			return res;
+	    	case INVALIDPATH:
+			// TODO: return 404 error page
+			res.set_status( 404, "Filemaster  Not Found" );
+			return res;
+	}
+    return res;
+}
 
 // Will take a request and handle it, which includes calling cgi
 HttpResponse Server::handleRequest(const HttpRequest& req)
@@ -86,8 +135,11 @@ HttpResponse Server::handleRequest(const HttpRequest& req)
     }
 
     path = get_path( req, route);
+    std::cout << "route path: " << route->route_path << std::endl;
+    std::cout << "route root: " << route->root << std::endl;
+    std::cout << "path in server: " << path << std::endl;
 
-    if (::access(path.c_str(), F_OK) < 0)
+    if (!is_directory( path ) && ::access(path.c_str(), F_OK) < 0)
     {
         // TODO: return 404 error page
         res.set_status(404, "File Not Found");
@@ -112,34 +164,10 @@ HttpResponse Server::handleRequest(const HttpRequest& req)
     // TODO: check for CGI
 
     if (req.method() == "GET")
-    {
-    	switch ( index_path( req, route, path) ) {
-	    case 1:
-		return list_dir_res( res, req, path);
-	    case 2:
-		// TODO: return 404 error page
-		res.set_status( 405, "Not Found" );
-		return res;
-	}
+	    return response_get( req, path, res, route);
+    else if (req.method() == "HEAD")
+	    return response_head( req, path, res, route);
 
-        std::ifstream file(path.c_str());
-        std::string buff(BUFFER_SIZE, '\0');
-        if (!file.is_open())
-        {
-            // TODO: return 500 error page
-            res.set_status(500, "Internal Server Error");
-            return res;
-        }
-
-        while(file.read(&buff[0], BUFFER_SIZE).gcount() > 0)
-            res.body().append(buff, 0, file.gcount());
-
-        std::ostringstream ss;
-        ss << res.body().length();
-        res.set_status(200, "OK");
-
-        res.set_header("Content-Type", ServerConfig::getMimeType(path));
-    }
     return res;
 }
 

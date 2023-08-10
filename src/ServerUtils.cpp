@@ -10,6 +10,14 @@
 #include "HttpResponse.hpp"
 #include <iostream>
 
+std::string	remove_slash_dups( std::string str) {
+	std::string result = str;
+	std::string::size_type pos = 0;
+	while ((pos = result.find("//", pos)) != std::string::npos)
+		result.erase(pos, 1);
+	return result;
+}
+
 /*
  *	get_path:
  *		Retrieves path from request
@@ -18,17 +26,17 @@ std::string	get_path( const HttpRequest& req, RouteCfg* route ) {
 	std::string	path;
 
 	// Check if route->root end in '/' => rmv it
-	std::string	route_root = route->root;
-	if ( !route_root.empty() && route_root[route_root.size() - 1] == '/')
-		route_root = route_root.substr( 0, route_root.size() - 1 );
+	//std::string	route_root = route->root;
+	//if ( !route_root.empty() && route_root[route_root.size() - 1] == '/')
+	//	route_root = route_root.substr( 0, route_root.size() - 1 );
 
 	// Remove dup from path (route->root & req.target() both have route_path)
 	std::string	req_target = req.target();
 	size_t	pos = req_target.find( route->route_path );
 	if ( pos != std::string::npos )
 		req_target.erase( pos, route->route_path.length() );
-	path = route_root + "/" + req_target;
-
+	path = route->root + "/" + req_target;
+	path = remove_slash_dups( path );
 	return path;
 }
 
@@ -70,7 +78,7 @@ int	index_path( const HttpRequest& req, RouteCfg* route, std::string& path ) {
 *   @replace_occurrence:
 *       Replace all uccurrences of str2 by str3 in str1
 */
-int replace_occurrence( std::string& str, const std::string& occurr, const std::string& replacement) {
+int	replace_occurrence( std::string& str, const std::string& occurr, const std::string& replacement) {
     size_t start_pos = 0;
     int i = 0;
 
@@ -87,7 +95,7 @@ int replace_occurrence( std::string& str, const std::string& occurr, const std::
 *   @is_accepted_method:
 *    Checks if the requested method is accepted by the route
 */
-bool is_accepted_method( RouteCfg* route, const std::string method ) {
+bool	is_accepted_method( RouteCfg* route, const std::string method ) {
     return std::find(route->accepted_methods.begin(), route->accepted_methods.end(), method) != route->accepted_methods.end();
 }
 
@@ -112,7 +120,7 @@ bool    is_file( const std::string& path ) {
 /*
 *   @is_directory:
 */
-bool is_directory( const std::string& path ) {
+bool	is_directory( const std::string& path ) {
     struct stat buf;
     
     // Any error returns false

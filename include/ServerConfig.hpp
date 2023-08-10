@@ -6,14 +6,14 @@
 # include <vector>
 # include <fstream>
 
-# define DIRLISTING	"./var/www/templates/dir_listing.html"
-
+// Parser
 # define SERVER 1
 # define CGI 2
 # define MIME 3
 # define COMMENT 4
 # define ERROR 5
 
+# define DIRLISTING	"./var/www/templates/dir_listing.html"
 # define MIME_DEFAULT "text/plain"
 
 # ifndef VERBOSE
