@@ -19,19 +19,38 @@ std::string	remove_slash_dups( std::string str) {
 }
 
 /*
- *	get_path:
- *		Retrieves path from request
+ *  startsWith:
+ *      Check if string starts with substring
  * */
-std::string	get_path( const HttpRequest& req, RouteCfg* route ) {
-	std::string	path;
+bool    startsWith(const std::string& str, const std::string& prefix) {
+    if (str.length() < prefix.length()) {
+        return false;
+    }
 
-	// Remove dup from path (route->root & req.target() both have route_path)
-	std::string	req_target = req.target();
-	size_t	pos = req_target.find( route->route_path );
-	if ( pos != std::string::npos )
-		req_target.erase( pos, route->route_path.length() );
+    return !str.compare(0, prefix.length(), prefix);
+}
+
+/*
+ *  get_path:
+ *      Retrieves path from request
+ * */
+std::string	get_path(const HttpRequest& req, RouteCfg* route)
+{
+	return get_path(req.target(), route);
+}
+
+std::string	get_path(std::string req_target, RouteCfg* route)
+{
+	std::string path;
+
+	if (startsWith(req_target, route->route_path))
+		req_target.erase(0, route->route_path.length());
+
 	path = route->root + "/" + req_target;
-	path = remove_slash_dups( path );
+	path = remove_slash_dups(path);
+
+    std::cout << std::endl << "path " << path << std::endl << std::endl;
+
 	return path;
 }
 

@@ -56,3 +56,24 @@ std::string HttpResponse::toString()
 
     return result.str();
 }
+
+std::map<short, std::string>    createStatusCodeMap() {
+    std::map<short, std::string> map;
+
+    map.insert(std::make_pair(200, "OK"));
+    map.insert(std::make_pair(403, "Forbidden"));
+    map.insert(std::make_pair(404, "File Not Found"));
+    map.insert(std::make_pair(405, "Method Not Allowed"));
+    map.insert(std::make_pair(500, "Internal Server Error"));
+
+    return map;
+}
+
+const std::map<short, std::string>  HttpResponse::_status_code_map = createStatusCodeMap();
+
+std::string HttpResponse::get_status_code_description(const int statusCode)
+{
+    std::map<short, std::string>::const_iterator    it = _status_code_map.find(statusCode);
+
+    return (it != HttpResponse::_status_code_map.end()) ? it->second : "Undefined";
+}
