@@ -52,7 +52,7 @@ HttpResponse    Server::handleRequest(const HttpRequest& req)
     // Check if a valid route has been found
     if (!route) {
         // TODO: return 404 error page
-        res.set_status(404, HttpResponse::get_status_code_description(404));
+        res.set_status(404);
         return res;
     }
 
@@ -130,7 +130,7 @@ HttpResponse    list_dir_res(const HttpRequest& req, std::string path, HttpRespo
         res.body().append(line_buff);
     }
 
-    res.set_status(200, HttpResponse::get_status_code_description(200));
+    res.set_status(200);
     res.set_header("Content-Type", "text/html");
     file.close();
 
@@ -159,7 +159,7 @@ HttpResponse    response_get(const HttpRequest& req, std::string path, HttpRespo
     std::ostringstream  ss;
 
     ss << res.body().length();
-    res.set_status(200, HttpResponse::get_status_code_description(200));
+    res.set_status(200);
     res.set_header("Content-Type", ServerConfig::getMimeType(path));
 
     return res;
@@ -169,12 +169,12 @@ HttpResponse    response_head(const HttpRequest& req, std::string path, HttpResp
 {
     switch (index_path(req, route, path)) {
         case VALIDPATH:
-            res.set_status(200, HttpResponse::get_status_code_description(200));
+            res.set_status(200);
             res.set_header("Content-type", ServerConfig::getMimeType(path));
             return res;
 
         case AUTOINDEX:
-            res.set_status(200, HttpResponse::get_status_code_description(200));
+            res.set_status(200);
             res.set_header("Content-type", ServerConfig::getMimeType(DIRLISTING));
             return res;
 
@@ -202,16 +202,16 @@ HttpResponse    response_error(const HttpRequest& req, HttpResponse& res, Server
             std::ostringstream  ss;
             ss << res.body().length();
 
-            res.set_status(200, HttpResponse::get_status_code_description(200));
+            res.set_status(200);
             res.set_header("Content-Type", ServerConfig::getMimeType(path));
         }
         else if (statusCode == 500)
-            res.set_status(500, HttpResponse::get_status_code_description(500));
+            res.set_status(500);
         else
             return response_error(req, res, _cfg, route, 500);
     }
     else
-        res.set_status(statusCode, HttpResponse::get_status_code_description(statusCode));
+        res.set_status(statusCode);
 
     return res;
 }

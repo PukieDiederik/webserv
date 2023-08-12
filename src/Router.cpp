@@ -277,7 +277,7 @@ void Router::listen()
                         }
                         catch (const std::exception &e) {
                             std::cerr << "Could not parse request\n";
-                            res.set_status(400, "Bad request");
+                            res.set_status(400);
                             res.set_header("Content-Length", "0");
                         }
                         // Add the server header
