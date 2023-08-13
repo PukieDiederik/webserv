@@ -49,8 +49,6 @@ std::string	get_path(std::string req_target, RouteCfg* route)
 	path = route->root + "/" + req_target;
 	path = remove_slash_dups(path);
 
-    std::cout << std::endl << "path " << path << std::endl << std::endl;
-
 	return path;
 }
 
