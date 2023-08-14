@@ -2,6 +2,7 @@
 #include "ParsingUtils.hpp"
 #include "ParsingException.hpp"
 #include <algorithm>
+#include <sstream>
 
 // Makes sure that the request line is correctly formatted
 bool isValidReqLine(const std::string& line)
@@ -48,7 +49,17 @@ void RequestFactory::parse()
         m_active_req = HttpRequest();
 
         // Parse request line
-        // TODO: implement this, right now we dont have functions to access this
+        m_active_req.method() = line.substr(0, line.find(' '));
+        m_active_req.target() = line.substr(line.find(' ') + 1, line.rfind(' '));
+
+        std::stringstream ss;
+        int maj_v;
+        int min_v;
+
+        ss << line.substr(line.rfind('/') + 1, line.rfind('.'));
+        ss >> maj_v;
+        ss << line.substr(line.rfind('.'));
+        ss >> min_v;
     }
 }
 
