@@ -19,20 +19,11 @@ public:
 
     HttpResponse& operator= (const HttpResponse& copy);
 
-    HttpResponse& set_version(int major, int minor);
+    int status() const;
+    const std::string& statusMessage() const;
 
-    HttpResponse& set_header(const std::string&, const std::string& value);
-    const std::string& get_header(const std::string& name) const;
-    HttpResponse& remove_header(const std::string& name);
-
-    HttpResponse& set_status(int code);
-    HttpResponse& set_status(int code, const std::string& message);
-
-    std::string& body();
-    const std::string& body() const;
-
-    int get_status() const;
-    const std::string& get_status_message() const;
+    HttpResponse& status(int code);
+    HttpResponse& status(int code, const std::string& message);
 
     virtual std::string toString();
 };

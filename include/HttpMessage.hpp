@@ -19,8 +19,6 @@ protected:
 
     std::string _body;
 
-    std::string& body();
-    headers_t& headers();
     headers_t::iterator add_header(const std::string& name, const std::string& value);
 
     //helper functions for toString method
@@ -39,10 +37,16 @@ public:
     // Getters/Setters
     int major_version() const;
     int minor_version() const;
+    void version(int maj, int min);
     std::string version_string() const; // Returns version string (for example: "HTTP/1.1")
 
-    const std::string& header(const std::string& field_name) const;
+//    const std::string& header(const std::string& field_name) const;
+    const headers_t& headers() const;
+    const std::string& headers(const std::string& field) const;
+    HttpMessage::headers_t::const_iterator headers(const std::string& field, const std::string& value);
+    void removeHeader(const std::string& field);
     const std::string& body() const;
+    std::string& body();
 
     // This will convert it back to a text based http message
     virtual std::string toString();

@@ -44,7 +44,7 @@ HttpResponse Server::handleRequest(const HttpRequest& req)
     // Check if a valid route has been found
     if (!route) {
         // TODO: return 404 error page
-        res.set_status(404, "File Not Found");
+        res.status(404, "File Not Found");
         return res;
     }
 
@@ -53,13 +53,13 @@ HttpResponse Server::handleRequest(const HttpRequest& req)
     if (::access(path.c_str(), F_OK) < 0)
     {
         // TODO: return 404 error page
-        res.set_status(404, "File Not Found");
+        res.status(404, "File Not Found");
         return res;
     }
     if (::access(path.c_str(), O_RDONLY) < 0)
     {
         // TODO: return 403 error page
-        res.set_status(403, "Forbidden");
+        res.status(403, "Forbidden");
         return res;
     }
 
@@ -73,7 +73,7 @@ HttpResponse Server::handleRequest(const HttpRequest& req)
         if (!file.is_open())
         {
             // TODO: return 500 error page
-            res.set_status(500, "Internal Server Error");
+            res.status(500, "Internal Server Error");
             return res;
         }
 
@@ -82,8 +82,8 @@ HttpResponse Server::handleRequest(const HttpRequest& req)
 
         std::ostringstream ss;
         ss << res.body().length();
-        res.set_status(200, "OK");
-        res.set_header("Content-Type", ServerConfig::getMimeType(path));
+        res.status(200, "OK");
+        res.headers("Content-Type", ServerConfig::getMimeType(path));
     }
     return res;
 }

@@ -277,11 +277,11 @@ void Router::listen()
                         }
                         catch (const std::exception &e) {
                             std::cerr << "Could not parse request\n";
-                            res.set_status(400, "Bad request");
-                            res.set_header("Content-Length", "0");
+                            res.status(400, "Bad request");
+                            res.headers("Content-Length", "0");
                         }
                         // Add the server header
-                        res.set_header("Server", "42-webserv");
+                        res.headers("Server", "42-webserv");
 
                         // Add the server to out_buffer to later be sent
                         std::string res_s = res.toString();
