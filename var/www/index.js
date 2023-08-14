@@ -2,26 +2,30 @@ function sayHello(message) {
 	alert(message || 'HELLO WORLD');
 }
 
-function appendRunningButton() {
+function createRunningButton() {
 	window.addEventListener("DOMContentLoaded", (event) => {
-		const runningContainer = document.createElement('div');
-		runningContainer.classList.add('running-container');
+		const section = document.querySelector('.running-button-section');
 
-		const runningButton = document.createElement('button');
-		runningButton.innerText = 'TRY ME';
-		runningButton.onclick = () => { sayHello('CAUGHT ME :(') };
-		runningButton.classList.add('running-button');
+		if ( !section ) return;
 
-		runningButton.style.top = '1%';
-		runningButton.style.left = '1%';
+		const container = document.createElement('div');
+		container.classList.add('running-container');
 
-		runningContainer.addEventListener("mouseover", (event) => {
-			runningButton.style.top = `max(1%, calc(${(Math.random() * 100)}% - 45px - 1%))`;
-			runningButton.style.left = `max(1%, calc(${(Math.random() * 100)}% - 120px - 1%))`;
+		const button = document.createElement('button');
+		button.innerText = 'TRY ME';
+		button.onclick = () => { sayHello('CAUGHT ME :(') };
+		button.classList.add('running-button');
+
+		button.style.top = '1%';
+		button.style.left = '1%';
+
+		container.addEventListener("mouseover", (event) => {
+			button.style.top = `max(1%, calc(${(Math.random() * 100)}% - 45px - 1%))`;
+			button.style.left = `max(1%, calc(${(Math.random() * 100)}% - 120px - 1%))`;
 		});
 
-		runningContainer.append(runningButton);
-		document.querySelector('.page-wrapper .container').append(runningContainer);
+		container.append(button);
+		section.append(container);
 	});
 }
 
@@ -45,8 +49,6 @@ function appendReturnButtons() {
 	});
 }
 
-if (window.location.pathname == '/index-alpha.html') {
-	appendRunningButton();
-}
+createRunningButton();
 
 appendReturnButtons();
