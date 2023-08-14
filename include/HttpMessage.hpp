@@ -6,6 +6,7 @@
 
 #define ALPHA "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 #define DIGIT "0123456789"
+#define TOKEN ("!#$%&'*+-.^_`|~" ALPHA DIGIT)
 
 
 class HttpMessage {
