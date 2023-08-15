@@ -29,18 +29,38 @@ bool isValidReqLine(const std::string& line)
     return true;
 }
 
+bool isValidHeaderLine(const std::string& line)
+{
+    if (line.find(static_cast<std::string>(": ")) != std::string::npos)
+        return false;
+
+    // Check if the field name is ok and both field and value are not empty
+    std::string _field = line.substr(0, line.find(static_cast<std::string>(": ")));
+    std::string _value = line.substr(line.find(static_cast<std::string>(": ")) + 2);
+    if (_field.empty() || _value.empty() || _field.find_first_not_of(TOKEN) != std::string::npos)
+        return false;
+
+    return true;
+}
+
 void RequestFactory::parse()
 {
     // Parsing request line
     if (m_active_status == RequestFactory::REQ_LINE)
     {
+        std::string line;
         // Remove any leading whitespace
+        while (m_buffer.find('\n') != std::string::npos && line.empty())
+        {
+            line = m_buffer.substr(0, m_buffer.find_first_not_of('\n') + 1);
+            line = trimSpace(line);
 
-        // Check if a line is ready, if not we exit this function
-        if (m_buffer.find('\n') == std::string::npos)
+            m_buffer.erase(0, m_buffer.find_first_not_of('\n') + 1);
+        }
+
+        if (line.empty())
             return;
-        std::string line = m_buffer.substr(0, m_buffer.find_first_not_of('\n') + 1);
-        line = trimSpace(line);
+
         // Check if a line is valid, throw exception otherwise
         if (!isValidReqLine(line))
             throw ParsingException("Invalid request line");
@@ -60,6 +80,40 @@ void RequestFactory::parse()
         ss >> maj_v;
         ss << line.substr(line.rfind('.'));
         ss >> min_v;
+
+        m_active_status = RequestFactory::HEADER;
+    }
+
+    if (m_active_status == RequestFactory::HEADER)
+    {
+        std::string line;
+        while (m_buffer.find('\n') != std::string::npos)
+        {
+            line = m_buffer.substr(0, m_buffer.find_first_not_of('\n') + 1);
+            line = trimSpace(line);
+
+            m_buffer.erase(0, m_buffer.find_first_not_of('\n') + 1);
+            if (line.empty())
+                break;
+            
+            // Add header
+            std::string _field = line.substr(0, line.find(static_cast<std::string>(": ")));
+            std::string _value = line.substr(line.find(static_cast<std::string>(": ")) + 2);
+            m_active_req.headers(_field, _value);
+        }
+
+        // If we've reached the end of the headers
+        if (line.empty())
+        {
+            // Check for body headers
+            if (m_active_req.headers().count("Content-Length") ||
+                m_active_req.headers().count("Transfer-Encoding")) // Check if there is a body expected
+                m_active_status = RequestFactory::BODY;
+            else
+                m_active_status = RequestFactory::REQ_LINE;
+
+        }
+        return;
     }
 }
 
