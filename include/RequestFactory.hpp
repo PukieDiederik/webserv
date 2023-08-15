@@ -10,9 +10,11 @@ public:
     
 private:
     enum parse_status { REQ_LINE, HEADER, BODY };
+    enum body_parse_type { LENGTH, CHUNKED };
 
     HttpRequest m_active_req;
     parse_status m_active_status;
+    body_parse_type m_body_type;
     std::string m_buffer;
     std::queue<HttpRequest> m_req_buffer;
 

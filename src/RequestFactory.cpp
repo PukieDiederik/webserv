@@ -106,14 +106,38 @@ void RequestFactory::parse()
         if (line.empty())
         {
             // Check for body headers
-            if (m_active_req.headers().count("Content-Length") ||
-                m_active_req.headers().count("Transfer-Encoding")) // Check if there is a body expected
+            if (m_active_req.headers().count("Content-Length"))
+            {
+                m_body_type = RequestFactory::LENGTH;
                 m_active_status = RequestFactory::BODY;
-            else
+            }
+            // TODO:
+//            else if (m_active_req.headers().count("Transfer-Encoding"))
+//            {
+//                m_body_type = RequestFactory::CHUNKED;
+//                m_active_status = RequestFactory::BODY;
+//            }
+            else // If no body is provided
                 m_active_status = RequestFactory::REQ_LINE;
 
         }
         return;
+    }
+    if (m_active_status == RequestFactory::BODY)
+    {
+        if (m_body_type == RequestFactory::LENGTH)
+        {
+            std::stringstream ss;
+            ss << m_active_req.headers("Content-Length");
+
+            unsigned int s;
+            ss >> s;
+
+            if (m_buffer.length() != s)
+                return;
+            else
+                m_active_req.body() = m_buffer.substr(0, s);
+        }
     }
 }
 
@@ -128,6 +152,7 @@ RequestFactory& RequestFactory::operator=(const RequestFactory& copy)
     m_active_status = copy.m_active_status;
     m_buffer = copy.m_buffer;
     m_req_buffer = copy.m_req_buffer;
+    m_body_type = copy.m_body_type;
 
     return *this;
 }
