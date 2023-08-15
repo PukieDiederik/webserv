@@ -14,7 +14,6 @@ protected:
 
 public:
     HttpRequest();
-    HttpRequest(const std::string& in); // parses the entire request
     HttpRequest(const HttpRequest& copy);
     ~HttpRequest();
 
