@@ -91,6 +91,7 @@ HttpRequest& HttpRequest::operator=(const HttpRequest& copy)
 {
     HttpMessage::operator=(copy);
     _target = copy._target;
+    _method = copy._method;
     return *this;
 }
 

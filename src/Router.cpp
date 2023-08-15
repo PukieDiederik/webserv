@@ -2,6 +2,7 @@
 #include "ServerConfig.hpp"
 #include "HttpRequest.hpp"
 #include "HttpResponse.hpp"
+#include "RequestFactory.hpp"
 #include <cstring>
 #include <unistd.h>
 #include <sys/socket.h>
@@ -72,6 +73,7 @@ struct event
     Server* server; // Server it is related to if not a serving socket itself
     int port; // The port it is open on, only needs to be set if this is a server
     struct timeval timeout_at; // Timeout for non-server sockets
+    RequestFactory rf; // For generating the requests
 };
 
 typedef std::deque<event*> timeouts_t;
@@ -248,38 +250,37 @@ void Router::listen()
                 // If it's a client socket we should process the request
                 else {
                     // Start reading data
-                    int bytes_read = recv(events[i].data.fd, buffer, sizeof(buffer), 0);
+                    int bytes_read = 1;
                     std::ostringstream req_sstream; // stringstream used for storing everything until all is read
                     req_sstream.write(buffer, bytes_read);
 
                     while (bytes_read > 0) {
-                        bytes_read = recv(events[i].data.fd, &buffer, sizeof(buffer), 0);
+                        bytes_read = recv(events[i].data.fd, buffer, sizeof(buffer), 0);
+                        if (bytes_read <= 0)
+                            break;
                         req_sstream.write(buffer, bytes_read);
+                        std::string s(buffer, bytes_read);
+                        event_map[events[i].data.fd].rf.in(s);
                     }
 
-                    // On socket closure we usually get an EPOLLIN event, this only runs on a normal request
-                    if (!req_sstream.str().empty()) {
-                        std::cout << "handling new request on: " << events[i].data.fd << std::endl;
+                    std::cout << "handling new request on: " << events[i].data.fd << std::endl;
 
+
+                    if (event_map[events[i].data.fd].rf.isReqReady())
+                    {
                         HttpResponse res;
+                        HttpRequest req = event_map[events[i].data.fd].rf.getRequest();
+                        std::cout << req.toString() << std::endl;
+                        std::cout << "Made request" << std::endl;
+                        // Figure out which server this request belongs to
+                        if (event_map[events[i].data.fd].server == NULL) {
+                            event_map[events[i].data.fd].server = find_server_from_port(
+                                event_map[events[i].data.fd].port,
+                                _servers,
+                                req);
+                        }
+                        res = event_map[events[i].data.fd].server->handleRequest(req);
 
-                        try {
-                            // Try creating a request, if failed it will not add anything to
-                            HttpRequest req(req_sstream.str());
-                            // Figure out which server this request belongs to
-                            if (event_map[events[i].data.fd].server == NULL) {
-                                event_map[events[i].data.fd].server = find_server_from_port(
-                                    event_map[events[i].data.fd].port,
-                                    _servers,
-                                    req);
-                            }
-                            res = event_map[events[i].data.fd].server->handleRequest(req);
-                        }
-                        catch (const std::exception &e) {
-                            std::cerr << "Could not parse request\n";
-                            res.status(400, "Bad request");
-                            res.headers("Content-Length", "0");
-                        }
                         // Add the server header
                         res.headers("Server", "42-webserv");
 
@@ -292,6 +293,7 @@ void Router::listen()
                         // (won't do anything if it was already listening for EPOLLOUT events)
                         event_map[events[i].data.fd].event.events |= EPOLLOUT;
                         epoll_ctl(epoll_fd, EPOLL_CTL_MOD, events[i].data.fd, &event_map[events[i].data.fd].event);
+
                     }
                 }
             }

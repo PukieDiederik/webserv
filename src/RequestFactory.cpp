@@ -3,6 +3,7 @@
 #include "ParsingException.hpp"
 #include <algorithm>
 #include <sstream>
+#include <iostream>
 
 // Makes sure that the request line is correctly formatted
 bool isValidReqLine(const std::string& line)
@@ -22,8 +23,8 @@ bool isValidReqLine(const std::string& line)
     std::string::size_type period_pos = _version.find('.');
     if (period_pos == std::string::npos ||
         _version.compare(0, 5, "HTTP/") || // Check for it starting with 'HTTP/'
-        _version.find_first_not_of(DIGIT) != period_pos || // Check for non-digits in version part
-        _version.find_first_not_of(DIGIT, period_pos) != std::string::npos) // ^^
+        _version.find_first_not_of(DIGIT, 5) != period_pos || // Check for non-digits in version part
+        _version.find_first_not_of(DIGIT, period_pos + 1) != std::string::npos) // ^^
         return false;
 
     return true;
@@ -52,10 +53,10 @@ void RequestFactory::parse()
         // Remove any leading whitespace
         while (m_buffer.find('\n') != std::string::npos && line.empty())
         {
-            line = m_buffer.substr(0, m_buffer.find_first_not_of('\n') + 1);
+            line = m_buffer.substr(0, m_buffer.find('\n') + 1);
             line = trimSpace(line);
 
-            m_buffer.erase(0, m_buffer.find_first_not_of('\n') + 1);
+            m_buffer.erase(0, m_buffer.find('\n') + 1);
         }
 
         if (line.empty())
@@ -70,7 +71,7 @@ void RequestFactory::parse()
 
         // Parse request line
         m_active_req.method() = line.substr(0, line.find(' '));
-        m_active_req.target() = line.substr(line.find(' ') + 1, line.rfind(' '));
+        m_active_req.target() = line.substr(line.find(' ') + 1, line.rfind(' ') - m_active_req.method().length() - 1);
 
         std::stringstream ss;
         int maj_v;
@@ -86,13 +87,14 @@ void RequestFactory::parse()
 
     if (m_active_status == RequestFactory::HEADER)
     {
+        std::cout << "headers" << std::endl;
         std::string line;
         while (m_buffer.find('\n') != std::string::npos)
         {
-            line = m_buffer.substr(0, m_buffer.find_first_not_of('\n') + 1);
+            line = m_buffer.substr(0, m_buffer.find('\n') + 1);
             line = trimSpace(line);
 
-            m_buffer.erase(0, m_buffer.find_first_not_of('\n') + 1);
+            m_buffer.erase(0, m_buffer.find('\n') + 1);
             if (line.empty())
                 break;
             
@@ -120,13 +122,16 @@ void RequestFactory::parse()
 //                m_active_status = RequestFactory::BODY;
 //            }
             else // If no body is provided
+            {
+                m_req_buffer.push(m_active_req);
                 m_active_status = RequestFactory::REQ_LINE;
-
+            }
         }
         return;
     }
     if (m_active_status == RequestFactory::BODY)
     {
+        std::cout << "body" << std::endl;
         if (m_body_type == RequestFactory::LENGTH)
         {
             std::stringstream ss;
@@ -134,11 +139,14 @@ void RequestFactory::parse()
 
             unsigned int s;
             ss >> s;
+            std::cout << m_buffer.length() << ", " << s << std::endl;
 
-            if (m_buffer.length() != s)
+            if (m_buffer.length() != s) // Exit if not enough is in the buffer yet
                 return;
-            else
-                m_active_req.body() = m_buffer.substr(0, s);
+
+            m_active_req.body() = m_buffer.substr(0, s);
+            m_req_buffer.push(m_active_req);
+            m_active_status = RequestFactory::REQ_LINE;
         }
     }
 }
@@ -159,7 +167,11 @@ RequestFactory& RequestFactory::operator=(const RequestFactory& copy)
     return *this;
 }
 
-void RequestFactory::in(const std::string& str) { (void)str; }
+void RequestFactory::in(const std::string& str)
+{
+    m_buffer += str;
+    parse();
+}
 bool RequestFactory::isReqReady() const { return !m_req_buffer.empty(); }
 HttpRequest RequestFactory::getRequest()
 {
