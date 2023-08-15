@@ -110,6 +110,8 @@ void RequestFactory::parse()
             {
                 m_body_type = RequestFactory::LENGTH;
                 m_active_status = RequestFactory::BODY;
+                if (m_active_req.headers().find("Content-Length")->second.find_first_not_of(DIGIT) != std::string::npos)
+                    throw ParsingException("Content-Length not in right format");
             }
             // TODO:
 //            else if (m_active_req.headers().count("Transfer-Encoding"))
