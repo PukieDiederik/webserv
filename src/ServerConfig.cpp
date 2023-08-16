@@ -33,69 +33,6 @@ RouteCfg::RouteCfg(const RouteCfg& copy) {
 	*this = copy;
 }
 
-//<<<<<<< HEAD
-//RouteCfg::RouteCfg() { }
-//RouteCfg::RouteCfg(const RouteCfg& copy)
-//{
-//    name = copy.name;
-//    is_redirect = copy.is_redirect;
-//    redirect_to = copy.redirect_to;
-//    root = copy.root;
-//    cgi_enabled = copy.cgi_enabled;
-//    auto_index = copy.auto_index;
-//    index = copy.index;
-//    accepted_methods = copy.accepted_methods;
-//}
-//RouteCfg::~RouteCfg() { }
-//RouteCfg RouteCfg::operator=(const RouteCfg& copy)
-//{
-//    name = copy.name;
-//    is_redirect = copy.is_redirect;
-//    redirect_to = copy.redirect_to;
-//    root = copy.root;
-//    cgi_enabled = copy.cgi_enabled;
-//    auto_index = copy.auto_index;
-//    index = copy.index;
-//    accepted_methods = copy.accepted_methods;
-//
-//    return *this;
-//}
-//
-//ServerCfg::ServerCfg() { }
-//ServerCfg::ServerCfg(const ServerCfg& copy)
-//{
-//    port = copy.port;
-//    server_names = copy.server_names;
-//
-//    error_pages = copy.error_pages;
-//    max_body_size = copy.max_body_size;
-//
-//    root_dir = copy.root_dir;
-//    routes = copy.routes;
-//}
-//ServerCfg::~ServerCfg() { }
-//ServerCfg ServerCfg::operator=(const ServerCfg& copy)
-//{
-//    port = copy.port;
-//    server_names = copy.server_names;
-//
-//    error_pages = copy.error_pages;
-//    max_body_size = copy.max_body_size;
-//
-//    root_dir = copy.root_dir;
-//    routes = copy.routes;
-//    return *this;
-//}
-//
-//
-//// ServerConfig
-//ServerConfig::ServerConfig(const std::string& file) { (void)file; }
-//ServerConfig::ServerConfig(const ServerConfig& copy)
-//{
-//    mime = copy.mime;
-//    servers = copy.servers;
-//}
-//=======
 RouteCfg::~RouteCfg() { }
 
 RouteCfg &RouteCfg::operator=(const RouteCfg& copy) {
@@ -137,10 +74,16 @@ ServerCfg	&ServerCfg::operator=(const ServerCfg& copy) {
 }
 
 /*	@ServerConfig constructor:
- * 		Calls getline until keyword is found
- * 		Sets keywd_bracket true
- * 		Call respective block parser
- * 		Sets keywd_bracket false
+ *		Desc:
+ * 			Calls getline until keyword is found
+ * 			Sets keywd_bracket true
+ * 			Call respective block parser
+ * 			Sets keywd_bracket false
+ * 		@params:
+ * 			const std::string&	-> path to file
+ * 		@returns:
+ * 			success:
+ * 			error: throws corresponding error
 */
 
 ServerConfig::ServerConfig() {}
@@ -201,7 +144,6 @@ ServerConfig::ServerConfig(const std::string& filepath) {
 
 
 ServerConfig::ServerConfig(const ServerConfig& copy) { *this = copy; }
-//>>>>>>> master
 
 ServerConfig::~ServerConfig() {
 	// Deletion of cmds arrays
@@ -226,7 +168,7 @@ std::string ServerConfig::getMimeType(const std::string& filename) {
         return MIME_DEFAULT;
 
     // Extract file extension based on the period found
-    std::string extension = filename.substr(dotPos);
+    std::string extension = filename.substr(dotPos + 1);
 
     const ServerConfig& sc = ServerConfig::getInstance();
     ServerConfig::mime_tab_t::const_iterator it = sc._mime.find(extension);

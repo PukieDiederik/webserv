@@ -2,6 +2,7 @@
 #include "ParserUtils.hpp"
 
 #include <sstream>
+#include <unistd.h>
 
 // check filepath
 # include <sys/types.h>
@@ -159,6 +160,7 @@ void	ServerConfig::parseServerMaxBodySize(const std::string &curr_line, ServerCf
 
 }
 
+
 /*	@parseServerRoot:
  *		Checks if its a valid absolute path, throws error if not or multiple defenitions
  *		Checks if more token and present in line, if not comments throws error
@@ -177,20 +179,15 @@ void	ServerConfig::parseServerRoot(const std::string &curr_line, ServerCfg &serv
 
 	token = ParserUtils::removeDelimiters(token);
 
-	//find last occurence of '/' and remove everything after that
-	int lastIndex = -1;
-	for (int i = 0; token[i] != '\0'; ++i) {
-		if (token[i] == '/') {
-			lastIndex = i;
-        	}
-    	}
+	// Check if permission to access path is enough
+	if ( access( token.c_str(), R_OK ) != 0 ) throw std::runtime_error( "Error: invalid root_dir path: line: " + ParserUtils::intToString( bad_line ) );
 
-	std::string	dir_path = token;
-	if (lastIndex != -1) dir_path.erase(lastIndex + 1);
+	// Check if path is valid
+	DIR	*checker = opendir( token.c_str() );
+	if ( checker == NULL ) throw std::runtime_error("Error: invalid root_dir path: line: " + ParserUtils::intToString(bad_line));
+	closedir( checker );
 
-	DIR	*checker = opendir(dir_path.c_str());
-	if (checker == NULL) throw std::runtime_error("Error: invalid root_dir path: line: " + ParserUtils::intToString(bad_line));
-	closedir(checker);
+
 
 	server_conf.root_dir = token;
 

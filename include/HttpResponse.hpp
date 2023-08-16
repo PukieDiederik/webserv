@@ -7,17 +7,21 @@
 class HttpResponse : public HttpMessage
 {
 private:
-    int _status_code;
+    int         _status_code;
     std::string _status_message;
+
+    static const std::map<short, std::string>   _status_code_map;
 
 protected:
     virtual std::string toStringStart() const;
+
 public:
     HttpResponse();
     HttpResponse(const HttpResponse& copy);
+
     ~HttpResponse();
 
-    HttpResponse& operator= (const HttpResponse& copy);
+    HttpResponse&   operator= (const HttpResponse& copy);
 
     int status() const;
     const std::string& statusMessage() const;
