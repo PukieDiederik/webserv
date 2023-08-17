@@ -41,16 +41,22 @@ std::string	get_path(const HttpRequest& req, RouteCfg* route)
 
 std::string	get_path(std::string req_target, RouteCfg* route)
 {
-	std::string path;
+    std::string path;
 
 	if (startsWith(req_target, route->route_path))
 		req_target.erase(0, route->route_path.length());
 
-	path = route->root + "/" + req_target;
-	path = remove_slash_dups(path);
+    path = remove_slash_dups( route->root + "/" + req_target );
 
 	return path;
 }
+
+/*
+ *  Gets path for error pages
+*/
+std::string     get_path(std::string error_page, ServerCfg& _cfg) {
+    return remove_slash_dups( _cfg.root_dir + error_page );
+} 
 
 /*
 *   @get_path_index:

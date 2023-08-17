@@ -21,8 +21,8 @@ DEPS_DIR    = $(OBJS_DIR)
 NAME        = webserv
 
 CXX         = c++
-CXXFLAGS    = -std=c++98 -D VERBOSE=true#-Wall -Werror -Wextra -pedantic 
-	      #-g -fsanitize=address -fsanitize=leak
+CXXFLAGS    = -std=c++98 -D VERBOSE=true #-Wall -Werror -Wextra -pedantic 
+#-g -fsanitize=address -fsanitize=leak
 
 INCLUDES    = -I $(INCLUDE_DIR)
 LIBS        =
