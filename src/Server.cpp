@@ -95,12 +95,19 @@ RouteCfg*   find_route(const HttpRequest& req, std::vector<RouteCfg>& routes)
 {
     std::pair<std::size_t, RouteCfg*>   route_match(0, NULL);
 
-    for(std::vector<RouteCfg>::iterator i = routes.begin(); i != routes.end(); ++i)
-    {
-        std::string::size_type  p = req.target().find(i->route_path);
+    for(std::vector<RouteCfg>::iterator i = routes.begin(); i != routes.end(); ++i) {
+	    std::string	available_route = i->route_path;
+	    if ( available_route[available_route.size() - 1] == '/' ) available_route.substr( 0, available_route.size() - 1 );
+	    
+	    std::string::size_type  p = req.target().find( available_route );
+	    std::string::size_type  q = req.target().find( available_route  + "/" );
 
-        if (p == 0 && i->route_path.length() > route_match.first)
-            route_match = std::pair<int, RouteCfg*>(i->route_path.length(), &(*i));
+	    if (p == 0) {
+	    	if ( req.target() != available_route && q != 0 && available_route != "/")
+			available_route = "";
+		if ( available_route.length() > route_match.first )
+            		route_match = std::pair<int, RouteCfg*>(available_route.length(), &(*i));
+	    }
     }
 
     return route_match.second;
@@ -188,7 +195,7 @@ HttpResponse    response_head(const HttpRequest& req, std::string path, HttpResp
 HttpResponse    response_error(const HttpRequest& req, HttpResponse& res, ServerCfg& _cfg, RouteCfg* route, const int statusCode)
 {
     std::map<short, std::string>::const_iterator    it = _cfg.error_pages.find(statusCode);
-    std::string     path = get_path(it->second, route);
+    std::string     path = get_path(it->second, _cfg);
     std::ifstream   file(path.c_str());
     std::string     buff(BUFFER_SIZE, '\0');
 
