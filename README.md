@@ -1,11 +1,53 @@
-# How to install
-`make` will compile the code into an executable (`webserv`) which you can run using:
-```bash
-./webserv [configuration file]
-```
-If no configuration file is provided it will use the default configuration file.
+<p align="center">
+  <img src="https://www.memecreator.org/static/images/memes/4886835.jpg" alt="webserv Logo" width="400">
+</p>
 
-# Contributing
+<h1 align="center">Webserv</h1>
+
+<p align="center">
+  <strong>🚀 Simple c++ webserver 🚀</strong>
+</p>
+
+---
+
+## 📖 Table of Contents
+
+- [Introduction](#-introduction)
+- [Features](#-features)
+- [Setup & Installation](#-setup--installation)
+- [Usage](#-usage)
+- [Contributing](#-contributing)
+
+---
+
+##  📢  Introduction
+
+Webserv is a project about implementing a webserver using c++98. 
+  
+---
+
+## 📚  Features
+
+- **F1**: Desc1.
+
+---
+
+## 🛠  Setup & Installation
+
+   ```bash
+   git clone https://github.com/PukieDiederik/webserv.git
+   cd inception 
+   make
+   ```
+
+## 🧪  Usage
+
+   ```bash
+   ./webserv [configuration file]
+   ```
+
+## 💪 Contributing
+
 1) Fork this repository
 2) Make a branch on your fork with the following format (without the square brackets) `[name]-[subject]` (`git checkout -B [branch-name]`). Subject should be a small descriptive name what your branch is supposed to implement/fix. For example `drobert-settings_parsing` or `drobert-cgi_env_vars`.
 3) After you're fixed/implemented what you wanted in your branch make a pull request. The pull request should have **EVERYTHING** that you changed in the description. Please add as much context as you can. 
