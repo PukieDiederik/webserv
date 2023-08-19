@@ -6,9 +6,6 @@
 
 class HttpRequest : public HttpMessage
 {
-private:
-    HttpRequest();
-
 protected:
     virtual std::string toStringStart() const;
 
@@ -16,16 +13,19 @@ protected:
     std::string _method;
 
 public:
-    HttpRequest(const std::string& in); // parses the entire request
+    HttpRequest();
     HttpRequest(const HttpRequest& copy);
     ~HttpRequest();
 
     HttpRequest& operator=(const HttpRequest& copy);
 
-    std::string& target();
+    // Getters & Setters
     const std::string& target() const;
+    std::string& target();
 
     const std::string& method() const;
+    std::string& method();
+
     const std::string& host() const;
 };
 

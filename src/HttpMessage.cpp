@@ -2,8 +2,6 @@
 #include <sstream>
 #include <exception>
 
-std::string& HttpMessage::body() { return _body; }
-HttpMessage::headers_t& HttpMessage::headers() { return _headers; }
 HttpMessage::headers_t::iterator HttpMessage::add_header(const std::string& name, const std::string& value)
 {
     if (_headers[name].empty())
@@ -11,6 +9,13 @@ HttpMessage::headers_t::iterator HttpMessage::add_header(const std::string& name
     else
         _headers[name] += ", " + value;
     return _headers.find(name);
+}
+
+HttpMessage&    HttpMessage::remove_header(const std::string& name)
+{
+    _headers.erase(name);
+
+    return *this;
 }
 
 // Constructors
@@ -39,11 +44,26 @@ std::string HttpMessage::version_string() const
     return result.str();
 }
 
-const std::string& HttpMessage::header(const std::string& field_name) const
+const HttpMessage::headers_t& HttpMessage::headers() const { return _headers; }
+
+const std::string& HttpMessage::headers(const std::string& field_name) const
 {
     return _headers.at(field_name);
 }
+
+HttpMessage::headers_t::const_iterator HttpMessage::headers(const std::string& field, const std::string& value)
+{
+    if (_headers[field].empty())
+        _headers[field] = value;
+    else
+        _headers[field] += ", " + value;
+    return _headers.find(field);
+}
+
+void HttpMessage::removeHeader(const std::string& field) { _headers.erase(field); }
+
 const std::string& HttpMessage::body() const { return _body; }
+std::string& HttpMessage::body() { return _body; }
 
 // This will convert it back to a text based http message
 std::string HttpMessage::toStringHeaders() const
