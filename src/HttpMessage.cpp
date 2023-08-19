@@ -11,6 +11,13 @@ HttpMessage::headers_t::iterator HttpMessage::add_header(const std::string& name
     return _headers.find(name);
 }
 
+HttpMessage&    HttpMessage::remove_header(const std::string& name)
+{
+    _headers.erase(name);
+
+    return *this;
+}
+
 // Constructors
 HttpMessage::HttpMessage() : _major_version(1), _minor_version(1) { }
 HttpMessage::HttpMessage(const HttpMessage& copy) { *this = copy; }

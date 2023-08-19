@@ -20,6 +20,7 @@ protected:
     std::string _body;
 
     headers_t::iterator add_header(const std::string& name, const std::string& value);
+    HttpMessage&        remove_header(const std::string& name);
 
     //helper functions for toString method
     virtual std::string toStringStart() const = 0;

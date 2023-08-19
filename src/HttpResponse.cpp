@@ -66,14 +66,7 @@ HttpResponse&       HttpResponse::set_header(const std::string& name, const std:
 
 const std::string&  HttpResponse::get_header(const std::string& name) const
 {
-    return this->header(name);
-}
-
-HttpResponse&       HttpResponse::remove_header(const std::string& name)
-{
-    this->headers().erase(name);
-
-    return *this;
+    return this->headers(name);
 }
 
 HttpResponse&       HttpResponse::set_status(int code)

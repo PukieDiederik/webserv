@@ -27,7 +27,6 @@ public:
 
     HttpResponse&       set_header(const std::string&, const std::string& value);
     const std::string&  get_header(const std::string& name) const;
-    HttpResponse&       remove_header(const std::string& name);
 
     HttpResponse&   set_status(int code);
     HttpResponse&   set_status(int code, const std::string& message);
