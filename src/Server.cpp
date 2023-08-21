@@ -78,9 +78,10 @@ HttpResponse    Server::handleRequest(const HttpRequest& req)
     else if (req.method() == "HEAD")
         return response_head(req, path, res, _cfg, route);
 
-    // TODO: check for CGI
+    else
+        return response_error(req, res, _cfg, route, 501);
 
-    return res;
+    // TODO: check for CGI
 }
 
 ServerCfg&  Server::cfg()
