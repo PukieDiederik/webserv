@@ -87,7 +87,6 @@ void RequestFactory::parse()
 
     if (m_active_status == RequestFactory::HEADER)
     {
-        std::cout << "headers" << std::endl;
         std::string line;
         while (m_buffer.find('\n') != std::string::npos)
         {
@@ -125,13 +124,12 @@ void RequestFactory::parse()
             {
                 m_req_buffer.push(m_active_req);
                 m_active_status = RequestFactory::REQ_LINE;
+                return;
             }
         }
-        return;
     }
     if (m_active_status == RequestFactory::BODY)
     {
-        std::cout << "body" << std::endl;
         if (m_body_type == RequestFactory::LENGTH)
         {
             std::stringstream ss;
