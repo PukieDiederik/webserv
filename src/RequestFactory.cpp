@@ -167,8 +167,13 @@ RequestFactory& RequestFactory::operator=(const RequestFactory& copy)
 
 void RequestFactory::in(const std::string& str)
 {
+    std::size_t buf_size = m_buffer.length();
     m_buffer += str;
-    parse();
+    while (buf_size != m_buffer.length()) // Checks if the length changes while parsing
+    {
+        buf_size = m_buffer.length();
+        parse();
+    }
 }
 bool RequestFactory::isReqReady() const { return !m_req_buffer.empty(); }
 HttpRequest RequestFactory::getRequest()

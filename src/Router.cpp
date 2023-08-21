@@ -263,14 +263,13 @@ void Router::listen()
                         event_map[events[i].data.fd].rf.in(s);
                     }
 
-                    std::cout << "handling new request on: " << events[i].data.fd << std::endl;
+                    std::cout << "handling new data on: " << events[i].data.fd << std::endl;
 
 
                     if (event_map[events[i].data.fd].rf.isReqReady())
                     {
                         HttpResponse res;
                         HttpRequest req = event_map[events[i].data.fd].rf.getRequest();
-                        std::cout << "req: \n" << req.toString() << std::endl;
                         std::cout << "Made request" << std::endl;
                         // Figure out which server this request belongs to
                         if (event_map[events[i].data.fd].server == NULL) {
