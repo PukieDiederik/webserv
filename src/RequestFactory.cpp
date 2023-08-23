@@ -87,7 +87,6 @@ void RequestFactory::parse()
 
     if (m_active_status == RequestFactory::HEADER)
     {
-        std::cout << "headers" << std::endl;
         std::string line;
         while (m_buffer.find('\n') != std::string::npos)
         {
@@ -125,13 +124,12 @@ void RequestFactory::parse()
             {
                 m_req_buffer.push(m_active_req);
                 m_active_status = RequestFactory::REQ_LINE;
+                return;
             }
         }
-        return;
     }
     if (m_active_status == RequestFactory::BODY)
     {
-        std::cout << "body" << std::endl;
         if (m_body_type == RequestFactory::LENGTH)
         {
             std::stringstream ss;
@@ -169,8 +167,13 @@ RequestFactory& RequestFactory::operator=(const RequestFactory& copy)
 
 void RequestFactory::in(const std::string& str)
 {
+    std::size_t buf_size = m_buffer.length();
     m_buffer += str;
-    parse();
+    while (buf_size != m_buffer.length()) // Checks if the length changes while parsing
+    {
+        buf_size = m_buffer.length();
+        parse();
+    }
 }
 bool RequestFactory::isReqReady() const { return !m_req_buffer.empty(); }
 HttpRequest RequestFactory::getRequest()
