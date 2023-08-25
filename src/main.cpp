@@ -7,14 +7,16 @@
 int main(int argc, char **argv) {
 	(void) argc;
 
-	if (argc != 2) {
+	if (argc > 2) {
 		std::cout << "error: missing config file" << std::endl;
 		return (0);
 	}
 
-	std::cout << "\nIf any possible errors do occur: \n" << std::endl;
 	try {
-		ServerConfig::initialize(argv[1]);
+		if ( argc > 1 )
+			ServerConfig::initialize(argv[1]);
+		else
+			ServerConfig::initialize( "config/default.conf" );
 
         // Start listening
         Router r;

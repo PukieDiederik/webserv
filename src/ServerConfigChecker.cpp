@@ -15,7 +15,6 @@ void	ServerConfig::checker() {
 		if ( VERBOSE )
 			std::cout << "\nServer[" << i++ << "]:" << std::endl;
 		
-		// Issue #27
 		if ( (*it).host.empty() ) throw std::runtime_error("missing ipv4 (hostname) config");
 		
 		if (VERBOSE)
@@ -25,7 +24,7 @@ void	ServerConfig::checker() {
 		if (VERBOSE)
 			std::cout << "\tServer port:\n\t\t[" << (*it).port << "]" << std::endl;
 
-		if ((*it).server_names.empty()) throw std::runtime_error("missing server name(s) config");
+		//if ((*it).server_names.empty()) throw std::runtime_error("missing server name(s) config");
 		if (VERBOSE)
 			std::cout << "\tServer name(s): " << std::endl;
 		for (std::vector<std::string>::iterator jit = (*it).server_names.begin(); jit != (*it).server_names.end(); jit++) {
