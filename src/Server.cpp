@@ -195,14 +195,15 @@ HttpResponse    response_head(const HttpRequest& req, std::string path, HttpResp
 
 HttpResponse    response_error(const HttpRequest& req, HttpResponse& res, ServerCfg& _cfg, RouteCfg* route, const int statusCode) {
 	if ( (_cfg.error_pages.empty()) ) {
-		res.body().append( "<html><head><title>Error</title></head> \
-				<body style=\"background-color: #f2f2f2; \
-				text-align: center; \
-				font-family: Arial, sans-serif;\">\
-				<h1 style=\"color: #333;\">\
-				Error\
-				</h1></body></html>" );
-			
+		res.body().append( "\
+				<html><head><title>Error</title></head>\
+				<body style=\"\
+				display: flex;\
+				justify-content: center;\
+				align-items: center;\
+				height: 100vh; margin: 0;\"\
+				><h1>Error</h1></body></html>\
+				" );
 		std::ostringstream  ss;
             	ss << res.body().length();
 
