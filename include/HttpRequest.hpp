@@ -22,7 +22,8 @@ public:
     // Getters & Setters
     const std::string& target() const;
     std::string& target();
-
+    void    set_target( const std::string& target );
+	
     const std::string& method() const;
     std::string& method();
 
