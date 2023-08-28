@@ -207,7 +207,7 @@ HttpResponse    response_error(const HttpRequest& req, HttpResponse& res, Server
 		std::ostringstream  ss;
             	ss << res.body().length();
 
-            	res.set_status(200);
+            	res.set_status( statusCode );
             	res.set_header("Content-Type", "text/html");
 		return res;
 	}
