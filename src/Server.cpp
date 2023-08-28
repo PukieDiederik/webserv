@@ -169,8 +169,8 @@ HttpResponse    response_get(const HttpRequest& req, std::string path, HttpRespo
         res.body().append(buff, 0, file.gcount());
 
     std::ostringstream  ss;
-
     ss << res.body().length();
+
     res.set_status(200);
     res.set_header("Content-Type", ServerConfig::getMimeType(path));
 
@@ -204,13 +204,12 @@ HttpResponse    response_delete(const HttpRequest& req, std::string path, HttpRe
 				res.body().append( "\nError deleting file\n\n" );
 			}
 			else res.body().append( "\nFile deleted\n\n" );
+
+			std::ostringstream  ss;
+			ss << res.body().length();
+
 			res.set_status( 200 );
 			res.set_header( "Content-type", "text/html" );
-			return res;
-
-		case AUTOINDEX:
-			res.set_status(200);
-			res.set_header("Content-type", ServerConfig::getMimeType(DIRLISTING));
 			return res;
 
         	default:
