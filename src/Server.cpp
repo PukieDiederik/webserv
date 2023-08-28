@@ -193,34 +193,44 @@ HttpResponse    response_head(const HttpRequest& req, std::string path, HttpResp
     return res;
 }
 
-HttpResponse    response_error(const HttpRequest& req, HttpResponse& res, ServerCfg& _cfg, RouteCfg* route, const int statusCode)
-{
-    std::map<short, std::string>::const_iterator    it = _cfg.error_pages.find(statusCode);
-    std::string     path = get_path(it->second, _cfg);
-    std::ifstream   file(path.c_str());
-    std::string     buff(BUFFER_SIZE, '\0');
+HttpResponse    response_error(const HttpRequest& req, HttpResponse& res, ServerCfg& _cfg, RouteCfg* route, const int statusCode) {
+	if ( (_cfg.error_pages.empty()) ) {
+		res.body().append( "<html><head><title>Error</title></head> \
+				<body style=\"background-color: #f2f2f2; \
+				text-align: center; \
+				font-family: Arial, sans-serif;\">\
+				<h1 style=\"color: #333;\">\
+				Error\
+				</h1></body></html>" );
+			
+		std::ostringstream  ss;
+            	ss << res.body().length();
 
-    if (it != _cfg.error_pages.end())
-    {
-        if (is_file(path) && file.is_open())
-        {
-            while(file.read(&buff[0], BUFFER_SIZE).gcount() > 0)
-                res.body().append(buff, 0, file.gcount());
+            	res.set_status(200);
+            	res.set_header("Content-Type", "text/html");
+		return res;
+	}
 
-            std::ostringstream  ss;
-            ss << res.body().length();
+	std::map<short, std::string>::const_iterator    it = _cfg.error_pages.find(statusCode);
+    	std::string     path = get_path(it->second, _cfg);
+    	std::ifstream   file(path.c_str());
+    	std::string     buff(BUFFER_SIZE, '\0');
 
-            res.set_status(200);
-            res.set_header("Content-Type", ServerConfig::getMimeType(path));
-        }
-        else if (statusCode == 500)
-            res.set_status(500);
-        else
-            return response_error(req, res, _cfg, route, 500);
-    }
-    else
-        res.set_status(statusCode);
+    	if (it != _cfg.error_pages.end()) {
+		if (is_file(path) && file.is_open()) {
+			while(file.read(&buff[0], BUFFER_SIZE).gcount() > 0)
+				res.body().append(buff, 0, file.gcount());
+			
+			std::ostringstream  ss;
+            		ss << res.body().length();
 
-    return res;
+            		res.set_status(200);
+            		res.set_header("Content-Type", ServerConfig::getMimeType(path));
+        	} else if (statusCode == 500)
+			res.set_status(500);
+		else
+			return response_error(req, res, _cfg, route, 500);
+	}
+	return res;
 }
 // END: Helper Functions
