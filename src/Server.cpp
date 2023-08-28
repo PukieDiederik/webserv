@@ -10,7 +10,7 @@
 #include <sstream>
 #include <algorithm>
 #include <string>
-
+#include <cstdio>
 
 #define VALIDPATH 0
 #define AUTOINDEX 1
@@ -22,6 +22,7 @@ RouteCfg*       find_route(const HttpRequest& req, std::vector<RouteCfg>& routes
 HttpResponse    list_dir_res(const HttpRequest& req, std::string path, HttpResponse& res, ServerCfg& _cfg, RouteCfg* route);
 HttpResponse    response_get(const HttpRequest& req, std::string path, HttpResponse& res, ServerCfg& _cfg, RouteCfg* route);
 HttpResponse    response_head(const HttpRequest& req, std::string path, HttpResponse& res, ServerCfg& _cfg, RouteCfg* route);
+HttpResponse    response_delete(const HttpRequest& req, std::string path, HttpResponse& res, ServerCfg& _cfg, RouteCfg* route);
 HttpResponse    response_error(const HttpRequest& req, HttpResponse& res, ServerCfg& _cfg, RouteCfg* route, const int statusCode);
 // END: Helper Functions Prototypes
 
@@ -77,6 +78,10 @@ HttpResponse    Server::handleRequest(const HttpRequest& req)
     // Handle HEAD method
     else if (req.method() == "HEAD")
         return response_head(req, path, res, _cfg, route);
+
+    // Handle DELETE method
+    else if (req.method() == "DELETE")
+        return response_delete(req, path, res, _cfg, route);
 
     else
         return response_error(req, res, _cfg, route, 501);
@@ -145,8 +150,7 @@ HttpResponse    list_dir_res(const HttpRequest& req, std::string path, HttpRespo
     return res;
 }
 
-HttpResponse    response_get(const HttpRequest& req, std::string path, HttpResponse& res, ServerCfg& _cfg, RouteCfg* route)
-{
+HttpResponse    response_get(const HttpRequest& req, std::string path, HttpResponse& res, ServerCfg& _cfg, RouteCfg* route) {
     switch (index_path(req, route, path)) {
         case AUTOINDEX:
             return list_dir_res(req, path, res, _cfg, route);
@@ -173,8 +177,7 @@ HttpResponse    response_get(const HttpRequest& req, std::string path, HttpRespo
     return res;
 }
 
-HttpResponse    response_head(const HttpRequest& req, std::string path, HttpResponse& res, ServerCfg& _cfg, RouteCfg* route)
-{
+HttpResponse    response_head(const HttpRequest& req, std::string path, HttpResponse& res, ServerCfg& _cfg, RouteCfg* route) {
     switch (index_path(req, route, path)) {
         case VALIDPATH:
             res.set_status(200);
@@ -189,6 +192,30 @@ HttpResponse    response_head(const HttpRequest& req, std::string path, HttpResp
         case INVALIDPATH:
             return response_error(req, res, _cfg, route, 404);
     }
+
+    return res;
+}
+
+HttpResponse    response_delete(const HttpRequest& req, std::string path, HttpResponse& res, ServerCfg& _cfg, RouteCfg* route) {
+	switch (index_path(req, route, path)) {
+		case VALIDPATH:
+			if ( remove( path.c_str() ) != 0 ) {
+				std::cout << "Error deleting file" << std::endl;
+				res.body().append( "\nError deleting file\n\n" );
+			}
+			else res.body().append( "\nFile deleted\n\n" );
+			res.set_status( 200 );
+			res.set_header( "Content-type", "text/html" );
+			return res;
+
+		case AUTOINDEX:
+			res.set_status(200);
+			res.set_header("Content-type", ServerConfig::getMimeType(DIRLISTING));
+			return res;
+
+        	default:
+			return response_error(req, res, _cfg, route, 404);
+	}
 
     return res;
 }
