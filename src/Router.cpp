@@ -270,6 +270,9 @@ void Router::listen()
                     {
                         HttpResponse res;
                         HttpRequest req = event_map[events[i].data.fd].rf.getRequest();
+
+                        std::cout << req.toString() << std::endl;
+
                         std::cout << "Made request" << std::endl;
                         // Figure out which server this request belongs to
                         if (event_map[events[i].data.fd].server == NULL) {
