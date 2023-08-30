@@ -138,7 +138,6 @@ void RequestFactory::parse()
 
             unsigned int s;
             ss >> s;
-            std::cout << m_buffer.length() << ", " << s << std::endl;
 
             if (m_buffer.length() != s) // Exit if not enough is in the buffer yet
                 return;
@@ -149,7 +148,6 @@ void RequestFactory::parse()
         }
         else if (m_body_type == RequestFactory::CHUNKED)
         {
-            std::cout << "Found chunked request" << std::endl;
             if (m_buffer.find('\n') == std::string::npos)
                 return;
 
@@ -163,7 +161,7 @@ void RequestFactory::parse()
                 line = trimSpace(line);
 
                 if (line.find_first_not_of(DIGIT) != std::string::npos)
-                    throw ParsingException("Bad Request");
+                    throw ParsingException("Expected number");
 
 
                 std::stringstream ss;
@@ -176,13 +174,11 @@ void RequestFactory::parse()
                     return;
 
                 if (m_buffer.compare(s + n, 2, "\r\n"))
-                    throw ParsingException("Bad Request");
+                    throw ParsingException("Expected newline");
 
                 m_active_req.body() += m_buffer.substr(s, n);
 
                 m_buffer.erase(0, s + n + 2);
-
-                std::cout << m_buffer << std::endl;
             }
 
             m_req_buffer.push(m_active_req);
