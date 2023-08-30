@@ -41,6 +41,43 @@ Server& Server::operator=(const Server& copy)
 // END: Canonical Form Functions
 
 
+HttpResponse    response_post(const HttpRequest& req, std::string path, HttpResponse& res, ServerCfg& _cfg, RouteCfg* route)
+{
+    std::string executablePath = "/home/edgar/.rbenv/shims/ruby";
+    char        command[256];
+
+    snprintf(command, sizeof(command), "%s %s", executablePath.c_str(), path.c_str());
+    std::cout << "command " << command << std::endl << std::endl;
+
+    char        buffer[128];
+    std::string result = "";
+    FILE*       pipe = popen(command, "r");
+
+    if (!pipe)
+    {
+        perror("popen");
+        return res;
+    }
+
+    while (!feof(pipe))
+    {
+        if (fgets(buffer, sizeof(buffer), pipe) != NULL)
+            result += buffer;
+    }
+
+    pclose(pipe);
+
+    res.body().append(result);
+
+    std::ostringstream  ss;
+    ss << res.body().length();
+
+    std::cout << "Script Output:\n" << result << std::endl << std::endl;
+
+    return res;
+}
+
+
 // BEGIN: Class Functions
 // Will take a request and handle it, which includes calling CGI
 HttpResponse    Server::handleRequest(const HttpRequest& req)
@@ -78,7 +115,9 @@ HttpResponse    Server::handleRequest(const HttpRequest& req)
     else if (req.method() == "HEAD")
         return response_head(req, path, res, _cfg, route);
 
-    // TODO: check for CGI
+    // Handle POST method
+    else if (req.method() == "POST")
+        return response_post(req, path, res, _cfg, route);
 
     return res;
 }
