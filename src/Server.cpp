@@ -43,10 +43,21 @@ Server& Server::operator=(const Server& copy)
 
 HttpResponse    response_post(const HttpRequest& req, std::string path, HttpResponse& res, ServerCfg& _cfg, RouteCfg* route)
 {
+    std::cout << "POST !!!" << std::endl
+        << "body: " << req.body() << std::endl
+        << "path: " << path << std::endl << std::endl;
+
     std::string executablePath = "/home/edgar/.rbenv/shims/ruby";
     char        command[256];
 
-    snprintf(command, sizeof(command), "%s %s", executablePath.c_str(), path.c_str());
+    snprintf(
+        command,
+        sizeof(command),
+        "%s %s \"%s\"",
+        executablePath.c_str(),
+        path.c_str(),
+        req.body().c_str()
+    );
     std::cout << "command " << command << std::endl << std::endl;
 
     char        buffer[128];
