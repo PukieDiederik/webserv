@@ -181,6 +181,8 @@ void RequestFactory::parse()
                 m_buffer.erase(0, s + n + 2);
             }
 
+            m_active_req.removeHeader("Transfer-Encoding");
+
             m_req_buffer.push(m_active_req);
             m_active_status = RequestFactory::REQ_LINE;
         }
