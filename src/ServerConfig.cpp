@@ -1,4 +1,5 @@
 #include "ServerConfig.hpp"
+#include "ServerUtils.hpp"
 #include "ParserUtils.hpp"
 
 #include <stdexcept>
@@ -162,13 +163,9 @@ ServerConfig& ServerConfig::operator=(const ServerConfig& copy)
 }
 
 std::string ServerConfig::getMimeType(const std::string& filename) {
-    size_t dotPos = filename.rfind('.');
-    // Check if filename contains a period
-    if (dotPos == std::string::npos)
-        return MIME_DEFAULT;
-
-    // Extract file extension based on the period found
-    std::string extension = filename.substr(dotPos + 1);
+	std::string	extension = get_filename_extension(filename);
+	if (extension.empty())
+		return MIME_DEFAULT;
 
     const ServerConfig& sc = ServerConfig::getInstance();
     ServerConfig::mime_tab_t::const_iterator it = sc._mime.find(extension);

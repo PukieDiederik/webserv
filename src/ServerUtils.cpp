@@ -166,3 +166,20 @@ std::vector<std::string>    list_dir( const std::string& path ) {
     }
     return dir_listing;
 }
+
+/*
+*  get_filename_extension:
+*      Gets the extension of a filename or path
+* */
+std::string get_filename_extension(const std::string& filename)
+{
+    size_t  dotPos = filename.rfind('.');
+    // Check if filename contains a period
+    if (dotPos == std::string::npos)
+        return NULL;
+
+    // Extract file extension based on the period found
+    std::string extension = filename.substr(dotPos + 1);
+
+    return (extension);
+}
