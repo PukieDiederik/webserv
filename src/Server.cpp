@@ -1,3 +1,4 @@
+#include "ParserUtils.hpp"
 #include "Server.hpp"
 #include "ServerConfig.hpp"
 #include "HttpRequest.hpp"
@@ -41,6 +42,56 @@ Server& Server::operator=(const Server& copy)
 // END: Canonical Form Functions
 
 
+void    setHeaders(HttpResponse& res, std::string response)
+{
+    std::string             line;
+    int                     i;
+    std::string::size_type  startPos = 0;
+    std::string::size_type  endPos;
+
+    while ((endPos = response.find('\n', startPos)) != std::string::npos)
+    {
+        line = trimSpace(response.substr(startPos, endPos - startPos));
+
+        if (line.empty())
+        {
+            startPos = response.find('\n', endPos + 1);
+            res.body().append(response.substr(startPos));
+            break;
+
+        } else if (startsWith(line, "HTTP/"))
+        {
+            int         statusCode = 0;
+            std::string statusMessage = "";
+
+            i = 0;
+            while (line[i] != ' ')
+                i++;
+
+            while (line[i] == ' ')
+                i++;
+
+            if (line.length() >= i + 3)
+            {
+                statusCode = ParserUtils::atoi(line.substr(i, 3));
+
+                i += 3;
+                while (line[i] == ' ')
+                    i++;
+
+                statusMessage = line.substr(i);
+            }
+        }
+
+        i = line.find(':');
+        if ((i != 0) && (i != line.length() - 1) && (i != std::string::npos))
+            res.set_header(line.substr(0, i), trimSpace(line.substr(i + 1)));
+
+        startPos = endPos + 1;
+    }
+}
+
+
 HttpResponse    response_post(const HttpRequest& req, std::string path, HttpResponse& res, ServerCfg& _cfg, RouteCfg* route)
 {
     std::cout << "POST !!!" << std::endl
@@ -78,12 +129,7 @@ HttpResponse    response_post(const HttpRequest& req, std::string path, HttpResp
 
     pclose(pipe);
 
-    res.body().append(result);
-
-    std::ostringstream  ss;
-    ss << res.body().length();
-
-    std::cout << "Script Output:\n" << result << std::endl << std::endl;
+    setHeaders(res, result);
 
     return res;
 }
