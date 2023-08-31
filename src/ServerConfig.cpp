@@ -184,3 +184,29 @@ const ServerConfig& ServerConfig::getInstance()
 {
     return ServerConfig::_instance;
 }
+
+const std::string	ServerConfig::getExecutablePath(std::string filename)
+{
+	std::string	extension = get_filename_extension(filename);
+	if (extension.empty())
+		return "";
+
+	std::string	result = "";
+
+	const ServerConfig&	sc = ServerConfig::getInstance();
+	for (std::map<std::string, char **>::const_iterator it = sc._cgi.begin(); it != sc._cgi.end(); it++)
+	{
+		if (extension == it->first)
+		{
+			for (int i = 0; (it->second)[i] != NULL; i++)
+			{
+				result += (it->second)[i];
+				if ((it->second)[i + 1] != NULL)
+					result += " ";
+			}
+			break;
+		}
+	}
+
+	return result;
+}

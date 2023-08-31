@@ -47,7 +47,7 @@ HttpResponse    response_post(const HttpRequest& req, std::string path, HttpResp
         << "body: " << req.body() << std::endl
         << "path: " << path << std::endl << std::endl;
 
-    std::string executablePath = "/home/edgar/.rbenv/shims/ruby";
+    std::string executablePath = ServerConfig::getExecutablePath(path);
     char        command[256];
 
     snprintf(

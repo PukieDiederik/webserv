@@ -176,7 +176,7 @@ std::string get_filename_extension(const std::string& filename)
     size_t  dotPos = filename.rfind('.');
     // Check if filename contains a period
     if (dotPos == std::string::npos)
-        return NULL;
+        return "";
 
     // Extract file extension based on the period found
     std::string extension = filename.substr(dotPos + 1);
