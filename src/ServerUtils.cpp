@@ -1,3 +1,4 @@
+#include "ParserUtils.hpp"
 #include "ServerUtils.hpp"
 #include <vector>
 #include <string>
@@ -16,18 +17,6 @@ std::string	remove_slash_dups( std::string str) {
 	while ((pos = result.find("//", pos)) != std::string::npos)
 		result.erase(pos, 1);
 	return result;
-}
-
-/*
- *  startsWith:
- *      Check if string starts with substring
- * */
-bool    startsWith(const std::string& str, const std::string& prefix) {
-    if (str.length() < prefix.length()) {
-        return false;
-    }
-
-    return !str.compare(0, prefix.length(), prefix);
 }
 
 /*

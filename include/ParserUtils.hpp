@@ -35,6 +35,7 @@ namespace ParserUtils {
 }
 
 // Parsing utils from file "ParsingUtils.hpp"
-std::string trimSpace(std::string s);
+std::string	trimSpace(std::string s);
+bool		startsWith(const std::string& str, const std::string& prefix);
 
 #endif
