@@ -46,6 +46,9 @@ std::string	get_path(std::string req_target, RouteCfg* route)
 	if (startsWith(req_target, route->route_path))
 		req_target.erase(0, route->route_path.length());
 
+	// ignore everything after ? or #
+    if ( req_target.find )
+
 	path = route->root + "/" + req_target;
 	path = remove_slash_dups(path);
 
