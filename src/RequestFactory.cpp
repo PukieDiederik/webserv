@@ -114,12 +114,13 @@ void RequestFactory::parse()
                 if (m_active_req.headers().find("Content-Length")->second.find_first_not_of(DIGIT) != std::string::npos)
                     throw ParsingException("Content-Length not in right format");
             }
-            // TODO:
-//            else if (m_active_req.headers().count("Transfer-Encoding"))
-//            {
-//                m_body_type = RequestFactory::CHUNKED;
-//                m_active_status = RequestFactory::BODY;
-//            }
+            else if (m_active_req.headers().count("Transfer-Encoding"))
+            {
+                if (m_active_req.headers().at("Transfer-Encoding") != "chunked")
+                    throw ParsingException("Unsupported Transfer-Encoding");
+                m_body_type = RequestFactory::CHUNKED;
+                m_active_status = RequestFactory::BODY;
+            }
             else // If no body is provided
             {
                 m_req_buffer.push(m_active_req);
@@ -137,12 +138,51 @@ void RequestFactory::parse()
 
             unsigned int s;
             ss >> s;
-            std::cout << m_buffer.length() << ", " << s << std::endl;
 
             if (m_buffer.length() != s) // Exit if not enough is in the buffer yet
                 return;
 
             m_active_req.body() = m_buffer.substr(0, s);
+            m_req_buffer.push(m_active_req);
+            m_active_status = RequestFactory::REQ_LINE;
+        }
+        else if (m_body_type == RequestFactory::CHUNKED)
+        {
+            if (m_buffer.find('\n') == std::string::npos)
+                return;
+
+            unsigned int n = 1;
+
+            while(n)
+            {
+                unsigned int s;
+                std::string line = m_buffer.substr(0,m_buffer.find('\n'));
+                s = line.length() + 1;
+                line = trimSpace(line);
+
+                if (line.find_first_not_of(DIGIT) != std::string::npos)
+                    throw ParsingException("Expected number");
+
+
+                std::stringstream ss;
+                ss << line;
+                ss >> n;
+
+
+                // Check if the buffer is big enough for the payload and \r\n
+                if (m_buffer.length() - s + 2 < n)
+                    return;
+
+                if (m_buffer.compare(s + n, 2, "\r\n"))
+                    throw ParsingException("Expected newline");
+
+                m_active_req.body() += m_buffer.substr(s, n);
+
+                m_buffer.erase(0, s + n + 2);
+            }
+
+            m_active_req.removeHeader("Transfer-Encoding");
+
             m_req_buffer.push(m_active_req);
             m_active_status = RequestFactory::REQ_LINE;
         }
