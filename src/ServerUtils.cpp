@@ -30,6 +30,16 @@ bool    startsWith(const std::string& str, const std::string& prefix) {
     return !str.compare(0, prefix.length(), prefix);
 }
 
+std::string	find_remove( const std::string& str, char flag ) {
+	std::string	return_str = str;
+	std::string::size_type	pos = return_str.find( '?' );
+
+	if ( pos != std::string::npos )
+		return_str.erase( pos );
+
+	return return_str;
+}
+
 /*
  *  get_path:
  *      Retrieves path from request
@@ -47,10 +57,13 @@ std::string	get_path(std::string req_target, RouteCfg* route)
 		req_target.erase(0, route->route_path.length());
 
 	// ignore everything after ? or #
-    if ( req_target.find )
+	req_target = find_remove( req_target, '?' );
+	req_target = find_remove( req_target, '#' );
 
 	path = route->root + "/" + req_target;
 	path = remove_slash_dups(path);
+
+	std::cout << "new path: " << path << std::endl;
 
 	return path;
 }
