@@ -51,11 +51,7 @@ HttpResponse    Server::handleRequest(const HttpRequest& req)
     std::string     path;
 
     // Check if a valid route has been found
-    if (!route) {
-        // TODO: return 404 error page
-        res.set_status(404);
-        return res;
-    }
+    if (!route) return response_error( req, res, _cfg, route, 404);
 
     path = get_path(req, route);
 
@@ -72,12 +68,14 @@ HttpResponse    Server::handleRequest(const HttpRequest& req)
         return response_error(req, res, _cfg, route, 405);
 
     // Handle GET method
-    else if (req.method() == "GET")
+    else if (req.method() == "GET") {
         return response_get(req, path, res, _cfg, route);
+    }
 
     // Handle HEAD method
-    else if (req.method() == "HEAD")
+    else if (req.method() == "HEAD") {
         return response_head(req, path, res, _cfg, route);
+    }
 
     // Handle DELETE method
     else if (req.method() == "DELETE")
@@ -219,34 +217,43 @@ HttpResponse    response_delete(const HttpRequest& req, std::string path, HttpRe
     return res;
 }
 
-HttpResponse    response_error(const HttpRequest& req, HttpResponse& res, ServerCfg& _cfg, RouteCfg* route, const int statusCode)
-{
+HttpResponse    response_error(const HttpRequest& req, HttpResponse& res, ServerCfg& _cfg, RouteCfg* route, const int statusCode) {
+
     std::map<short, std::string>::const_iterator    it = _cfg.error_pages.find(statusCode);
-    std::string     path = get_path(it->second, _cfg);
-    std::ifstream   file(path.c_str());
-    std::string     buff(BUFFER_SIZE, '\0');
+    
+    if (it != _cfg.error_pages.end()) {
+    	std::string     path = get_path(it->second, _cfg);
+    	std::ifstream   file(path.c_str());
+    	std::string     buff(BUFFER_SIZE, '\0');
 
-    if (it != _cfg.error_pages.end())
-    {
-        if (is_file(path) && file.is_open())
-        {
-            while(file.read(&buff[0], BUFFER_SIZE).gcount() > 0)
-                res.body().append(buff, 0, file.gcount());
+		if (is_file(path) && file.is_open()) {
+			while(file.read(&buff[0], BUFFER_SIZE).gcount() > 0)
+				res.body().append(buff, 0, file.gcount());
+			
+			std::ostringstream  ss;
+            		ss << res.body().length();
 
-            std::ostringstream  ss;
-            ss << res.body().length();
-
-            res.set_status(200);
-            res.set_header("Content-Type", ServerConfig::getMimeType(path));
-        }
-        else if (statusCode == 500)
-            res.set_status(500);
-        else
-            return response_error(req, res, _cfg, route, 500);
-    }
-    else
-        res.set_status(statusCode);
-
-    return res;
+            		res.set_status(200);
+            		res.set_header("Content-Type", ServerConfig::getMimeType(path));
+        	} else if (statusCode == 500)
+			res.set_status(500);
+		else
+			return response_error(req, res, _cfg, route, 500);
+	}
+    else {
+		res.body().append( "\
+				<html><head><title>Error</title></head>\
+				<body style=\"\
+				display: flex;\
+				justify-content: center;\
+				align-items: center;\
+				height: 100vh; margin: 0;\"\
+				><h1>Error</h1></body></html>\
+				" );
+        res.set_status( statusCode );
+        res.set_header("Content-Type", "text/html");
+		return res;
+	}
+	return res;
 }
 // END: Helper Functions
