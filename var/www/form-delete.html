@@ -11,9 +11,33 @@
 	<body>
 		<div class="page-wrapper">
 			<div class="container">
-				<h1 class="title">
-					Form Delete
-				</h1>
+				<section>
+					<h1 class="title">
+						Form Delete
+					</h1>
+				</section>
+
+				<section>
+					<form method="post" action="/cgi-bin/form-delete.rb">
+						<fieldset>
+							<legend>WHAT FILE YOU WANNA DELETE !?</legend>
+
+							<br>
+							<br>
+
+							<label for="filename">
+								File path:
+								<input type="text" placeholder="..." id="filename" name="filename">
+							</label>
+
+							<br>
+							<br>
+						</fieldset>
+
+						<br>
+						<input type="submit" class="button" value="Submit">
+					</form>
+				</section>
 			</div>
 		</div>
 	</body>
