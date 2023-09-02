@@ -31,8 +31,6 @@ void	ServerConfig::parseCgi(int &bad_line, bool &keywd_bracket, std::ifstream &f
 		else if (token.compare("{") == 0) keywd_bracket = true;
 	}
 
-	std::vector<std::string>	file_extensions;
-	std::vector<std::string>	command;
 	while (std::getline(fd_conf, curr_line)) {
 		curr_line = ParserUtils::parseLine(curr_line, "	", " ");
 		bad_line++;
@@ -42,15 +40,18 @@ void	ServerConfig::parseCgi(int &bad_line, bool &keywd_bracket, std::ifstream &f
 		std::getline(iss_curr_line, token, ' ');
 
 		if (token == "cgi_add") {
-			//get file extensions from next token
+			std::vector<std::string>	file_extensions;
+			std::vector<std::string>	command;
+	
+			// get file extensions from next token
 			std::getline(iss_curr_line, token, ' ');
 			ParserUtils::getParams(token, file_extensions, bad_line);
 			
-			//get command from next token
+			// get command from next token
 			std::getline(iss_curr_line, ltoken, ' ');
 			ParserUtils::getParams(ltoken, command, bad_line);
 			
-			//add command to list of commands
+			// add command to list of commands
 			char	**cmd_array = new char*[command.size() + 1]; //add to destructor!!
 			cmd_array[command.size()] = NULL;
 			for (size_t i = 0; i < command.size(); i++) {
@@ -59,7 +60,7 @@ void	ServerConfig::parseCgi(int &bad_line, bool &keywd_bracket, std::ifstream &f
 			}
 			_cgi_cmds.push_back(cmd_array);
 
-			//populate _cgi with all the file_extensions to the corresponding cmd
+			// populate _cgi with all the file_extensions to the corresponding cmd
 			for (std::vector<std::string>::iterator it = file_extensions.begin(); it != file_extensions.end(); it++) {
 				_cgi.insert(std::make_pair(*it, cmd_array));
 			}
