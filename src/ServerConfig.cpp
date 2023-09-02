@@ -147,16 +147,21 @@ ServerConfig::ServerConfig(const std::string& filepath) {
 ServerConfig::ServerConfig(const ServerConfig& copy) { *this = copy; }
 
 ServerConfig::~ServerConfig() {
+	// TODO: Free cmds arrays, and use copy operator to duplicate it
 	// Deletion of cmds arrays
+	/*
 	for (std::vector<char **>::iterator it = _cgi_cmds.begin(); it != _cgi_cmds.end(); it++) {
 		for (int i = 0; (*it)[i] != NULL; i++)
 			delete[] (*it)[i];
 		delete[] *it;
 	}
+	*/
 }
 
 ServerConfig& ServerConfig::operator=(const ServerConfig& copy)
 {
+	_cgi_cmds = copy._cgi_cmds;
+	_cgi = copy._cgi;
     _mime = copy._mime;
     _servers = copy._servers;
     return *this;
