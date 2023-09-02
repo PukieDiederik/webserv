@@ -57,6 +57,7 @@ function createNavbar() {
 
 		const appendListItem = (name) => {
 			const anchor = document.createElement('a');
+			anchor.classList.add('button');
 			anchor.innerText = name.toUpperCase();
 			anchor.href = `/index-${name}.html`;
 

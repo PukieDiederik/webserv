@@ -59,6 +59,30 @@ ul li {
 	font-weight: 700;
 	margin: 0 0 1.5rem;
 }
+
+.button {
+	text-align: center;
+	display: block;
+	font-weight: 600;
+	letter-spacing: 0.1rem;
+	text-decoration: none;
+	padding: 12px 24px;
+	border: 1px solid transparent;
+	border-radius: 8px;
+	transition: 0.25s;
+	cursor: pointer;
+}
+
+.button[type="submit"] {
+	color: var(--sub-color);
+	background-color: var(--main-color);
+}
+
+.button[type="submit"]:hover {
+	color: var(--main-color);
+	background-color: var(--sub-color);
+	border-color: var(--main-color);
+}
 /* END: Standard */
 
 
@@ -88,20 +112,11 @@ ul li {
 	height: 45px;
 }
 
-.navbar li:not(.logo) a {
-	text-align: center;
-	display: block;
-	font-weight: 600;
-	letter-spacing: 0.1rem;
-	text-decoration: none;
+.navbar .button {
 	background-color: var(--sub-color);
-	padding: 12px 24px;
-	border: 1px solid transparent;
-	border-radius: 8px;
-	transition: 0.25s;
 }
 
-.navbar li:not(.logo) a:hover {
+.navbar .button:hover {
 	color: var(--sub-color);
 	background-color: var(--main-color);
 	border-color: var(--sub-color);
