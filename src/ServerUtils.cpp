@@ -60,11 +60,8 @@ std::string	get_path(std::string req_target, RouteCfg* route)
 	req_target = find_remove( req_target, '?' );
 	req_target = find_remove( req_target, '#' );
 
-    std::cout << "route root " << route->root << std::endl;
 	path = route->root + "/" + req_target;
 	path = remove_slash_dups(path);
-
-	std::cout << "new path: " << path << std::endl;
 
 	return path;
 }
