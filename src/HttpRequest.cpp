@@ -28,7 +28,6 @@ HttpRequest& HttpRequest::operator=(const HttpRequest& copy)
 
 std::string& HttpRequest::target() { return _target; }
 const std::string& HttpRequest::target() const { return _target; }
-void    HttpRequest::set_target( const std::string& target ) { _target = target; }
 
 const std::string& HttpRequest::method() const { return _method; }
 std::string& HttpRequest::method() { return _method; }
