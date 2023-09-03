@@ -44,7 +44,7 @@ void	ServerConfig::checker() {
 		if (VERBOSE)
 			std::cout << "\tServer max_body_size:\n\t\t[" << (*it).max_body_size << "]" << std::endl;
 
-		// Issue #27
+
 		if ((*it).root_dir.empty()) throw std::runtime_error("missing root dir config");
 		if (VERBOSE)
 			std::cout << "\tServer root dir:\n\t\t[" << (*it).root_dir << "]" << std::endl;
@@ -62,9 +62,7 @@ void	ServerConfig::checker() {
 			if ((*jit).is_redirect && (*jit).redirect_to.empty()) throw std::runtime_error("missing redirection config");
 		    if ((*jit).is_redirect && VERBOSE) std::cout << "\t\tRoute redirection:\n\t\t\t[" << (*jit).redirect_to << "]" << std::endl;
 
-			// Issue #29
-		    std::cout << (*jit).root << std::endl;
-			if ( !(ParserUtils::isValidPath( (*jit).root ) ) ) throw std::runtime_error("invalid route root path");
+			if ( !(ParserUtils::isValidPath( (*jit).root ) ) || (*jit).root[0] != '/') throw std::runtime_error("invalid route root path");
 			if ( (*jit).root.empty() )  {
 				// if root tag was not given, then the route_root = server_root
 				(*jit).root = (*it).root_dir;
