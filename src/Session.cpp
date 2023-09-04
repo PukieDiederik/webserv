@@ -15,7 +15,6 @@ std::string generateExpirationDate();
 Session::Session() {
     _session_id = createSessionID();
     _last_log = std::time(0);
-    _pid        = 0;
 }
 
 Session::Session( const Session& ref ) {
@@ -68,18 +67,6 @@ void    Session::updateCookies( const Session::cookies_t& update_cookies ) {
 
 void    Session::removeCookie( const std::string& name ) {
     _cookies.erase( name );
-}
-
-int     Session::getPid() const {
-    return _pid;
-}
-
-void    Session::incrementPid() {
-    _pid++;
-}
-
-void    Session::resetPid() {
-    _pid = 0;
 }
 
 /* Helpers */

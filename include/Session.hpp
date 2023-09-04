@@ -12,7 +12,6 @@ class Session {
         std::string      _session_id;
         cookies_t        _cookies;
         time_t           _last_log;
-        int              _pid;
     public:
         Session();
         ~Session();

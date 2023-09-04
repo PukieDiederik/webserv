@@ -3,8 +3,6 @@
 #include <exception>
 #include "SessionManager.hpp"
 
-#include <cstdlib> // exit
-
 #include <iostream>
 
 int main(int argc, char **argv) {
