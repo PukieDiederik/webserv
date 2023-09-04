@@ -65,12 +65,9 @@ void    setHeaders(HttpResponse& res, std::string response)
             int         statusCode = 0;
             std::string statusMessage = "";
 
-            i = 0;
-            while (line[i] != ' ')
-                i++;
-
-            while (line[i] == ' ')
-                i++;
+            // Get the 'i' variable to the index of the first char of the status code (3 chars)
+            i = line.find_first_of(' ');
+            i = line.find_first_not_of(' ', i);
 
             if (line.length() >= i + 3)
             {
