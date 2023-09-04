@@ -20,10 +20,12 @@ SessionManager*  SessionManager::getInstance() {
 }
 
 SessionManager::~SessionManager() {
+	for ( std::map<std::string, Session*>::iterator it = _sessions.begin(); it != _sessions.end(); it++ )
+        delete it->second;
 }
 
 std::string SessionManager::createSession() {
-    std::string id = "";
+    std::string id;
     Session* new_session = new Session();
 
     // make sure sessionID does not already exist
@@ -33,7 +35,6 @@ std::string SessionManager::createSession() {
     // add essential cookies
     id = new_session->getSessionID();
     new_session->addCookie( "sessionID", createCookie( "sessionID", id, "/", "Expires" ) );    
-    new_session->addCookie( "user", createCookie( "user", "42", "/", "Expires" ) );    
     _sessions.insert( std::pair<std::string, Session*>( id, new_session ) );
     return id;
 }

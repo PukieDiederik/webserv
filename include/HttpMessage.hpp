@@ -55,7 +55,7 @@ public:
     virtual std::string toString();
 
     // gde-alme
-    cookies_t::iterator add_cookie( const std::string& name, const std::string& cookie );
+    void cookies( const HttpMessage::cookies_t& cookies );
 };
 
 #endif

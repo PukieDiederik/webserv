@@ -90,8 +90,7 @@ std::string HttpMessage::toString()
 }
 
 // gde-alme
-HttpMessage::cookies_t::iterator HttpMessage::add_cookie( const std::string& name, const std::string& cookie ) {
-    _cookies[name] = cookie;
-    return _headers.find( name );
+void    HttpMessage::cookies( const HttpMessage::cookies_t& cookies ) {
+    _cookies = cookies;
 }
 

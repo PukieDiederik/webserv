@@ -15,6 +15,7 @@ std::string generateExpirationDate();
 Session::Session() {
     _session_id = createSessionID();
     _last_log = std::time(0);
+    _pid        = 0;
 }
 
 Session::Session( const Session& ref ) {
@@ -60,13 +61,25 @@ void    Session::updateCookies( const Session::cookies_t& update_cookies ) {
     // check if exists and update
     for ( Session::cookies_t::const_iterator update_cookie = update_cookies.begin(); update_cookie != update_cookies.end(); update_cookie++ ) {
         if ( _cookies.size() < 200 )
-                _cookies[update_cookie->first] = createCookie( update_cookie->first, update_cookie->second, "/", generateExpirationDate() );
+                _cookies[update_cookie->first] = createCookie( update_cookie->first, update_cookie->second, "/", "Expires" );
     }
 
 }
 
 void    Session::removeCookie( const std::string& name ) {
     _cookies.erase( name );
+}
+
+int     Session::getPid() const {
+    return _pid;
+}
+
+void    Session::incrementPid() {
+    _pid++;
+}
+
+void    Session::resetPid() {
+    _pid = 0;
 }
 
 /* Helpers */
@@ -113,29 +126,41 @@ Session::cookies_t parseCookies( const Session::cookies_t& headers ) {
     Session::cookies_t  cookies;
 
     for ( Session::cookies_t::const_iterator header = headers.begin(); header != headers.end(); header++ ) {
-            if ( header->first.find( "Cookie" ) != std::string::npos )
-                cookies[removeAfterChar( header->first, '=' )] = removeBeforeChar( header->second, '=' );
+            if ( header->first.find( "Cookie" ) != std::string::npos ) {
+                if ( header->second.empty() ) continue;
+                std::string name = removeAfterChar( header->first, '=' );
+                std::string value = removeBeforeChar( header->second, '=' );
+                if ( !name.empty() && !value.empty() )
+                    cookies[name] = value;
+            }
     }
     return cookies;
 }
 
 void    handleCookies( const HttpRequest& req, HttpResponse& res ) {
-    std::string mozilla_bool = req.headers( "User-Agent" );
+    std::string browser_bool = req.headers( "User-Agent" );
     std::string origin_bool = req.headers( "Sec-Fetch-Site" );
-    if ( mozilla_bool.find( "Mozilla" ) == std::string::npos ) return ;
+    if ( browser_bool.find( "Mozilla" ) == std::string::npos && browser_bool.find( "Chrome" ) == std::string::npos) return ;
     if ( origin_bool.find( "same-origin" ) != std::string::npos ) return ;
-    
+
     SessionManager* sessions = SessionManager::getInstance();
+
 
     // Parse headers -> cookies
     Session::cookies_t  cookies = parseCookies( req.headers() );
+
+    std::cout << "Reading cookies..." << std::endl;
+    for ( Session::cookies_t::iterator it = cookies.begin(); it != cookies.end(); it++ )
+        std::cout << "Cookie -> " << it->second << std::endl;
+    std::cout << "wtf" << std::endl;
+
     std::string session_id = cookies["sessionID"];
 
     // Check if session exits if not create
     if ( session_id.empty() || sessions->getSessions()[session_id] == NULL ) session_id = sessions->createSession();
 
     // Update cookies
-
+    sessions->getSessions()[session_id]->updateCookies( cookies );
 
     res.set_header( std::string( "Set-Cookie" ), sessions->getSessions()[session_id]->getCookies()["sessionID"] );
 }
