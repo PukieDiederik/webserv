@@ -29,10 +29,6 @@ class Session {
 
 
         std::string createSessionID();
-
-        int     getPid() const;
-        void    incrementPid();
-        void    resetPid();
 };
 
 #endif
