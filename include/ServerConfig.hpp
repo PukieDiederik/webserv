@@ -119,6 +119,7 @@ class ServerConfig {
 
         static void initialize(const std::string& filepath);
         static const ServerConfig& getInstance();
+        static bool	isCgiScript(std::string filename);
         static const std::string	getExecutablePath(std::string filename);
 };
 

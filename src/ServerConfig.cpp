@@ -190,6 +190,22 @@ const ServerConfig& ServerConfig::getInstance()
     return ServerConfig::_instance;
 }
 
+bool	ServerConfig::isCgiScript(std::string filename)
+{
+	std::string	extension = get_filename_extension(filename);
+	if (extension.empty())
+		return false;
+
+	const ServerConfig&	sc = ServerConfig::getInstance();
+	for (std::map<std::string, char **>::const_iterator it = sc._cgi.begin(); it != sc._cgi.end(); it++)
+	{
+		if (extension == it->first)
+			return true;
+	}
+
+	return false;
+}
+
 const std::string	ServerConfig::getExecutablePath(std::string filename)
 {
 	std::string	extension = get_filename_extension(filename);

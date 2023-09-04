@@ -90,12 +90,8 @@ void    setHeaders(HttpResponse& res, std::string response)
 }
 
 
-HttpResponse    response_post(const HttpRequest& req, std::string path, HttpResponse& res, ServerCfg& _cfg, RouteCfg* route)
+HttpResponse    response_cgi(const HttpRequest& req, std::string path, HttpResponse& res, ServerCfg& _cfg, RouteCfg* route)
 {
-    std::cout << "POST !!!" << std::endl
-        << "body: " << req.body() << std::endl
-        << "path: " << path << std::endl << std::endl;
-
     std::string executablePath = ServerConfig::getExecutablePath(path);
     char        command[256];
 
@@ -107,7 +103,6 @@ HttpResponse    response_post(const HttpRequest& req, std::string path, HttpResp
         path.c_str(),
         req.body().c_str()
     );
-    std::cout << "command " << command << std::endl << std::endl;
 
     char        buffer[128];
     std::string result = "";
@@ -158,6 +153,10 @@ HttpResponse    Server::handleRequest(const HttpRequest& req)
     else if (!route->accepted_methods.empty() && !is_accepted_method(route, req.method()))
         return response_error(req, res, _cfg, route, 405);
 
+    // Handle CGI
+    else if (ServerConfig::isCgiScript(path))
+        return response_cgi(req, path, res, _cfg, route);
+
     // Handle GET method
     else if (req.method() == "GET")
         return response_get(req, path, res, _cfg, route);
@@ -166,18 +165,12 @@ HttpResponse    Server::handleRequest(const HttpRequest& req)
     else if (req.method() == "HEAD")
         return response_head(req, path, res, _cfg, route);
 
-    // Handle POST method
-    else if (req.method() == "POST")
-        return response_post(req, path, res, _cfg, route);
-
     // Handle DELETE method
     else if (req.method() == "DELETE")
         return response_delete(req, path, res, _cfg, route);
 
     else
         return response_error(req, res, _cfg, route, 501);
-
-    return res;
 }
 
 ServerCfg&  Server::cfg()
