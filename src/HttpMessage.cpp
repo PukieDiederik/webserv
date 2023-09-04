@@ -2,6 +2,8 @@
 #include <sstream>
 #include <exception>
 
+# include <iostream>
+
 HttpMessage::headers_t::iterator HttpMessage::add_header(const std::string& name, const std::string& value)
 {
     if (_headers[name].empty())
@@ -71,6 +73,9 @@ std::string HttpMessage::toStringHeaders() const
     std::stringstream result;
     for (HttpMessage::headers_t::const_iterator i = _headers.begin(); i != _headers.end(); ++i)
         result << i->first << ": " << i->second << "\r\n";
+    // gde-alme
+    for ( HttpMessage::cookies_t::const_iterator i = _cookies.begin(); i != _cookies.end(); i++ )
+        result << "Set-Cookie" << ": " << i->second << "\r\n";
     return result.str();
 }
 std::string HttpMessage::toStringBody() const { return _body;}
@@ -83,3 +88,10 @@ std::string HttpMessage::toString()
 
     return result.str();
 }
+
+// gde-alme
+HttpMessage::cookies_t::iterator HttpMessage::add_cookie( const std::string& name, const std::string& cookie ) {
+    _cookies[name] = cookie;
+    return _headers.find( name );
+}
+

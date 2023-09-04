@@ -88,6 +88,7 @@ void RequestFactory::parse()
     if (m_active_status == RequestFactory::HEADER)
     {
         std::string line;
+        int cookie_count = 0; // gde-alme
         while (m_buffer.find('\n') != std::string::npos)
         {
             line = m_buffer.substr(0, m_buffer.find('\n') + 1);
@@ -100,6 +101,11 @@ void RequestFactory::parse()
             // Add header
             std::string _field = line.substr(0, line.find(static_cast<std::string>(": ")));
             std::string _value = line.substr(line.find(static_cast<std::string>(": ")) + 2);
+            if ( _field == "Cookie" ) { // gde-alme
+                std::stringstream ss; // gde-alme
+                ss << ++cookie_count; // gde-alme
+                m_active_req.headers("Cookie" + ss.str(), _value); // gde-alme
+            } // gde-alme
             m_active_req.headers(_field, _value);
         }
 

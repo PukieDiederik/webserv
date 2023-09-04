@@ -12,8 +12,10 @@
 class HttpMessage {
 public:
     typedef std::map<std::string, std::string> headers_t;
+    typedef std::map<std::string, std::string> cookies_t;
 protected:
     headers_t _headers;
+    cookies_t _cookies; // gde-alme
     int _major_version;
     int _minor_version;
 
@@ -51,6 +53,9 @@ public:
 
     // This will convert it back to a text based http message
     virtual std::string toString();
+
+    // gde-alme
+    cookies_t::iterator add_cookie( const std::string& name, const std::string& cookie );
 };
 
 #endif

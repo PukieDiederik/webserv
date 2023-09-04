@@ -180,3 +180,13 @@ std::vector<std::string>    list_dir( const std::string& path ) {
     }
     return dir_listing;
 }
+
+std::string removeAfterChar( const std::string str, char c ) {
+    std::string::size_type pos = str.find( c );
+    return ( pos != std::string::npos ) ? str.substr( 0, pos ) : str;
+}
+
+std::string removeBeforeChar( const std::string str, char c ) {
+    std::string::size_type pos = str.find( c );
+    return ( pos != std::string::npos ) ? str.substr( pos + 1 ) : str;
+}

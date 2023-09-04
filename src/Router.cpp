@@ -18,7 +18,7 @@
 #include <algorithm>
 
 // Timeout in seconds
-#define TIMEOUT_TIME 15
+#define TIMEOUT_TIME 30
 
 Router::Router()
 {
@@ -273,7 +273,7 @@ void Router::listen()
                     {
                         HttpResponse res;
                         HttpRequest req = event_map[events[i].data.fd].rf.getRequest();
-                        if (req.headers().count("Connection") && req.headers("Connection") == "close")
+                        if (req.headers().count("Connection") && req.headers("Connection") == "close") // send timeout ?
                             event_map[events[i].data.fd].closing = true;
 
                         std::cout << "Made request" << std::endl;
@@ -284,7 +284,7 @@ void Router::listen()
                                 _servers,
                                 req);
                         }
-                        res = event_map[events[i].data.fd].server->handleRequest(req);
+                        res = event_map[events[i].data.fd].server->handleRequest( req );
 
                         // Add the server header
                         res.headers("Server", "42-webserv");

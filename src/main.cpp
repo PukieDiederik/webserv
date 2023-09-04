@@ -1,6 +1,9 @@
 #include "ServerConfig.hpp"
 #include "Router.hpp"
 #include <exception>
+#include "SessionManager.hpp"
+
+#include <cstdlib> // exit
 
 #include <iostream>
 
@@ -12,9 +15,9 @@ int main(int argc, char **argv) {
 		return (0);
 	}
 
-	std::cout << "\nIf any possible errors do occur: \n" << std::endl;
 	try {
 		ServerConfig::initialize(argv[1]);
+		SessionManager::initialize();
 
         // Start listening
         Router r;

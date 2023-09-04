@@ -15,5 +15,7 @@ bool	is_accepted_method( RouteCfg* route, const std::string method );
 bool    is_file( const std::string& path );
 bool	is_directory( const std::string& path );
 std::vector<std::string>    list_dir( const std::string& path );
+std::string removeAfterChar( const std::string str, char c);
+std::string removeBeforeChar( const std::string str, char c);
 
 #endif

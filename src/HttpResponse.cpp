@@ -1,6 +1,6 @@
 #include "HttpResponse.hpp"
 #include <sstream>
-
+#include <iostream>
 
 // BEGIN: Helper Functions Prototypes
 std::map<short, std::string>    createStatusCodeMap();
@@ -114,6 +114,7 @@ std::string         HttpResponse::toString()
     _headers["Content-Length"] = cl.str();
 
     std::stringstream   result;
+    std::cout << "r -> " << result.str() << std::endl;
     result << toStringStart() << toStringHeaders() << "\r\n" << toStringBody();
 
     return result.str();

@@ -3,6 +3,7 @@
 #include "HttpRequest.hpp"
 #include "HttpResponse.hpp"
 #include "ServerUtils.hpp"
+#include "SessionManager.hpp"
 #include <iostream>
 #include <unistd.h>
 #include <fcntl.h>
@@ -24,6 +25,7 @@ HttpResponse    response_get(const HttpRequest& req, std::string path, HttpRespo
 HttpResponse    response_head(const HttpRequest& req, std::string path, HttpResponse& res, ServerCfg& _cfg, RouteCfg* route);
 HttpResponse    response_delete(const HttpRequest& req, std::string path, HttpResponse& res, ServerCfg& _cfg, RouteCfg* route);
 HttpResponse    response_error(const HttpRequest& req, HttpResponse& res, ServerCfg& _cfg, RouteCfg* route, const int statusCode);
+void            handleCookies( const HttpRequest& req, HttpResponse& res );
 // END: Helper Functions Prototypes
 
 
@@ -41,10 +43,9 @@ Server& Server::operator=(const Server& copy)
 }
 // END: Canonical Form Functions
 
-
 // BEGIN: Class Functions
 // Will take a request and handle it, which includes calling CGI
-HttpResponse    Server::handleRequest(const HttpRequest& req)
+HttpResponse    Server::handleRequest(const HttpRequest& req )
 {
     HttpResponse    res;
     RouteCfg*       route = find_route(req, _cfg.routes);
@@ -54,6 +55,7 @@ HttpResponse    Server::handleRequest(const HttpRequest& req)
     if (!route) return response_error( req, res, _cfg, route, 404);
 
     path = get_path(req, route);
+    std::cout << path << std::endl;
 
     // Check if file exists
     if (!is_directory(path) && ::access(path.c_str(), F_OK) < 0)
@@ -69,6 +71,7 @@ HttpResponse    Server::handleRequest(const HttpRequest& req)
 
     // Handle GET method
     else if (req.method() == "GET") {
+        handleCookies( req, res );
         return response_get(req, path, res, _cfg, route);
     }
 
