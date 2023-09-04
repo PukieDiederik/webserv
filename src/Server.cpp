@@ -21,6 +21,7 @@
 // BEGIN: Helper Functions Prototypes
 RouteCfg*       find_route(const HttpRequest& req, std::vector<RouteCfg>& routes);
 HttpResponse    list_dir_res(const HttpRequest& req, std::string path, HttpResponse& res, ServerCfg& _cfg, RouteCfg* route);
+HttpResponse    response_cgi(const HttpRequest& req, std::string path, HttpResponse& res, ServerCfg& _cfg, RouteCfg* route);
 HttpResponse    response_get(const HttpRequest& req, std::string path, HttpResponse& res, ServerCfg& _cfg, RouteCfg* route);
 HttpResponse    response_head(const HttpRequest& req, std::string path, HttpResponse& res, ServerCfg& _cfg, RouteCfg* route);
 HttpResponse    response_delete(const HttpRequest& req, std::string path, HttpResponse& res, ServerCfg& _cfg, RouteCfg* route);
@@ -41,91 +42,6 @@ Server& Server::operator=(const Server& copy)
     return *this;
 }
 // END: Canonical Form Functions
-
-
-void    setHeaders(HttpResponse& res, std::string response)
-{
-    std::string             line;
-    int                     i;
-    std::string::size_type  startPos = 0;
-    std::string::size_type  endPos;
-
-    while ((endPos = response.find('\n', startPos)) != std::string::npos)
-    {
-        line = trimSpace(response.substr(startPos, endPos - startPos));
-
-        if (line.empty())
-        {
-            startPos = response.find('\n', endPos + 1);
-            res.body().append(response.substr(startPos));
-            break;
-
-        } else if (startsWith(line, "HTTP/"))
-        {
-            int         statusCode = 0;
-            std::string statusMessage = "";
-
-            // Get the 'i' variable to the index of the first char of the status code (3 chars)
-            i = line.find_first_of(' ');
-            i = line.find_first_not_of(' ', i);
-
-            if (line.length() >= i + 3)
-            {
-                statusCode = ParserUtils::atoi(line.substr(i, 3));
-
-                i += 3;
-                while (line[i] == ' ')
-                    i++;
-
-                statusMessage = line.substr(i);
-            }
-        }
-
-        i = line.find(':');
-        if ((i != 0) && (i != line.length() - 1) && (i != std::string::npos))
-            res.set_header(line.substr(0, i), trimSpace(line.substr(i + 1)));
-
-        startPos = endPos + 1;
-    }
-}
-
-
-HttpResponse    response_cgi(const HttpRequest& req, std::string path, HttpResponse& res, ServerCfg& _cfg, RouteCfg* route)
-{
-    std::string executablePath = ServerConfig::getExecutablePath(path);
-    char        command[256];
-
-    snprintf(
-        command,
-        sizeof(command),
-        "%s %s \"%s\"",
-        executablePath.c_str(),
-        path.c_str(),
-        req.body().c_str()
-    );
-
-    char        buffer[128];
-    std::string result = "";
-    FILE*       pipe = popen(command, "r");
-
-    if (!pipe)
-    {
-        perror("popen");
-        return res;
-    }
-
-    while (!feof(pipe))
-    {
-        if (fgets(buffer, sizeof(buffer), pipe) != NULL)
-            result += buffer;
-    }
-
-    pclose(pipe);
-
-    setHeaders(res, result);
-
-    return res;
-}
 
 
 // BEGIN: Class Functions
@@ -230,6 +146,90 @@ HttpResponse    list_dir_res(const HttpRequest& req, std::string path, HttpRespo
     res.set_status(200);
     res.set_header("Content-Type", "text/html");
     file.close();
+
+    return res;
+}
+
+void    set_cgi_headers(HttpResponse& res, std::string response)
+{
+    std::string             line;
+    int                     i;
+    std::string::size_type  startPos = 0;
+    std::string::size_type  endPos;
+
+    while ((endPos = response.find('\n', startPos)) != std::string::npos)
+    {
+        line = trimSpace(response.substr(startPos, endPos - startPos));
+
+        if (line.empty())
+        {
+            startPos = response.find('\n', endPos + 1);
+            res.body().append(response.substr(startPos));
+            break;
+
+        } else if (startsWith(line, "HTTP/"))
+        {
+            int         statusCode = 0;
+            std::string statusMessage = "";
+
+            // Get the 'i' variable to the index of the first char of the status code (3 chars)
+            i = line.find_first_of(' ');
+            i = line.find_first_not_of(' ', i);
+
+            if (line.length() >= i + 3)
+            {
+                statusCode = ParserUtils::atoi(line.substr(i, 3));
+
+                i += 3;
+                while (line[i] == ' ')
+                    i++;
+
+                statusMessage = line.substr(i);
+            }
+        }
+
+        i = line.find(':');
+        if ((i != 0) && (i != line.length() - 1) && (i != std::string::npos))
+            res.set_header(line.substr(0, i), trimSpace(line.substr(i + 1)));
+
+        startPos = endPos + 1;
+    }
+}
+
+
+HttpResponse    response_cgi(const HttpRequest& req, std::string path, HttpResponse& res, ServerCfg& _cfg, RouteCfg* route)
+{
+    std::string executablePath = ServerConfig::getExecutablePath(path);
+    char        command[256];
+
+    snprintf(
+        command,
+        sizeof(command),
+        "%s %s \"%s\"",
+        executablePath.c_str(),
+        path.c_str(),
+        req.body().c_str()
+    );
+
+    char        buffer[128];
+    std::string result = "";
+    FILE*       pipe = popen(command, "r");
+
+    if (!pipe)
+    {
+        perror("popen");
+        return res;
+    }
+
+    while (!feof(pipe))
+    {
+        if (fgets(buffer, sizeof(buffer), pipe) != NULL)
+            result += buffer;
+    }
+
+    pclose(pipe);
+
+    set_cgi_headers(res, result);
 
     return res;
 }
