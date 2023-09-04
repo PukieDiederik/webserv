@@ -74,6 +74,8 @@ struct event
     int port; // The port it is open on, only needs to be set if this is a server
     struct timeval timeout_at; // Timeout for non-server sockets
     RequestFactory rf; // For generating the requests
+
+    bool closing; // If this connection is closing. It will close the sockets once all data has been read
 };
 
 typedef std::deque<event*> timeouts_t;
@@ -87,6 +89,7 @@ struct event create_event(int fd, uint32_t events, bool is_server, int port, Ser
     e.is_server = is_server;
     e.port = port;
     e.server = server;
+    e.closing = false;
 
     return e;
 }
@@ -126,6 +129,7 @@ void clear_fd(int fd, int epoll_fd,
     remove_timeout(timeouts, &event_map[fd]);
     event_map.erase(fd);
     out_buffer.erase(fd);
+    close(fd);
 }
 
 Server* find_server_from_port(int port, std::vector<Server>& servers, HttpRequest& req)
@@ -160,7 +164,6 @@ Server* find_server_from_port(int port, std::vector<Server>& servers, HttpReques
 
 void Router::listen()
 {
-    std::cout << "Got in listening" << std::endl;
     int epoll_fd;
     event_map_t event_map; // Map which stores all event information using fd as a key
     timeouts_t timeouts; // For managing timeouts of client sockets
@@ -270,6 +273,8 @@ void Router::listen()
                     {
                         HttpResponse res;
                         HttpRequest req = event_map[events[i].data.fd].rf.getRequest();
+                        if (req.headers().count("Connection") && req.headers("Connection") == "close")
+                            event_map[events[i].data.fd].closing = true;
 
                         std::cout << "Made request" << std::endl;
                         // Figure out which server this request belongs to
@@ -306,16 +311,18 @@ void Router::listen()
                     continue;
 
                 int bytes_send = 0;
+                std::cout << "Writing: " << out_it->second.length() << " characters" << std::endl;
                 // start writing on the socket
                 for (std::size_t s = 0; s < out_it->second.length(); s += bytes_send)
                 {
                     bytes_send = send(events[i].data.fd,
-                                      out_it->second.c_str() + i,
-                                      out_it->second.length() - i,
+                                      out_it->second.c_str() + s,
+                                      out_it->second.length() - s,
                                       MSG_DONTWAIT);
                     if (bytes_send <= 0)
                         break; // Something errored
                 }
+                std::cout << "bytes_send: " << bytes_send << std::endl;
                 // Remove the out_buffer for this socket
                 out_buffer.erase(out_it);
 
@@ -323,7 +330,13 @@ void Router::listen()
                 event_map[events[i].data.fd].event.events &= ~EPOLLOUT;
                 epoll_ctl(epoll_fd, EPOLL_CTL_MOD, events[i].data.fd, &event_map[events[i].data.fd].event);
 
-                update_timeout(timeouts, &event_map[events[i].data.fd]);
+                if (event_map[events[i].data.fd].closing)
+                {
+                    std::cout << "Closing connection early" << std::endl;
+                    clear_fd(events[i].data.fd, epoll_fd, event_map, timeouts, out_buffer);
+                }
+                else
+                    update_timeout(timeouts, &event_map[events[i].data.fd]);
             }
             // On socket closure
             if (events[i].events & (EPOLLRDHUP | EPOLLHUP)) {

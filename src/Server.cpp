@@ -86,7 +86,10 @@ HttpResponse    Server::handleRequest(const HttpRequest& req)
         return response_delete(req, path, res, _cfg, route);
 
     else
+    {
+        std::cout << "Returning response error" << std::endl;
         return response_error(req, res, _cfg, route, 501);
+    }
 }
 
 ServerCfg&  Server::cfg()
@@ -244,16 +247,17 @@ HttpResponse    response_get(const HttpRequest& req, std::string path, HttpRespo
     }
 
     std::ifstream   file(path.c_str());
-    std::string     buff(BUFFER_SIZE, '\0');
+    char buff [BUFFER_SIZE];
 
     if (!file.is_open())
         return response_error(req, res, _cfg, route, 500);
 
-    while(file.read(&buff[0], BUFFER_SIZE).gcount() > 0)
-        res.body().append(buff, 0, file.gcount());
+    std::ostringstream ss;
 
-    std::ostringstream  ss;
-    ss << res.body().length();
+    ss << file.rdbuf();
+    file.close();
+
+    res.body() = ss.str();
 
     res.set_status(200);
     res.set_header("Content-Type", ServerConfig::getMimeType(path));
