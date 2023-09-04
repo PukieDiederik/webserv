@@ -16,9 +16,10 @@
 #include <deque>
 #include <sys/time.h>
 #include <algorithm>
+#include "Server.hpp"
 
 // Timeout in seconds
-#define TIMEOUT_TIME 15
+#define TIMEOUT_TIME 30
 
 Router::Router()
 {
@@ -137,6 +138,7 @@ Server* find_server_from_port(int port, std::vector<Server>& servers, HttpReques
     Server* s = NULL;
     std::string host = req.host();
 
+
     if (host.find(':'))
         host = host.substr(0, host.find(':')); // Remove port if provided
 
@@ -251,7 +253,8 @@ void Router::listen()
                     std::cout << "Created client socket with fd: " << client_socket << std::endl;
                 }
                 // If it's a client socket we should process the request
-                else {
+                else if (!event_map[events[i].data.fd].closing) {
+
                     // Start reading data
                     int bytes_read = 1;
                     std::ostringstream req_sstream; // stringstream used for storing everything until all is read
@@ -263,13 +266,28 @@ void Router::listen()
                             break;
                         req_sstream.write(buffer, bytes_read);
                         std::string s(buffer, bytes_read);
-                        event_map[events[i].data.fd].rf.in(s);
+                        try
+                        {
+                            event_map[events[i].data.fd].rf.in(s);
+                        }
+                        catch (const std::exception& e)
+                        {
+                            HttpResponse res;
+                            res.set_status(400, "Bad request");
+                            res.headers("Connection", "Close");
+
+                            res = response_error(res, event_map[events[i].data.fd].server->cfg(), 400);
+                            out_buffer[events[i].data.fd] += res.toString();
+                            event_map[events[i].data.fd].closing = true;
+                            break;
+                        }
                     }
 
                     std::cout << "handling new data on: " << events[i].data.fd << std::endl;
 
 
-                    if (event_map[events[i].data.fd].rf.isReqReady())
+                    if (!event_map[events[i].data.fd].closing &&
+                        event_map[events[i].data.fd].rf.isReqReady())
                     {
                         HttpResponse res;
                         HttpRequest req = event_map[events[i].data.fd].rf.getRequest();
@@ -292,13 +310,13 @@ void Router::listen()
                         // Add the server to out_buffer to later be sent
                         std::string res_s = res.toString();
                         out_buffer[events[i].data.fd] += res_s;
-                        update_timeout(timeouts, &event_map[events[i].data.fd]);
 
                         // Update epoll to start listening to EPOLLOUT events
                         // (won't do anything if it was already listening for EPOLLOUT events)
                         event_map[events[i].data.fd].event.events |= EPOLLOUT;
                         epoll_ctl(epoll_fd, EPOLL_CTL_MOD, events[i].data.fd, &event_map[events[i].data.fd].event);
                     }
+                    update_timeout(timeouts, &event_map[events[i].data.fd]);
                 }
             }
             // If the socket is ready for write operations

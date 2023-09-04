@@ -87,7 +87,7 @@ void RequestFactory::parse()
 
     if (m_active_status == RequestFactory::HEADER)
     {
-        std::string line;
+        std::string line = "TEMP";
         while (m_buffer.find('\n') != std::string::npos)
         {
             line = m_buffer.substr(0, m_buffer.find('\n') + 1);
@@ -106,6 +106,8 @@ void RequestFactory::parse()
         // If we've reached the end of the headers
         if (line.empty())
         {
+            if (!m_active_req.headers().count("Host"))
+                throw ParsingException("Host not provided");
             // Check for body headers
             if (m_active_req.headers().count("Content-Length"))
             {
