@@ -86,7 +86,6 @@ int	index_path( const HttpRequest& req, RouteCfg* route, std::string& path ) {
         
         // If index.html exists in said folder, return request
         std::vector<std::string>::iterator it = std::find(dir_listing.begin(), dir_listing.end(), route->index);
-        //std::cout << *it << std::endl;
 
         if ( it != dir_listing.end() ) {
 		    std::string	part_path = route->route_path;

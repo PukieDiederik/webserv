@@ -85,7 +85,6 @@ void	parseRoot(RouteCfg &route_conf, std::istringstream &iss_c_line, int &bad_li
 	}
 
 	route_conf.root = token;
-	std::cout << "route root -> " << token << std::endl;
 	if (!(ntoken.empty()) && ntoken[0] != '#') throw std::runtime_error("Error: unexpected token: line: " + ParserUtils::intToString(bad_line)); 
 }
 
@@ -174,7 +173,6 @@ void	ServerConfig::parseServerRoute(std::string &curr_line, ServerCfg &server_co
 		std::string		ntoken, nltoken;
 
 		std::getline(iss_c_line, ntoken, ' ');
-		std::cout << "token -> " << ntoken << std::endl;
 		if (ntoken.compare("}") == 0) {
 			subkeywd_bracket = false; server_conf.routes.push_back(route_conf); return ;
 		} else if (ntoken.compare("auto_index") == 0) {
@@ -190,7 +188,7 @@ void	ServerConfig::parseServerRoute(std::string &curr_line, ServerCfg &server_co
 		} else if (ntoken.compare("redirect") == 0) {
 			parseRedirect(route_conf, iss_c_line, bad_line);
 		} else if ( ntoken != "}" && ntoken[0] != '#' )
-			throw std::runtime_error( "missing closing bracket");
+			throw std::runtime_error( "Error: missing closing bracket" + ParserUtils::intToString( bad_line) );
 
 	}
 	if (fd_conf.eof()) throw std::runtime_error("Error: missing closing bracket in route_config");	

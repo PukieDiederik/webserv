@@ -173,7 +173,6 @@ namespace ParserUtils {
 		}
 		removeArraySpaces( rline );
 		rline = removeMultipleSpaces( rline );
-		std::cout << "line -> " << rline << std::endl;
 		return ( rline );
 	}
 
@@ -218,7 +217,6 @@ namespace ParserUtils {
 			if (ip[i] < '0' || ip[i] > '9') return (false);
 			value = ParserUtils::atoi(ip.c_str() + i);
 			if (value < 0 || value > 255) return (false);
-			std::cout << value << std::endl;
 			while (ip[i] != '.' && ip[i + 1] != '\0')
 				i++;
 			if (ip[i] == '.' && ip[i + 1] == '\0') return (false);
