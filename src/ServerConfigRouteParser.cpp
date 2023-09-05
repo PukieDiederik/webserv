@@ -59,15 +59,6 @@ void	parseEnableCgi(RouteCfg &route_conf, std::istringstream &iss_c_line, int &b
 	if (!(token.empty()) && token[0] != '#') throw std::runtime_error("Error: unexpected token: line: " + ParserUtils::intToString(bad_line));
 }
 
-
-void	find_closing_bracket(  std::istringstream &iss_c_line, std::string& ntoken, std::ifstream &fd_conf, std::string& curr_line, int& bad_line ) {
-	std::getline(iss_c_line, ntoken, ' ');
-
-	if (!(ntoken.empty()) && ntoken[0] != '#') throw std::runtime_error("Error: unexpected token: line: " + ParserUtils::intToString(bad_line)); 
-	if ( ntoken == "}" ) return ;
-	while ( std::getline( fd_conf, curr_line ) );
-}
-
 /*	@parseRoot:
  *		Checks if multiple root definitions
  *		Parses and adds the root_path token to route_conf
@@ -85,6 +76,8 @@ void	parseRoot(RouteCfg &route_conf, std::istringstream &iss_c_line, int &bad_li
 	}
 
 	route_conf.root = token;
+
+	std::getline(iss_c_line, ntoken, ' ');
 	if (!(ntoken.empty()) && ntoken[0] != '#') throw std::runtime_error("Error: unexpected token: line: " + ParserUtils::intToString(bad_line)); 
 }
 
