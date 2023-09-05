@@ -4,120 +4,124 @@
 #include <cstdlib>
 #include <iostream>
 
-void	ServerConfig::checker() {
-	if (VERBOSE)
-		std::cout << "\nServerConfig parsing done." << std::endl;
-	int	i = 1;
-	
-	if ( _servers.empty() ) throw std::runtime_error("no server config found in config file.");
-
-	for (std::vector<ServerCfg>::iterator it = _servers.begin(); it != _servers.end(); it++) {
-		if ( VERBOSE )
-			std::cout << "\nServer[" << i++ << "]:" << std::endl;
-		
-		// Issue #27
-		if ( (*it).host.empty() ) throw std::runtime_error("missing ipv4 (hostname) config");
-		
-		if (VERBOSE)
-			std::cout << "\tServer host:\n\t\t[" << (*it).host << "]" << std::endl;
-
-		if ((*it).port == -42) throw std::runtime_error("missing port config");
-		if (VERBOSE)
-			std::cout << "\tServer port:\n\t\t[" << (*it).port << "]" << std::endl;
-
-		if (VERBOSE)
-			std::cout << "\tServer name(s): " << std::endl;
-		for (std::vector<std::string>::iterator jit = (*it).server_names.begin(); jit != (*it).server_names.end(); jit++) {
-			if (VERBOSE)
-				std::cout << "\t\t[" << *jit << "]" << std::endl;
-		}
-
-		// not necessary for config
-		if (VERBOSE)
-			std::cout << "\tServer error_pages: " << std::endl;
-		for (std::map<short, std::string>::iterator jit = (*it).error_pages.begin(); jit != (*it).error_pages.end(); jit++)
-			if (VERBOSE)
-				std::cout << "\t\t[" << jit->first << "] -> [" << jit->second << "]" << std::endl;
-
-		// if 0, any amount is valid
-		if (VERBOSE)
-			std::cout << "\tServer max_body_size:\n\t\t[" << (*it).max_body_size << "]" << std::endl;
-
-		// Issue #27
-		if ((*it).root_dir.empty()) throw std::runtime_error("missing root dir config");
-		if (VERBOSE)
-			std::cout << "\tServer root dir:\n\t\t[" << (*it).root_dir << "]" << std::endl;
-
-		if ((*it).routes.empty()) throw std::runtime_error("server must have one route");
-		if (VERBOSE)
-			std::cout << "\tServer route(s):" << std::endl;
+void	route_checker( ServerCfg& server, bool cgi_config ) {
 		int j = 1;
-		for (std::vector<RouteCfg>::iterator jit = (*it).routes.begin(); jit != (*it).routes.end(); jit++) {
-			if (VERBOSE) {
+		for ( std::vector<RouteCfg>::iterator route = server.routes.begin(); route != server.routes.end(); route++ ) {
+			if ( VERBOSE ) {
 				std::cout << "\tRoute[" << j++ << "]" << std::endl;
-				std::cout << "\t\tRoute path:\n\t\t\t[" << (*jit).route_path << "]" << std::endl;
+				std::cout << "\t\tRoute path:\n\t\t\t[" << (*route).route_path << "]" << std::endl;
 			}
 
-			if ((*jit).is_redirect && (*jit).redirect_to.empty()) throw std::runtime_error("missing redirection config");
-		    if ((*jit).is_redirect && VERBOSE) std::cout << "\t\tRoute redirection:\n\t\t\t[" << (*jit).redirect_to << "]" << std::endl;
+			if ( ( *route ).is_redirect && ( *route ).redirect_to.empty() ) throw std::runtime_error( "missing redirection config" );
+		    if ( ( *route ).is_redirect && VERBOSE) std::cout << "\t\tRoute redirection:\n\t\t\t[" << ( *route ).redirect_to << "]" << std::endl;
 
-			// Issue #29
-		    std::cout << (*jit).root << std::endl;
-			if ( !(ParserUtils::isValidPath( (*jit).root ) ) ) throw std::runtime_error("invalid route root path");
-			if ( (*jit).root.empty() )  {
+			if ( ( *route ).root.empty() )  {
 				// if root tag was not given, then the route_root = server_root
-				(*jit).root = (*it).root_dir;
-			} else if ( (*jit).root[0] != '/' ) {
-				(*jit).root = (*it).root_dir + (*jit).root;
+				( *route ).root = server.root_dir;
 			}
+			if ( !( ParserUtils::isValidPath( ( *route ).root ) ) || ( *route ).root[0] != '/') throw std::runtime_error( "invalid route root path (path must be absolute)" );
 
-			if (VERBOSE)
-				std::cout << "\t\tRoute root:\n\t\t\t[" << (*jit).root << "]" << std::endl;
+			if ( VERBOSE )
+				std::cout << "\t\tRoute root:\n\t\t\t[" << ( *route ).root << "]" << std::endl;
 
-			if (VERBOSE)
+			if ( VERBOSE )
 				std::cout << "\t\tRoute cgi enabled:\n\t\t\t[" << std::flush; 
-			if ((*jit).cgi_enabled && VERBOSE)
-			{
+			if (( *route ).cgi_enabled && VERBOSE ) {
 				std::cout << "yes]" << std::endl;
-				if (_cgi_cmds.empty()) throw std::runtime_error("cgi enabled but missing cgi config");
+				if ( cgi_config ) throw std::runtime_error( "cgi enabled but missing cgi config" );
 			}
-			else if (VERBOSE)
+			else if ( VERBOSE )
 				std::cout << "no]" << std::endl;
 
-			if ( !((*jit).auto_index ) && (*jit).index.empty() && !((*jit).is_redirect) ) throw std::runtime_error("missing index config");
-			if ((*jit).auto_index && VERBOSE) std::cout << "\t\tRoute auto_index\n\t\t\t[yes]" << std::endl;
+			if ( !( ( *route ).auto_index ) && ( *route ).index.empty() && !( ( *route ).is_redirect ) ) throw std::runtime_error( "missing index config" );
+			if ( ( *route ).auto_index && VERBOSE ) std::cout << "\t\tRoute auto_index\n\t\t\t[yes]" << std::endl;
 
-			if ((*jit).auto_index && !((*jit).index.empty())) throw std::runtime_error("both auto_index and manual index set");
-			if (VERBOSE)
-				std::cout << "\t\tRoute index:\n\t\t\t[" << (*jit).index << "]" << std::endl;
+			if ( ( *route ).auto_index && !( ( *route ).index.empty() ) ) throw std::runtime_error( "both auto_index and manual index set" );
+			if ( VERBOSE )
+				std::cout << "\t\tRoute index:\n\t\t\t[" << ( *route ).index << "]" << std::endl;
 
-			if (!((*jit).accepted_methods.empty())) {	
-				if (VERBOSE)
+			if ( !( ( *route ).accepted_methods.empty() ) ) {	
+				if ( VERBOSE )
 					std::cout << "\t\tRoute accepted methods:" << std::endl;
-				for (std::vector<std::string>::iterator vit = (*jit).accepted_methods.begin(); vit != (*jit).accepted_methods.end(); vit++) {
-					if (VERBOSE)
-						std::cout << "\t\t\t[" << *vit << "]" << std::endl;
+				for ( std::vector<std::string>::iterator method = ( *route ).accepted_methods.begin(); method != ( *route ).accepted_methods.end(); method++ ) {
+					if ( VERBOSE )
+						std::cout << "\t\t\t[" << *method << "]" << std::endl;
 				}
 			}
 		}
-		if (VERBOSE && !(_cgi_cmds.empty())) {
+
+}
+
+void	server_checker( std::vector<ServerCfg>& servers, bool cgi_cmds ) {
+
+	int	server_count = 1;
+	
+	for ( std::vector<ServerCfg>::iterator server = servers.begin(); server != servers.end(); server++ ) {
+		if ( VERBOSE )
+			std::cout << "\nServer[" << server_count++ << "]:" << std::endl;
+		
+		if ( ( *server ).host.empty() ) throw std::runtime_error( "missing ipv4 (hostname) config" );
+		
+		if ( VERBOSE )
+			std::cout << "\tServer host:\n\t\t[" << ( *server ).host << "]" << std::endl;
+
+		if ( ( *server ).port == -42 ) throw std::runtime_error( "missing port config" );
+		if  (VERBOSE )
+			std::cout << "\tServer port:\n\t\t[" << ( *server ).port << "]" << std::endl;
+
+		if ( ( *server ).server_names.empty() ) throw std::runtime_error( "missing server name(s) config" );
+		if ( VERBOSE )
+			std::cout << "\tServer name(s): " << std::endl;
+		for ( std::vector<std::string>::iterator server_name = ( *server ).server_names.begin(); server_name != ( *server ).server_names.end(); server_name++ ) {
+			if ( VERBOSE )
+				std::cout << "\t\t[" << *server_name << "]" << std::endl;
+		}
+
+		// not necessary for config
+		if ( VERBOSE )
+			std::cout << "\tServer error_pages: " << std::endl;
+		for ( std::map<short, std::string>::iterator error_page = ( *server ).error_pages.begin(); error_page != ( *server ).error_pages.end(); error_page++ )
+			if ( VERBOSE )
+				std::cout << "\t\t[" << error_page->first << "] -> [" << error_page->second << "]" << std::endl;
+
+		// if 0, any amount is valid
+		if ( VERBOSE )
+			std::cout << "\tServer max_body_size:\n\t\t[" << ( *server ).max_body_size << "]" << std::endl;
+
+
+		if ( ( *server ).root_dir.empty()) throw std::runtime_error( "missing root dir config" );
+		if ( VERBOSE )
+			std::cout << "\tServer root dir:\n\t\t[" << ( *server ).root_dir << "]" << std::endl;
+
+		if ( ( *server ).routes.empty()) throw std::runtime_error( "server must have one route" );
+		if ( VERBOSE )
+			std::cout << "\tServer route(s):" << std::endl;
+		route_checker( *server, cgi_cmds );
+	}
+}
+
+void	ServerConfig::checker() {
+	if ( _servers.empty() ) throw std::runtime_error("no server config found in config file.");
+
+		server_checker( _servers, _cgi_cmds.empty() );
+
+		if ( VERBOSE && !( _cgi_cmds.empty() ) ) {
 			std::cout << "\tServer cgi: " << std::endl;
-			for (std::map<std::string, char **>::iterator it = _cgi.begin(); it != _cgi.end(); it++) {
-				std::cout << "\t\t[" << it->first << "] -> [" << std::flush;
-				for (int i = 0; (it->second)[i] != NULL; i++) {
-					std::cout << (it->second)[i] << std::flush;
-					if ((it->second)[i + 1] != NULL)
+			for ( std::map<std::string, char **>::iterator cgi_cmd = _cgi.begin(); cgi_cmd != _cgi.end(); cgi_cmd++ ) {
+				std::cout << "\t\t[" << cgi_cmd->first << "] -> [" << std::flush;
+				for ( int i = 0; ( cgi_cmd->second )[i] != NULL; i++ ) {
+					std::cout << ( cgi_cmd->second )[i] << std::flush;
+					if ( ( cgi_cmd->second)[i + 1] != NULL )
 						std::cout << " " << std::flush;
 				}
 				std::cout << "]" << std::endl;
 			}
 		}
 
-		if (VERBOSE)
+		if ( VERBOSE )
 			std::cout << "\tServer mimes:" << std::endl;;
-		for (std::map<std::string, std::string>::iterator	jit = _mime.begin(); jit != _mime.end(); jit++) {
-			if (VERBOSE)
-				std::cout << "\t\t[" << jit->first << "] -> [" << jit->second << "]" << std::endl;
+		for ( std::map<std::string, std::string>::iterator mime = _mime.begin(); mime != _mime.end(); mime++ ) {
+			if ( VERBOSE )
+				std::cout << "\t\t[" << mime->first << "] -> [" << mime->second << "]" << std::endl;
 		}
-	}
 }
