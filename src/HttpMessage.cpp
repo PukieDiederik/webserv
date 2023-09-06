@@ -1,8 +1,11 @@
 #include "HttpMessage.hpp"
 #include <sstream>
 #include <exception>
+#include "SessionManager.hpp"
 
 # include <iostream>
+
+void    debugss( const std::string& msg );
 
 HttpMessage::headers_t::iterator HttpMessage::add_header(const std::string& name, const std::string& value)
 {
@@ -76,7 +79,9 @@ std::string HttpMessage::toStringHeaders() const
 
     // gde-alme    
     for ( HttpMessage::cookies_t::const_iterator i = _cookies.begin(); i != _cookies.end(); i++ ) {
-        result << "Set-Cookie" << ": " << i->second  << "\r\n";
+        debugss( "Adding cookie: " + i->second );
+        if ( i->second.find( '=' ) != std::string::npos)
+            result << "Set-Cookie" << ": " << i->second  << "\r\n";
     }
 
     return result.str();

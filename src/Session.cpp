@@ -58,6 +58,7 @@ std::map<std::string, std::string>    Session::getCookies() const {
 }
 
 void    Session::updateCookies( const Session::cookies_t& update_cookies ) {
+    _cookies = update_cookies;
 }
 
 void    Session::removeCookie( const std::string& name ) {
@@ -145,13 +146,23 @@ std::string    handleCookies( const HttpRequest& req, HttpResponse& res ) {
     // parse cookies from request
     Session::cookies_t  req_cookies = parseCookies( req.headers() );
 
+    std::map<std::string, Session*> allSessions = sessions->getSessions();
+    int y = 0;
+    if ( !( allSessions.empty() ) ) {
+        for ( std::map<std::string, Session*>::iterator it = allSessions.begin(); it != allSessions.end(); it++ ) {
+                y++;
+                std::cout << y << "->" << std::flush;
+                if ( it->second != NULL ) std::cout << it->second->getSessionID() << std::endl;
+                //debugss( "Session: " + it->second->getSessionID() );
+        }
+    }
     // no cookies || validation fails ( validation can be further improved by tracking others headers info )
     if ( req_cookies.empty() || req_cookies.find( "session_id" ) == req_cookies.end() || \
         sessions->getSessions().empty() || sessions->getSessions().find( req_cookies["session_id"] ) == sessions->getSessions().end() ) {
 
         // create new session
         session_id = sessions->createSession();
-        debugss( "Created new session" + session_id );
+        debugss( "Created new session: " + session_id );
 
         // add relevant info to session (data)
 
