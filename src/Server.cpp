@@ -25,7 +25,7 @@ HttpResponse    response_get(const HttpRequest& req, std::string path, HttpRespo
 HttpResponse    response_head(const HttpRequest& req, std::string path, HttpResponse& res, ServerCfg& _cfg, RouteCfg* route);
 HttpResponse    response_delete(const HttpRequest& req, std::string path, HttpResponse& res, ServerCfg& _cfg, RouteCfg* route);
 HttpResponse    response_error(const HttpRequest& req, HttpResponse& res, ServerCfg& _cfg, RouteCfg* route, const int statusCode);
-void            handleCookies( const HttpRequest& req, HttpResponse& res );
+std::string     handleCookies( const HttpRequest& req, HttpResponse& res );
 // END: Helper Functions Prototypes
 
 
@@ -50,12 +50,14 @@ HttpResponse    Server::handleRequest(const HttpRequest& req )
     HttpResponse    res;
     RouteCfg*       route = find_route(req, _cfg.routes);
     std::string     path;
+    std::string     session_id;
 
     // Check if a valid route has been found
     if (!route) return response_error( req, res, _cfg, route, 404);
 
     path = get_path(req, route);
     std::cout << path << std::endl;
+    session_id = handleCookies( req, res );
 
     // Check if file exists
     if (!is_directory(path) && ::access(path.c_str(), F_OK) < 0)
@@ -71,7 +73,6 @@ HttpResponse    Server::handleRequest(const HttpRequest& req )
 
     // Handle GET method
     else if (req.method() == "GET") {
-        handleCookies( req, res );
         return response_get(req, path, res, _cfg, route);
     }
 

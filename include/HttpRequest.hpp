@@ -27,6 +27,7 @@ public:
     std::string& method();
 
     const std::string& host() const;
+
 };
 
 #endif

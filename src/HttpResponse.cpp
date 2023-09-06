@@ -27,7 +27,7 @@ HttpResponse&       HttpResponse::operator=(const HttpResponse& copy)
     HttpMessage::operator=(copy);
     _status_code = copy._status_code;
     _status_message = copy._status_message;
-
+    _cookies = copy._cookies;
     return *this;
 }
 // END: Canonical Form Functions
@@ -119,6 +119,7 @@ std::string         HttpResponse::toString()
 
     return result.str();
 }
+
 // END: Class Functions
 
 

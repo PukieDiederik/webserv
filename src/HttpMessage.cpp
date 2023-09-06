@@ -74,8 +74,11 @@ std::string HttpMessage::toStringHeaders() const
     for (HttpMessage::headers_t::const_iterator i = _headers.begin(); i != _headers.end(); ++i)
         result << i->first << ": " << i->second << "\r\n";
     // gde-alme
-    for ( HttpMessage::cookies_t::const_iterator i = _cookies.begin(); i != _cookies.end(); i++ )
-        result << "Set-Cookie" << ": " << i->second << "\r\n";
+    
+    for ( HttpMessage::cookies_t::const_iterator i = _cookies.begin(); i != _cookies.end(); i++ ) {
+        result << "Set-Cookie" << ": " << i->second  << "\r\n";
+    }
+
     return result.str();
 }
 std::string HttpMessage::toStringBody() const { return _body;}
@@ -90,7 +93,11 @@ std::string HttpMessage::toString()
 }
 
 // gde-alme
-void    HttpMessage::cookies( const HttpMessage::cookies_t& cookies ) {
+void    HttpMessage::setCookies( const HttpMessage::cookies_t& cookies ) {
     _cookies = cookies;
+}
+
+HttpMessage::cookies_t  HttpMessage::getCookies() const {
+    return _cookies;
 }
 

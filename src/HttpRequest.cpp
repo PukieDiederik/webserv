@@ -23,6 +23,7 @@ HttpRequest& HttpRequest::operator=(const HttpRequest& copy)
     HttpMessage::operator=(copy);
     _target = copy._target;
     _method = copy._method;
+    _cookies = copy._cookies;
     return *this;
 }
 
@@ -33,4 +34,3 @@ const std::string& HttpRequest::method() const { return _method; }
 std::string& HttpRequest::method() { return _method; }
 
 const std::string& HttpRequest::host() const { return headers("Host"); }
-

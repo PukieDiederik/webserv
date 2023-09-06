@@ -57,17 +57,16 @@ std::map<std::string, std::string>    Session::getCookies() const {
 }
 
 void    Session::updateCookies( const Session::cookies_t& update_cookies ) {
-    // check if exists and update
-    for ( Session::cookies_t::const_iterator update_cookie = update_cookies.begin(); update_cookie != update_cookies.end(); update_cookie++ ) {
-        if ( _cookies.size() < 200 )
-                _cookies[update_cookie->first] = createCookie( update_cookie->first, update_cookie->second, "/", "Expires" );
-    }
-
 }
 
 void    Session::removeCookie( const std::string& name ) {
     _cookies.erase( name );
 }
+
+void    Session::updateStamp() {
+    _last_log = std::time(0);
+}
+
 
 /* Helpers */
 std::string Session::createSessionID() {
@@ -94,7 +93,7 @@ std::string Session::createSessionID() {
 }
 
 std::string generateExpirationDate() {
-    return "Wed, 09 Jun 2021 10:18:14 GMT";
+    return "Wed, 09 Jun 2024 10:18:14 GMT";
 }
 
 std::string createCookie(const std::string& name, const std::string& value, const std::string& path, const std::string& flag) {
@@ -112,42 +111,66 @@ std::string createCookie(const std::string& name, const std::string& value, cons
 Session::cookies_t parseCookies( const Session::cookies_t& headers ) {
     Session::cookies_t  cookies;
 
-    for ( Session::cookies_t::const_iterator header = headers.begin(); header != headers.end(); header++ ) {
-            if ( header->first.find( "Cookie" ) != std::string::npos ) {
-                if ( header->second.empty() ) continue;
-                std::string name = removeAfterChar( header->first, '=' );
-                std::string value = removeBeforeChar( header->second, '=' );
-                if ( !name.empty() && !value.empty() )
-                    cookies[name] = value;
-            }
+    Session::cookies_t::const_iterator it = headers.find( "Cookie" );
+
+    if ( it != headers.end() ) {
+        std::stringstream ss( it->second );
+        std::string cookie;
+        while ( std::getline( ss, cookie, ';' ) ) {
+            if ( cookie.find( '=' ) != std::string::npos ) continue;
+                const std::string name = removeAfterChar( cookie, '=' );
+                const std::string value = removeAfterChar( cookie, '=');
+                if ( !( name.empty() ) && !( value.empty() ) )
+                    cookies[name] = cookies[value];
+        }
     }
+
     return cookies;
 }
 
-void    handleCookies( const HttpRequest& req, HttpResponse& res ) {
-    std::string browser_bool = req.headers( "User-Agent" );
-    std::string origin_bool = req.headers( "Sec-Fetch-Site" );
-    if ( browser_bool.find( "Mozilla" ) == std::string::npos && browser_bool.find( "Chrome" ) == std::string::npos) return ;
-    if ( origin_bool.find( "same-origin" ) != std::string::npos ) return ;
+std::string    handleCookies( const HttpRequest& req, HttpResponse& res ) {
+    Session::cookies_t  headers;
+    std::string         session_id;
+
+    // make sure to only continue if request from browser ( Firefox or Chrome )
+    try {
+        std::string browser = req.headers( "User-Agent" );
+        std::string origin = req.headers( "Sec-Fetch-Site" );
+        if ( browser.find( "Mozilla" ) == std::string::npos && origin.find( "Mozilla" ) == std::string::npos ) return "";
+        if ( origin.find( "same-origin" ) != std::string::npos ) return "";
+    } catch ( std::exception &ex ) { return ""; }
 
     SessionManager* sessions = SessionManager::getInstance();
 
+    // parse cookies from request
+    Session::cookies_t  req_cookies = parseCookies( req.headers() );
 
-    // Parse headers -> cookies
-    Session::cookies_t  cookies = parseCookies( req.headers() );
+    // no cookies || validation fails ( validation can be further improved by tracking others headers info )
+    if ( req_cookies.empty() || req_cookies.find( "session_id" ) == req_cookies.end() ) {
+        // create new session
+        session_id = sessions->createSession();
+        std::cout << "[SessionManager] Created new session. -> [" << session_id << "]" << std::endl;
 
-    std::cout << "Reading cookies..." << std::endl;
-    for ( Session::cookies_t::iterator it = cookies.begin(); it != cookies.end(); it++ )
-        std::cout << "Cookie -> " << it->second << std::endl;
-    std::cout << "wtf" << std::endl;
+        // add relevant info to session (data)
 
-    std::string session_id = cookies["sessionID"];
+    } else {
+        session_id = req_cookies["session_id"];
+        // update cookies in session
+        //sessions->getSessions()[session_id]->updateCookies( req_cookies );
 
-    // Check if session exits if not create
-    if ( session_id.empty() || sessions->getSessions()[session_id] == NULL ) session_id = sessions->createSession();
+        // update session data    
+    
+    }
 
-    // Update cookies
-    sessions->getSessions()[session_id]->updateCookies( cookies );
+    Session::cookies_t cookies = sessions->getSessions()[session_id]->getCookies();
 
-    res.set_header( std::string( "Set-Cookie" ), sessions->getSessions()[session_id]->getCookies()["sessionID"] );
+    for ( Session::cookies_t::const_iterator it = cookies.begin(); it != cookies.end(); it++ )
+        std::cout << "cookies-> " << it->second << std::endl;
+
+    // update res cookies
+    res.setCookies( sessions->getSessions()[session_id]->getCookies() );
+
+    std::cout << "okk3" << std::endl;
+
+    return session_id;
 }

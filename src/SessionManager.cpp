@@ -25,18 +25,25 @@ SessionManager::~SessionManager() {
 }
 
 std::string SessionManager::createSession() {
-    std::string id;
     Session* new_session = new Session();
+    std::string session_id;
 
     // make sure sessionID does not already exist
     while ( _sessions.find( new_session->getSessionID() ) != _sessions.end() )
         new_session->setSessionID( new_session->createSessionID() );
 
+    session_id = new_session->getSessionID();
+
     // add essential cookies
-    id = new_session->getSessionID();
-    new_session->addCookie( "sessionID", createCookie( "sessionID", id, "/", "Expires" ) );    
-    _sessions.insert( std::pair<std::string, Session*>( id, new_session ) );
-    return id;
+    new_session->addCookie( "session_id", createCookie( "session_id", session_id, "/", "Expires" ) );
+    
+    // add stamp to session
+    new_session->updateStamp();
+    
+    // add session to map
+    _sessions[session_id] = new_session;
+
+    return session_id;
 }
 
 std::map<std::string, Session*>   SessionManager::getSessions() {

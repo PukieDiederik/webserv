@@ -8,15 +8,19 @@
 class Session {
     public:
         typedef std::map<std::string, std::string> cookies_t;
+        typedef std::map<std::string, std::string> client_data_t;
     private:
         std::string      _session_id;
         cookies_t        _cookies;
+        client_data_t    _client_data;
         time_t           _last_log;
+
     public:
         Session();
         ~Session();
         Session( const Session& ref );
         Session& operator=( const Session& ref );
+        std::string createSessionID();
         
         void    setSessionID( const std::string& new_id );
         std::string getSessionID();
@@ -27,8 +31,10 @@ class Session {
         Session::cookies_t getCookies() const;
         void    removeCookie( const std::string& name );
 
+        void            setData( const client_data_t& new_data );
+        client_data_t   getData() const;
 
-        std::string createSessionID();
+        void    updateStamp();
 };
 
 #endif
