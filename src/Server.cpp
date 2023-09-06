@@ -44,7 +44,7 @@ Server& Server::operator=(const Server& copy)
 
 // BEGIN: Class Functions
 // Will take a request and handle it, which includes calling CGI
-HttpResponse    Server::handleRequest(const HttpRequest& req)
+HttpResponse    Server::handleRequest( const HttpRequest& req)
 {
     HttpResponse    res;
     RouteCfg*       route = find_route(req, _cfg.routes);
@@ -52,6 +52,12 @@ HttpResponse    Server::handleRequest(const HttpRequest& req)
 
     // Check if a valid route has been found
     if (!route) return response_error( req, res, _cfg, route, 404);
+
+    if ( route->is_redirect ) {
+        res.set_status( 301 );
+        res.set_header("Location" , route->redirect_to );
+        return res;
+    }
 
     path = get_path(req, route);
 
@@ -221,7 +227,6 @@ HttpResponse    response_delete(const HttpRequest& req, std::string path, HttpRe
 }
 
 HttpResponse    response_error(const HttpRequest& req, HttpResponse& res, ServerCfg& _cfg, RouteCfg* route, const int statusCode) {
-
     std::map<short, std::string>::const_iterator    it = _cfg.error_pages.find(statusCode);
     
     if (it != _cfg.error_pages.end()) {
