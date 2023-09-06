@@ -138,6 +138,10 @@ Session::cookies_t parseCookies( const Session::cookies_t& headers ) {
     return cookies;
 }
 
+bool    validateClientID( const std::map<std::string, Session*>& sessions, Session::cookies_t& req_cookies ) {
+    return ( sessions.empty() || sessions.find( req_cookies["session_id"] ) == sessions.end() ); 
+}
+
 std::string    handleCookies( const HttpRequest& req, HttpResponse& res ) {
     std::string         session_id;
 
@@ -146,36 +150,36 @@ std::string    handleCookies( const HttpRequest& req, HttpResponse& res ) {
         std::string browser = req.headers( "User-Agent" );
         std::string origin = req.headers( "Sec-Fetch-Site" );
         if ( browser.find( "Mozilla" ) == std::string::npos && origin.find( "Mozilla" ) == std::string::npos ) return "";
-        //if ( origin.find( "same-origin" ) != std::string::npos ) return "";
+        //if ( origin.find( "same-origin" ) != std::string::npos ) return ""; // dont read repeated requests from same client
     } catch ( std::exception &ex ) { return ""; }
+
+    std::cout << "ola" << std::endl;
 
     SessionManager* session_manager = SessionManager::getInstance();
 
     // parse cookies from request
     Session::cookies_t  req_cookies = parseCookies( req.headers() );
 
-    //std::map<std::string, Session*> allSessions = session_manager->getSessions();
-    /*int y = 0;
-    if ( !( allSessions.empty() ) ) {
-        for ( std::map<std::string, Session*>::iterator it = allSessions.begin(); it != allSessions.end(); it++ ) {
-                y++;
-                if ( it->second != NULL ) debugss( "Session: " + it->second->getSessionID() );
-        }
-    }*/
+    std::cout << "ola2" << std::endl;
+
     // no cookies || validation fails ( validation can be further improved by tracking others headers info )
-    if ( req_cookies.empty() || req_cookies.find( "session_id" ) == req_cookies.end() || \
-        session_manager->getSessions().empty() || session_manager->getSessions().find( req_cookies["session_id"] ) == session_manager->getSessions().end() ) {
+    if ( req_cookies.empty() || req_cookies.find( "session_id" ) == req_cookies.end() || validateClientID( session_manager->getSessions(), req_cookies ) ) {
 
         // find client ip
         std::string ip;
         Session::cookies_t::const_iterator host_ip = req.headers().find( "Host" );
         if ( host_ip != req.headers().end() ) ip = host_ip->second;
 
-        Session::cookies_t::iterator it;
-        if ( !( session_manager->getSessions().empty() ) && \
-            ( it = session_manager->getSessionsIp().find( ip ) ) != session_manager->getSessionsIp().end() ) {
-                session_id = it->second;
+        std::cout << "ola3" << std::endl;
+
+        if ( !( session_manager->getSessions().empty() ) ) {
+                    std::cout << "ola4" << std::endl;
+
+            Session::cookies_t::iterator it = session_manager->getSessionsIp().find( ip );
+            if ( it != session_manager->getSessionsIp().end() )
+                session_id = session_manager->getSessions()[it->second]->getSessionID();
         } else {
+        std::cout << "ola5" << std::endl;
 
             // create new session
             session_id = session_manager->createSession( ip );

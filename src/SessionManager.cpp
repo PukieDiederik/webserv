@@ -37,15 +37,15 @@ std::string SessionManager::createSession( const std::string& ip) {
     // add essential cookies
     new_session->addCookie( "session_id", createCookie( "session_id", session_id, "/", "Secure" ) );
     
-    // add stamp to session
-    new_session->updateStamp();
-    
     // add session to map
     _sessions[session_id] = new_session;
 
     new_session->setIp( ip );
 
     _sessions_ip[ip] = session_id;
+
+    // add stamp to session
+    new_session->updateStamp();
 
     return session_id;
 }
