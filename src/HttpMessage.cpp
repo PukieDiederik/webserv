@@ -79,7 +79,7 @@ std::string HttpMessage::toStringHeaders() const
 
     // gde-alme    
     for ( HttpMessage::cookies_t::const_iterator i = _cookies.begin(); i != _cookies.end(); i++ ) {
-        debugss( "Adding cookie: " + i->second );
+        debugss( "Adding cookie: " + i->first + " with value: " + i->second );
         if ( i->second.find( '=' ) != std::string::npos)
             result << "Set-Cookie" << ": " << i->second  << "\r\n";
     }

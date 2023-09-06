@@ -32,7 +32,7 @@ bool    startsWith(const std::string& str, const std::string& prefix) {
 
 std::string	find_remove( const std::string& str, char flag ) {
 	std::string	return_str = str;
-	std::string::size_type	pos = return_str.find( '?' );
+	std::string::size_type	pos = return_str.find( flag );
 
 	if ( pos != std::string::npos )
 		return_str.erase( pos );
@@ -76,7 +76,7 @@ std::string	get_path( std::string error_page, ServerCfg& _cfg ) {
 *       If not, return predefined index
 *
 */
-int	index_path( const HttpRequest& req, RouteCfg* route, std::string& path ) {
+int	index_path( RouteCfg* route, std::string& path ) {
     // if is a file return request
     if ( is_file( path ) ) {
         return 0;

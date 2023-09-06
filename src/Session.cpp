@@ -59,6 +59,7 @@ std::map<std::string, std::string>    Session::getCookies() const {
 
 void    Session::updateCookies( const Session::cookies_t& update_cookies ) {
     _cookies = update_cookies;
+    updateStamp();
 }
 
 void    Session::removeCookie( const std::string& name ) {
@@ -69,6 +70,13 @@ void    Session::updateStamp() {
     _last_log = std::time(0);
 }
 
+void    Session::setIp( const std::string& ip ) {
+    _client_ip = ip;
+}
+
+std::string Session::getIp() const {
+    return _client_ip;
+}
 
 /* Helpers */
 std::string Session::createSessionID() {
@@ -122,7 +130,7 @@ Session::cookies_t parseCookies( const Session::cookies_t& headers ) {
             if ( cookie.find( '=' ) == std::string::npos ) continue;
             const std::string name = removeAfterChar( cookie, '=' );
             const std::string value = removeBeforeChar( cookie, '=');
-            debugss( "Cookie found. Name: " + name + " | Value: " + value );
+            debugss( "Cookie found with pair: key-> " + name + " | value-> " + value );
             cookies[name] = value;
         }
     }
@@ -141,43 +149,53 @@ std::string    handleCookies( const HttpRequest& req, HttpResponse& res ) {
         //if ( origin.find( "same-origin" ) != std::string::npos ) return "";
     } catch ( std::exception &ex ) { return ""; }
 
-    SessionManager* sessions = SessionManager::getInstance();
+    SessionManager* session_manager = SessionManager::getInstance();
 
     // parse cookies from request
     Session::cookies_t  req_cookies = parseCookies( req.headers() );
 
-    std::map<std::string, Session*> allSessions = sessions->getSessions();
-    int y = 0;
+    //std::map<std::string, Session*> allSessions = session_manager->getSessions();
+    /*int y = 0;
     if ( !( allSessions.empty() ) ) {
         for ( std::map<std::string, Session*>::iterator it = allSessions.begin(); it != allSessions.end(); it++ ) {
                 y++;
-                std::cout << y << "->" << std::flush;
-                if ( it->second != NULL ) std::cout << it->second->getSessionID() << std::endl;
-                //debugss( "Session: " + it->second->getSessionID() );
+                if ( it->second != NULL ) debugss( "Session: " + it->second->getSessionID() );
         }
-    }
+    }*/
     // no cookies || validation fails ( validation can be further improved by tracking others headers info )
     if ( req_cookies.empty() || req_cookies.find( "session_id" ) == req_cookies.end() || \
-        sessions->getSessions().empty() || sessions->getSessions().find( req_cookies["session_id"] ) == sessions->getSessions().end() ) {
+        session_manager->getSessions().empty() || session_manager->getSessions().find( req_cookies["session_id"] ) == session_manager->getSessions().end() ) {
 
-        // create new session
-        session_id = sessions->createSession();
-        debugss( "Created new session: " + session_id );
+        // find client ip
+        std::string ip;
+        Session::cookies_t::const_iterator host_ip = req.headers().find( "Host" );
+        if ( host_ip != req.headers().end() ) ip = host_ip->second;
 
-        // add relevant info to session (data)
+        Session::cookies_t::iterator it;
+        if ( !( session_manager->getSessions().empty() ) && \
+            ( it = session_manager->getSessionsIp().find( ip ) ) != session_manager->getSessionsIp().end() ) {
+                session_id = it->second;
+        } else {
 
+            // create new session
+            session_id = session_manager->createSession( ip );
+            session_manager->getSessions()[session_id]->setIp( ip );
+            debugss( "Created new session witg ID: " + session_id + " and ip: " + ip );
+
+        }
     } else {
         session_id = req_cookies["session_id"];
-        debugss( "Session found: " + session_id );
+        debugss( "Session found with ID: " + session_id + " and ip: " + session_manager->getSessions()[session_id]->getIp() );
+        
         // update cookies in session
-        //sessions->getSessions()[session_id]->updateCookies( req_cookies );
+        session_manager->getSessions()[session_id]->updateCookies( req_cookies );
 
         // update session data
 
     }
 
     // update res cookies
-    res.setCookies( sessions->getSessions()[session_id]->getCookies() );
+    res.setCookies( session_manager->getSessions()[session_id]->getCookies() );
 
     return session_id;
 }

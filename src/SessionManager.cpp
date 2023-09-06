@@ -24,7 +24,7 @@ SessionManager::~SessionManager() {
         delete it->second;
 }
 
-std::string SessionManager::createSession() {
+std::string SessionManager::createSession( const std::string& ip) {
     Session* new_session = new Session();
     std::string session_id;
 
@@ -35,7 +35,7 @@ std::string SessionManager::createSession() {
     session_id = new_session->getSessionID();
 
     // add essential cookies
-    new_session->addCookie( "session_id", createCookie( "session_id", session_id, "/", "Expires" ) );
+    new_session->addCookie( "session_id", createCookie( "session_id", session_id, "/", "Secure" ) );
     
     // add stamp to session
     new_session->updateStamp();
@@ -43,11 +43,19 @@ std::string SessionManager::createSession() {
     // add session to map
     _sessions[session_id] = new_session;
 
+    new_session->setIp( ip );
+
+    _sessions_ip[ip] = session_id;
+
     return session_id;
 }
 
 std::map<std::string, Session*>   SessionManager::getSessions() {
     return _sessions;
+}
+
+std::map<std::string, std::string>   SessionManager::getSessionsIp() {
+    return _sessions_ip;
 }
 
 void    debugss( const std::string& msg ) {

@@ -56,7 +56,8 @@ HttpResponse    Server::handleRequest(const HttpRequest& req )
     if (!route) return response_error( req, res, _cfg, route, 404);
 
     path = get_path(req, route);
-    session_id = handleCookies( req, res );
+    if ( SM_ON )
+        session_id = handleCookies( req, res );
 
     // Check if file exists
     if (!is_directory(path) && ::access(path.c_str(), F_OK) < 0)
@@ -154,7 +155,7 @@ HttpResponse    list_dir_res(const HttpRequest& req, std::string path, HttpRespo
 }
 
 HttpResponse    response_get(const HttpRequest& req, std::string path, HttpResponse& res, ServerCfg& _cfg, RouteCfg* route) {
-    switch (index_path(req, route, path)) {
+    switch (index_path( route, path)) {
         case AUTOINDEX:
             return list_dir_res(req, path, res, _cfg, route);
 
@@ -163,7 +164,6 @@ HttpResponse    response_get(const HttpRequest& req, std::string path, HttpRespo
     }
 
     std::ifstream   file(path.c_str());
-    char buff [BUFFER_SIZE];
 
     if (!file.is_open())
         return response_error(req, res, _cfg, route, 500);
@@ -182,7 +182,7 @@ HttpResponse    response_get(const HttpRequest& req, std::string path, HttpRespo
 }
 
 HttpResponse    response_head(const HttpRequest& req, std::string path, HttpResponse& res, ServerCfg& _cfg, RouteCfg* route) {
-    switch (index_path(req, route, path)) {
+    switch (index_path( route, path)) {
         case VALIDPATH:
             res.set_status(200);
             res.set_header("Content-type", ServerConfig::getMimeType(path));
@@ -201,7 +201,7 @@ HttpResponse    response_head(const HttpRequest& req, std::string path, HttpResp
 }
 
 HttpResponse    response_delete(const HttpRequest& req, std::string path, HttpResponse& res, ServerCfg& _cfg, RouteCfg* route) {
-	switch (index_path(req, route, path)) {
+	switch (index_path( route, path)) {
 		case VALIDPATH: {
 			if ( remove( path.c_str() ) != 0 ) {
 				std::cout << "Error deleting file" << std::endl;

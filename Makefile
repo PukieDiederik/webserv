@@ -22,7 +22,7 @@ DEPS_DIR    = $(OBJS_DIR)
 NAME        = webserv
 
 CXX         = c++
-CXXFLAGS    = -std=c++98 -D VERBOSE=true#-Wall -Werror -Wextra -pedantic 
+CXXFLAGS    = -std=c++98 -D VERBOSE=true -D SM_ON=true -Wall -Werror -Wextra -pedantic 
 	      #-g -fsanitize=address -fsanitize=leak
 
 INCLUDES    = -I $(INCLUDE_DIR)
@@ -39,7 +39,7 @@ RED         = \033[0;31m
 GREEN       = \033[0;32m
 ORANGE      = \033[0;33m
 BLUE        = \033[0;34m
-PURPLE      = \033[0;35m
+PURPLE      = \033[0;35mz
 CYAN        = \033[0;36m
 GRAY        = \033[0;37m
 WHITE       = \033[0;38m

@@ -9,7 +9,7 @@ std::string	remove_slash_dups( std::string str);
 std::string	get_path(const HttpRequest& req, RouteCfg* route);
 std::string	get_path(std::string req_target, RouteCfg* route);
 std::string	get_path(std::string error_page, ServerCfg& _cfg);
-int		index_path( const HttpRequest& req, RouteCfg* route, std::string& path );
+int		index_path( RouteCfg* route, std::string& path );
 int		replace_occurrence( std::string& str, const std::string& occurr, const std::string& replacement);
 bool	is_accepted_method( RouteCfg* route, const std::string method );
 bool    is_file( const std::string& path );
