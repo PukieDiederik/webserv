@@ -5,7 +5,7 @@
 #include "HttpRequest.hpp"
 #include <string>
 
-std::string	remove_slash_dups( std::string str);
+std::string	removeSlashDups( std::string str);
 std::string	get_path(const HttpRequest& req, RouteCfg* route);
 std::string	get_path(std::string req_target, RouteCfg* route);
 std::string	get_path(std::string error_page, ServerCfg& _cfg);

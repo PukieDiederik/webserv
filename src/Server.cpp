@@ -139,7 +139,7 @@ HttpResponse    list_dir_res(const HttpRequest& req, std::string path, HttpRespo
     std::vector<std::string>    dir_listing = list_dir(path);
 
     for (size_t i = 0; i < dir_listing.size(); i++)
-        items.append("<li><a href=\"" + remove_slash_dups(req.target() + "/") + dir_listing[i] + "\">" + dir_listing[i] + "</a></li>");
+        items.append("<li><a href=\"" + removeSlashDups(req.target() + "/") + dir_listing[i] + "\">" + dir_listing[i] + "</a></li>");
 
     // Replace all occurs of [DIR] & [ITEMS] with dir name and dir listing
     while(std::getline(file, line_buff))
