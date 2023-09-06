@@ -10,10 +10,12 @@
 class Session;
 
 class SessionManager {
+    public:
+        typedef std::map<std::string, Session*> sessions_t;
     private:
         static  SessionManager*    _instance;
-        std::map<std::string, Session*>    _sessions;
-        std::map<std::string, std::string> _sessions_ip;
+        SessionManager::sessions_t    _sessions;
+        SessionManager::sessions_t   _sessions_ip;
         SessionManager();
         ~SessionManager();
 
@@ -22,8 +24,8 @@ class SessionManager {
         static void initialize();
 
         std::string    createSession( const std::string& ip );
-        std::map<std::string, Session*> getSessions();
-        std::map<std::string, std::string>  getSessionsIp();
+        SessionManager::sessions_t  getSessions();
+        SessionManager::sessions_t  getSessionsIp();
 };
 
 #endif

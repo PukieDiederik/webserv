@@ -2,6 +2,8 @@
 #include <cstdlib>
 #include <iostream>
 #include <map>
+#include <cstdarg>
+#include <cstring>
 
 std::string createCookie(const std::string& name, const std::string& value, const std::string& path, const std::string& flag);
 
@@ -36,13 +38,14 @@ std::string SessionManager::createSession( const std::string& ip) {
 
     // add essential cookies
     new_session->addCookie( "session_id", createCookie( "session_id", session_id, "/", "Secure" ) );
+    new_session->addCookie( "jsjsjs", createCookie( "jsjsjs", session_id, "/", "Secure" ) );
     
     // add session to map
     _sessions[session_id] = new_session;
 
     new_session->setIp( ip );
 
-    _sessions_ip[ip] = session_id;
+    _sessions_ip[ip] = new_session;
 
     // add stamp to session
     new_session->updateStamp();
@@ -50,14 +53,14 @@ std::string SessionManager::createSession( const std::string& ip) {
     return session_id;
 }
 
-std::map<std::string, Session*>   SessionManager::getSessions() {
+SessionManager::sessions_t   SessionManager::getSessions() {
     return _sessions;
 }
 
-std::map<std::string, std::string>   SessionManager::getSessionsIp() {
+SessionManager::sessions_t   SessionManager::getSessionsIp() {
     return _sessions_ip;
 }
 
-void    debugss( const std::string& msg ) {
-    std::cout << "[SessionManager]" << "[" << msg << "]" << std::endl;
+void    debugss( const std::string& event, const std::string& trace ) {
+    std::cout << "[SessionManager]" << "[" << event << "][" << trace << "]" << std::endl;
 }

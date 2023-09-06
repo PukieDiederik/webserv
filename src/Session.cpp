@@ -10,7 +10,7 @@
 
 std::string createCookie(const std::string& name, const std::string& value, const std::string& path, const std::string& flag);
 std::string generateExpirationDate();
-void    debugss( const std::string& msg );
+void    debugss( const std::string& event, const std::string& trace );
 
 /* Constructors */
 Session::Session() {
@@ -130,7 +130,7 @@ Session::cookies_t parseCookies( const Session::cookies_t& headers ) {
             if ( cookie.find( '=' ) == std::string::npos ) continue;
             const std::string name = removeAfterChar( cookie, '=' );
             const std::string value = removeBeforeChar( cookie, '=');
-            debugss( "Cookie found with pair: key-> " + name + " | value-> " + value );
+            debugss( "Cookie found", "key: " + name + " | value: " + value );
             cookies[name] = value;
         }
     }
@@ -139,11 +139,28 @@ Session::cookies_t parseCookies( const Session::cookies_t& headers ) {
 }
 
 bool    validateClientID( const std::map<std::string, Session*>& sessions, Session::cookies_t& req_cookies ) {
-    return ( sessions.empty() || sessions.find( req_cookies["session_id"] ) == sessions.end() ); 
+    return ( req_cookies.empty() || req_cookies.find( "session_id" ) == req_cookies.end() || sessions.empty() || sessions.find( req_cookies["session_id"] ) == sessions.end() ); 
 }
+
+bool   validateClientIp( const std::string& ip, std::string& session_id ) {
+    SessionManager* session_manager = SessionManager::getInstance();
+
+    if ( !( session_manager->getSessions().empty() ) ) {
+        SessionManager::sessions_t::iterator it = session_manager->getSessionsIp().find( ip );
+        if ( it != session_manager->getSessionsIp().end() ) {
+            session_id = it->second->getSessionID();
+            return true;
+        }
+    }
+    return false;
+}
+
+void   logger( const char* flag, ... );
+
 
 std::string    handleCookies( const HttpRequest& req, HttpResponse& res ) {
     std::string         session_id;
+    bool                vip = false, vid = false;
 
     // make sure to only continue if request from browser ( Firefox or Chrome )
     try {
@@ -153,49 +170,40 @@ std::string    handleCookies( const HttpRequest& req, HttpResponse& res ) {
         //if ( origin.find( "same-origin" ) != std::string::npos ) return ""; // dont read repeated requests from same client
     } catch ( std::exception &ex ) { return ""; }
 
-    std::cout << "ola" << std::endl;
-
     SessionManager* session_manager = SessionManager::getInstance();
 
     // parse cookies from request
     Session::cookies_t  req_cookies = parseCookies( req.headers() );
 
-    std::cout << "ola2" << std::endl;
+    // find client ip
+    std::string ip;
+    Session::cookies_t::const_iterator host_ip = req.headers().find( "Host" );
+    if ( host_ip != req.headers().end() ) ip = host_ip->second;
+
+    // find if already have session for client
+    vip = validateClientIp( ip, session_id );
+    vid = !( validateClientID( session_manager->getSessions(), req_cookies ) );
 
     // no cookies || validation fails ( validation can be further improved by tracking others headers info )
-    if ( req_cookies.empty() || req_cookies.find( "session_id" ) == req_cookies.end() || validateClientID( session_manager->getSessions(), req_cookies ) ) {
+    if ( !vip && !vid ) {
 
-        // find client ip
-        std::string ip;
-        Session::cookies_t::const_iterator host_ip = req.headers().find( "Host" );
-        if ( host_ip != req.headers().end() ) ip = host_ip->second;
-
-        std::cout << "ola3" << std::endl;
-
-        if ( !( session_manager->getSessions().empty() ) ) {
-                    std::cout << "ola4" << std::endl;
-
-            Session::cookies_t::iterator it = session_manager->getSessionsIp().find( ip );
-            if ( it != session_manager->getSessionsIp().end() )
-                session_id = session_manager->getSessions()[it->second]->getSessionID();
-        } else {
-        std::cout << "ola5" << std::endl;
-
-            // create new session
-            session_id = session_manager->createSession( ip );
-            session_manager->getSessions()[session_id]->setIp( ip );
-            debugss( "Created new session witg ID: " + session_id + " and ip: " + ip );
-
-        }
-    } else {
-        session_id = req_cookies["session_id"];
-        debugss( "Session found with ID: " + session_id + " and ip: " + session_manager->getSessions()[session_id]->getIp() );
-        
-        // update cookies in session
-        session_manager->getSessions()[session_id]->updateCookies( req_cookies );
+        // create new session
+        session_id = session_manager->createSession( ip );
+        debugss( "Created session", "ID: " + session_id + " | HOST: " + ip );
 
         // update session data
+        session_manager->getSessions()[session_id]->setIp( ip );
 
+    } else {
+        // check if client ip was found
+        if ( !vip ) session_id = req_cookies["session_id"];
+        debugss( "Session found", "ID: " + session_id + " | HOST: " + session_manager->getSessions()[session_id]->getIp() );
+        
+        // update cookies in session
+        if ( vip && vid)
+            session_manager->getSessions()[session_id]->updateCookies( req_cookies );
+
+        // update session data
     }
 
     // update res cookies

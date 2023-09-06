@@ -98,7 +98,6 @@ void RequestFactory::parse()
                 break;
             
             // Add header
-            //td::cout << "HEADER -> " << line << std::endl;
             std::string _field = line.substr(0, line.find(static_cast<std::string>(": ")));
             std::string _value = line.substr(line.find(static_cast<std::string>(": ")) + 2);
             m_active_req.headers(_field, _value);
