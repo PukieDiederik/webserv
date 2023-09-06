@@ -73,8 +73,8 @@ std::string HttpMessage::toStringHeaders() const
     std::stringstream result;
     for (HttpMessage::headers_t::const_iterator i = _headers.begin(); i != _headers.end(); ++i)
         result << i->first << ": " << i->second << "\r\n";
-    // gde-alme
-    
+
+    // gde-alme    
     for ( HttpMessage::cookies_t::const_iterator i = _cookies.begin(); i != _cookies.end(); i++ ) {
         result << "Set-Cookie" << ": " << i->second  << "\r\n";
     }

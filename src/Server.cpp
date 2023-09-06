@@ -56,7 +56,6 @@ HttpResponse    Server::handleRequest(const HttpRequest& req )
     if (!route) return response_error( req, res, _cfg, route, 404);
 
     path = get_path(req, route);
-    std::cout << path << std::endl;
     session_id = handleCookies( req, res );
 
     // Check if file exists

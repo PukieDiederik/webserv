@@ -49,3 +49,7 @@ std::string SessionManager::createSession() {
 std::map<std::string, Session*>   SessionManager::getSessions() {
     return _sessions;
 }
+
+void    debugss( const std::string& msg ) {
+    std::cout << "[SessionManager]" << "[" << msg << "]" << std::endl;
+}

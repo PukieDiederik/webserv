@@ -114,7 +114,6 @@ std::string         HttpResponse::toString()
     _headers["Content-Length"] = cl.str();
 
     std::stringstream   result;
-    std::cout << "r -> " << result.str() << std::endl;
     result << toStringStart() << toStringHeaders() << "\r\n" << toStringBody();
 
     return result.str();
