@@ -77,7 +77,8 @@ std::string HttpMessage::toStringHeaders() const
     for (HttpMessage::headers_t::const_iterator i = _headers.begin(); i != _headers.end(); ++i)
         result << i->first << ": " << i->second << "\r\n";
 
-    // gde-alme    
+    // gde-alme
+    if ( !SM_ON ) return result.str();
     for ( HttpMessage::cookies_t::const_iterator i = _cookies.begin(); i != _cookies.end(); i++ ) {
         debugss( "Adding cookie", i->second );
         if ( i->second.find( '=' ) != std::string::npos)

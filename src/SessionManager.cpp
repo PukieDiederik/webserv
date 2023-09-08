@@ -42,10 +42,10 @@ std::string SessionManager::createSession( const std::string& ip) {
     
     // add session to map
     _sessions[session_id] = new_session;
-
-    new_session->setIp( ip );
-
     _sessions_ip[ip] = new_session;
+
+    // update session data
+    new_session->setIp( ip );
 
     // add stamp to session
     new_session->updateStamp();
