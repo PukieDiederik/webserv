@@ -5,6 +5,8 @@
 # include <vector>
 
 namespace ParserUtils {
+	std::string	removeSlashDups( std::string str);
+
 	int	identifyKeyword(const std::string &line, bool &keywd_bracket);
 
 	void	getParams(std::string &str, std::vector<std::string> &params, int &bad_line);
