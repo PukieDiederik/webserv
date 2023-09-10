@@ -6,6 +6,14 @@
 # include <string>
 
 namespace ParserUtils {
+	std::string	removeSlashDups( std::string str) {
+		std::string result = str;
+		std::string::size_type pos = 0;	
+		while ((pos = result.find("//", pos)) != std::string::npos)
+			result.erase(pos, 1);
+		return result;
+	}
+
 	/*	@identifyKeyword:
 	*		Evaluates if given line contains a keyword and its respective '{' (or just the keyword)
 	*		Returns error (5) for all other cases
@@ -163,8 +171,9 @@ namespace ParserUtils {
 			else
 				pos++;
 		}
-		removeArraySpaces(rline);
-		return (removeMultipleSpaces(rline));
+		removeArraySpaces( rline );
+		rline = removeMultipleSpaces( rline );
+		return ( rline );
 	}
 
 	/*	@isValidPath:
@@ -208,7 +217,6 @@ namespace ParserUtils {
 			if (ip[i] < '0' || ip[i] > '9') return (false);
 			value = ParserUtils::atoi(ip.c_str() + i);
 			if (value < 0 || value > 255) return (false);
-			std::cout << value << std::endl;
 			while (ip[i] != '.' && ip[i + 1] != '\0')
 				i++;
 			if (ip[i] == '.' && ip[i + 1] == '\0') return (false);

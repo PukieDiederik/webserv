@@ -19,7 +19,8 @@ void	route_checker( ServerCfg& server, bool cgi_config ) {
 				// if root tag was not given, then the route_root = server_root
 				( *route ).root = server.root_dir;
 			}
-			if ( !( ParserUtils::isValidPath( ( *route ).root ) ) || ( *route ).root[0] != '/') throw std::runtime_error( "invalid route root path (path must be absolute)" );
+			if ( !( ParserUtils::isValidPath( ( *route ).root ) ) ) throw std::runtime_error( "invalid route root path (path must be absolute)" );
+			if ( ( *route ).root[0] != '/' ) ( *route ).root = ParserUtils::removeSlashDups( server.root_dir + "/" + ( *route ).root );
 
 			if ( VERBOSE )
 				std::cout << "\t\tRoute root:\n\t\t\t[" << ( *route ).root << "]" << std::endl;
