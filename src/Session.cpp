@@ -16,6 +16,7 @@ void    debugss( const std::string& event, const std::string& trace );
 Session::Session() {
     _session_id = createSessionID();
     _last_log = std::time(0);
+    _genesis = std::time(0);
 }
 
 Session::Session( const Session& ref ) {
@@ -25,6 +26,7 @@ Session::Session( const Session& ref ) {
 Session& Session::operator=( const Session& ref ) {
     _session_id = ref._session_id;
     _cookies = ref._cookies;
+    _client_ip = ref._client_ip;
     _last_log = ref._last_log;
     return *this;
 }
@@ -76,6 +78,10 @@ void    Session::setIp( const std::string& ip ) {
 
 std::string Session::getIp() const {
     return _client_ip;
+}
+
+time_t  Session::getGenesis() const {
+    return _genesis;
 }
 
 /* Helpers */
@@ -130,7 +136,7 @@ Session::cookies_t parseCookies( const Session::cookies_t& headers ) {
             if ( cookie.find( '=' ) == std::string::npos ) continue;
             const std::string name = removeAfterChar( cookie, '=' );
             const std::string value = removeBeforeChar( cookie, '=');
-            debugss( "Cookie found", "key: " + name + " | value: " + value );
+            //debugss( "Cookie found", "key: " + name + " | value: " + value );
             cookies[name] = value;
         }
     }
@@ -155,17 +161,14 @@ bool   validateClientIp( const std::string& ip, std::string& session_id ) {
     return false;
 }
 
-void   logger( const char* flag, ... );
-
-
 std::string    handleCookies( const HttpRequest& req, HttpResponse& res ) {
     std::string         session_id;
     bool                vip = false, vid = false;
 
     // make sure to only continue if request from browser ( Firefox or Chrome )
     try {
-        std::string browser = req.headers( "User-Agent" );
-        std::string origin = req.headers( "Sec-Fetch-Site" );
+        const std::string browser = req.headers( "User-Agent" );
+        const std::string origin = req.headers( "Sec-Fetch-Site" );
         if ( browser.find( "Mozilla" ) == std::string::npos && origin.find( "Mozilla" ) == std::string::npos ) return "";
         //if ( origin.find( "same-origin" ) != std::string::npos ) return ""; // dont read repeated requests from same client
     } catch ( std::exception &ex ) { return ""; }
@@ -210,4 +213,52 @@ std::string    handleCookies( const HttpRequest& req, HttpResponse& res ) {
     res.setCookies( session_manager->getSessions()[session_id]->getCookies() );
 
     return session_id;
+}
+
+// encode string to url
+std::string urlencode( const std::string &value ) {
+    std::ostringstream escaped;
+    escaped.fill( '0' );
+    escaped << std::hex;
+
+    for ( std::string::const_iterator i = value.begin(); i != value.end(); ++i ) {
+        char c = (*i);
+        if ( isalnum( c ) || c == '-' || c == '_' || c == '.' || c == '~' ) {
+            escaped << c;
+        } else {
+            escaped << '%' << std::uppercase << static_cast<unsigned short>( static_cast<unsigned char>( c ) );
+        }
+    }
+
+    return escaped.str();
+}
+
+// decode url to str
+std::string urldecode( const std::string &value ) {
+    std::string ret;
+    char ch;
+    std::string::size_type i;
+    unsigned int ii;
+    for ( i = 0; i < value.length(); i++ ) {
+        if ( value[i] != '%' ) {
+            if ( value[i] == '+' ) {
+                ret += ' ';
+            } else {
+                ret += value[i];
+            }
+        } else {
+            sscanf( value.substr( i + 1, 2 ).c_str(), "%x", &ii );
+            ch = static_cast<char>( ii );
+            ret += ch;
+            i = i + 2;
+        }
+    }
+    return ret;
+}
+
+const std::string   timeToString( time_t timestamp ) {
+    struct tm *time = localtime( &timestamp );
+    std::stringstream   ss;
+    ss << time->tm_hour << "h:" << time->tm_min << "m, " << time->tm_mday << "/" << time->tm_mon + 1 << "/" << time->tm_year + 1900;
+	return ss.str();
 }

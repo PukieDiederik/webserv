@@ -1,4 +1,5 @@
 #include "SessionManager.hpp"
+#include "JSON.hpp"
 #include <cstdlib>
 #include <iostream>
 #include <map>
@@ -36,16 +37,26 @@ std::string SessionManager::createSession( const std::string& ip) {
 
     session_id = new_session->getSessionID();
 
+    // update session data
+    new_session->setIp( ip );
+
     // add essential cookies
     new_session->addCookie( "session_id", createCookie( "session_id", session_id, "/", "Secure" ) );
-    new_session->addCookie( "jsjsjs", createCookie( "jsjsjs", session_id, "/", "Secure" ) );
+
+    // json cookie
+    std::map<std::string, JSON> myMap;
+
+	myMap["name"] = JSON( "Evaluator" );	
+    myMap["age"] = JSON( 42 );
+	myMap["points"] = JSON( 120 );
+	myMap["admin"] = JSON( false );
+    myMap["genesis"] = JSON( timeToString( new_session->getGenesis() ).c_str() );
+
+    new_session->addCookie( "json", createCookie( "json", urlencode( toJson( myMap ) ), "/", "Lax" ) );
     
     // add session to map
     _sessions[session_id] = new_session;
     _sessions_ip[ip] = new_session;
-
-    // update session data
-    new_session->setIp( ip );
 
     // add stamp to session
     new_session->updateStamp();

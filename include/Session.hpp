@@ -1,9 +1,14 @@
 #ifndef __SESSION_HPP__
 #define __SESSION_HPP__
 
+# include "JSON.hpp"
 # include <string>
 # include <map>
 # include <ctime>
+
+std::string urldecode( const std::string &value );
+std::string urlencode( const std::string &value );
+const std::string   timeToString( time_t timestamp );
 
 class Session {
     public:
@@ -13,6 +18,7 @@ class Session {
         cookies_t        _cookies;
         std::string      _client_ip;
         time_t           _last_log;
+        time_t           _genesis;
 
     public:
         Session();
@@ -32,6 +38,8 @@ class Session {
 
         void            setIp( const std::string& ip );
         std::string     getIp() const;
+
+        time_t     getGenesis() const;
 
         void    updateStamp();
 };

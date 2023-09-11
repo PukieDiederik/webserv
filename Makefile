@@ -7,7 +7,7 @@ FNAMES      = main.cpp\
  			  ServerConfig.cpp ServerConfigCgiParser.cpp ServerConfigMimeParser.cpp\
  			  ServerConfigServerParser.cpp ServerConfigRouteParser.cpp ServerConfigChecker.cpp\
  			  ParserUtils.cpp ParsingException.cpp ServerUtils.cpp\
-			  SessionManager.cpp Session.cpp
+			  SessionManager.cpp Session.cpp JSON.cpp
 
 SRCS        = $(addprefix $(SRCS_DIR)/,$(FNAMES))
 OBJS        = $(addprefix $(OBJS_DIR)/,$(notdir $(FNAMES:.cpp=.o)))
