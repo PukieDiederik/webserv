@@ -10,7 +10,7 @@
 #include "HttpResponse.hpp"
 #include <iostream>
 
-std::string	remove_slash_dups( std::string str) {
+std::string	removeSlashDups( std::string str) {
 	std::string result = str;
 	std::string::size_type pos = 0;
 	while ((pos = result.find("//", pos)) != std::string::npos)
@@ -61,13 +61,13 @@ std::string	get_path(std::string req_target, RouteCfg* route)
 	req_target = find_remove( req_target, '#' );
 
 	path = route->root + "/" + req_target;
-	path = remove_slash_dups(path);
+	path = removeSlashDups(path);
 
 	return path;
 }
 
 std::string	get_path( std::string error_page, ServerCfg& _cfg ) {
-	return remove_slash_dups( _cfg.root_dir + error_page );
+	return removeSlashDups( _cfg.root_dir + error_page );
 }
 
 /*
@@ -86,14 +86,13 @@ int	index_path( RouteCfg* route, std::string& path ) {
         
         // If index.html exists in said folder, return request
         std::vector<std::string>::iterator it = std::find(dir_listing.begin(), dir_listing.end(), route->index);
-        //std::cout << *it << std::endl;
 
         if ( it != dir_listing.end() ) {
 		    std::string	part_path = route->route_path;
 		    if ( !route->route_path.empty() && route->route_path[route->route_path.size() - 1] == '/' )
 			    part_path = route->route_path.substr(0, route->route_path.size() - 1);
 		    // Remove dup when root is defined in route
-		    path = remove_slash_dups( route->root + /* "/" + part_path + */ "/" + route->index );
+		    path = removeSlashDups( route->root + /* "/" + part_path + */ "/" + route->index );
 	    	return 0;
         } else if ( route->auto_index ) { // else if (auto_index on), return list of contents
             return 1;
@@ -132,7 +131,7 @@ bool	is_accepted_method( RouteCfg* route, const std::string method ) {
 /*
 *   @is_file:
 *       Checks if given path points to a file
-*       Path must not end in '/'
+*        not end in '/'
 */
 bool    is_file( const std::string& path ) {
     // Path must not end in '/'
