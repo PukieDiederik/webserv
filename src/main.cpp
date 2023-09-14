@@ -1,7 +1,7 @@
 #include "ServerConfig.hpp"
 #include "Router.hpp"
 #include <exception>
-
+#include <cstdlib>
 #include <iostream>
 
 int main(int argc, char **argv) {
@@ -15,6 +15,7 @@ int main(int argc, char **argv) {
 	std::cout << "\nIf any possible errors do occur: \n" << std::endl;
 	try {
 		ServerConfig::initialize(argv[1]);
+		exit(0);
 
         // Start listening
         Router r;
