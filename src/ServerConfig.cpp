@@ -182,6 +182,9 @@ ServerConfig& ServerConfig::operator=(const ServerConfig& copy)
 		_cgi_cmds.push_back( cmd_array );
 
 	}
+
+	_cgi = copy._cgi;
+
     return *this;
 }
 
