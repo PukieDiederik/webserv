@@ -153,9 +153,6 @@ ServerConfig::~ServerConfig() {
 		delete[] *it;
 	}
 	_cgi_cmds.clear();
-	/*for ( std::map<std::string, char**>::iterator it = _cgi.begin(); it != _cgi.end(); it++ ) {
-		delete *(it->second);
-	}*/
 }
 
 ServerConfig& ServerConfig::operator=(const ServerConfig& copy)
