@@ -12,6 +12,10 @@
 #include <algorithm>
 #include <string>
 #include <cstdio>
+#include <cstring>
+#include <cstdlib>
+#include <sys/types.h>
+#include <sys/wait.h>
 
 #define VALIDPATH 0
 #define AUTOINDEX 1
@@ -207,38 +211,95 @@ void    set_cgi_headers(HttpResponse& res, std::string response)
     }
 }
 
+std::string executeScript(std::string executablePath, std::string path, std::string body)
+{
+    int     pipe_in[2];
+    int     pipe_out[2];
+    pid_t   _cgi_pid;
+    char    **argv;
+
+    argv = new char *[3];
+    argv[0] = new char[executablePath.length()];
+    argv[1] = new char[path.length()];
+
+    strcpy(argv[0], executablePath.c_str());
+    strcpy(argv[1], path.c_str());
+
+    argv[2] = NULL;
+
+    char *envVars[] = {
+        "MY_ENV_VAR=my_value",
+        NULL
+    };
+
+    if (pipe(pipe_in) < 0 || pipe(pipe_out) < 0)
+    {
+        std::cout << "ERROR: Failed to create pipes" << std::endl;
+        return "";
+    }
+
+    _cgi_pid = fork();
+
+    // Child process
+    if (_cgi_pid == 0)
+    {
+        close(pipe_in[1]);
+        close(pipe_out[0]);
+        dup2(pipe_in[0], STDIN_FILENO);
+        dup2(pipe_out[1], STDOUT_FILENO);
+
+        // Execute the CGI script
+        execve(argv[0], argv, envVars);
+
+        std::cout << "ERROR: Failed to execute CGI script : " << std::endl;
+        exit(1);
+    }
+    // Parent process
+    else if (_cgi_pid > 0)
+    {
+        close(pipe_in[0]);
+        close(pipe_out[1]);
+
+        // Write the request body to the child process
+        write(pipe_in[1], body.c_str(), body.length());
+        close(pipe_in[1]);
+
+        // Wait for the child process to complete
+        int status;
+        waitpid(_cgi_pid, &status, 0);
+
+        if (WIFEXITED(status))
+        {
+            // Child process exited normally
+            WEXITSTATUS(status);
+
+            // Read the response from the child process
+            char				buffer[1024];
+            int					bytes_read;
+            std::stringstream	ss;
+            while ((bytes_read = read(pipe_out[0], buffer, sizeof(buffer))) > 0)
+                ss << buffer;
+
+            close(pipe_out[0]);
+
+            return ss.str();
+        }
+        else
+            std::cout << "ERROR: Child process did not exit normally" << std::endl;
+    }
+    else
+    {
+        std::cout << "ERROR: Failed to fork" << std::endl;
+        return "";
+    }
+
+    return "";
+}
 
 HttpResponse    response_cgi(const HttpRequest& req, std::string path, HttpResponse& res, ServerCfg& _cfg, RouteCfg* route)
 {
     std::string executablePath = ServerConfig::getExecutablePath(path);
-    char        command[256];
-
-    snprintf(
-        command,
-        sizeof(command),
-        "%s %s \"%s\"",
-        executablePath.c_str(),
-        path.c_str(),
-        req.body().c_str()
-    );
-
-    char        buffer[128];
-    std::string result = "";
-    FILE*       pipe = popen(command, "r");
-
-    if (!pipe)
-    {
-        perror("popen");
-        return res;
-    }
-
-    while (!feof(pipe))
-    {
-        if (fgets(buffer, sizeof(buffer), pipe) != NULL)
-            result += buffer;
-    }
-
-    pclose(pipe);
+    std::string result = executeScript(executablePath, path, req.body());
 
     set_cgi_headers(res, result);
 
