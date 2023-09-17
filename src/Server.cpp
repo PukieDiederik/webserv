@@ -195,6 +195,8 @@ void    set_cgi_headers(HttpResponse& res, std::string response)
 
                 statusMessage = line.substr(i);
             }
+
+            res.set_status(statusCode, statusMessage);
         }
 
         i = line.find(':');
