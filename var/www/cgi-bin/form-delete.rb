@@ -6,10 +6,10 @@ cgi = CGI.new
 
 was_file_defeted = false
 
-if File.exists?(cgi["filename"])
-	was_file_defeted = true
-
+if File.exist?(cgi["filename"])
 	File.delete(cgi["filename"])
+
+	was_file_defeted = !File.exist?(cgi["filename"])
 end
 
 puts 'HTTP/1.0 200 OK'
