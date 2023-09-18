@@ -365,24 +365,14 @@ HttpResponse    response_head(const HttpRequest& req, std::string path, HttpResp
 }
 
 HttpResponse    response_delete(const HttpRequest& req, std::string path, HttpResponse& res, ServerCfg& _cfg, RouteCfg* route) {
-	switch (index_path(req, route, path)) {
-		case VALIDPATH: {
-			if ( remove( path.c_str() ) != 0 ) {
-				std::cout << "Error deleting file" << std::endl;
-				res.body().append( "\nError deleting file\n\n" );
-			}
-			else res.body().append( "\nFile deleted\n\n" );
+    std::string executablePath = ServerConfig::getExecutablePath("/cgi-bin/form-delete.rb");
+    std::string deletePath = get_path("/cgi-bin/form-delete.rb", route);
+    std::string body = "filename=";
+    body.append(path);
 
-			std::ostringstream  ss;
-			ss << res.body().length();
+    std::string result = executeScript(executablePath, deletePath, body, NULL);
 
-			res.set_status( 200 );
-			res.set_header( "Content-type", "text/html" );
-			break ;
-		}
-        	default:
-			return response_error(req, res, _cfg, route, 404);
-	}
+    set_cgi_headers(res, result);
 
     return res;
 }
