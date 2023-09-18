@@ -185,3 +185,19 @@ std::string get_filename_extension(const std::string& filename)
 
     return (extension);
 }
+
+/*
+*  find_delimiter:
+*      Get the index of 'delimiter' on the 'str'
+*      Otherwise return -1
+* */
+int find_delimiter(const std::string str, const std::string delimiter)
+{
+    if (str.empty())
+        return (-1);
+    size_t poz = str.find(delimiter);
+    if (poz != std::string::npos)
+        return (poz);
+    else
+        return (-1);
+}

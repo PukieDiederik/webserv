@@ -16,5 +16,6 @@ bool    is_file( const std::string& path );
 bool	is_directory( const std::string& path );
 std::vector<std::string>    list_dir( const std::string& path );
 std::string	get_filename_extension(const std::string& filename);
+int			find_delimiter(const std::string str, const std::string delimiter);
 
 #endif
