@@ -163,7 +163,7 @@ HttpResponse    list_dir_res(const HttpRequest& req, std::string path, HttpRespo
     return res;
 }
 
-void    set_cgi_headers(HttpResponse& res, std::string response)
+void    set_res_cgi_headers(HttpResponse& res, std::string response)
 {
     std::string             line;
     int                     i;
@@ -291,28 +291,53 @@ std::string executeScript(std::string executablePath, std::string path, std::str
     return "";
 }
 
-HttpResponse    response_cgi(const HttpRequest& req, std::string path, HttpResponse& res, ServerCfg& _cfg, RouteCfg* route)
+char            **get_cgi_headers(const HttpRequest& req, std::string path)
 {
-    std::map<std::string, std::string>  headers = req.headers();
+    std::map<std::string, std::string>  headers;
+    int i_pos;
 
-    char    **envp;
-    envp = new char *[headers.size() + 1];
+    headers["AUTH_TYPE"] = "Basic";
+    headers["CONTENT_LENGTH"] = req.headers("Content-Length");
+    headers["CONTENT_TYPE"] = req.headers("Content-Type");
+    headers["GATEWAY_INTERFACE"] = "CGI/1.1";
+    headers["HTTP_COOKIE"] = req.headers("Cookie");
+    headers["REDIRECT_STATUS"] = "200";
+    headers["REMOTE_ADDR"] = req.headers("Host");
+    headers["REQUEST_METHOD"] = req.method();
 
+    i_pos = find_delimiter(path, "cgi-bin/");
+    headers["SCRIPT_NAME"] = path;
+    headers["SCRIPT_FILENAME"] = (i_pos < 0 ? "" : path.substr(i_pos + 8, path.size()));
+
+    i_pos = find_delimiter(req.headers("Host"), ":");
+    headers["SERVER_NAME"] = (i_pos > 0 ? req.headers("Host").substr(0, i_pos) : "");
+    headers["SERVER_PORT"] = (i_pos > 0 ? req.headers("Host").substr(i_pos + 1, req.headers("Host").size()) : "");
+    headers["SERVER_PROTOCOL"] = "HTTP/1.1";
+    headers["SERVER_SOFTWARE"] = "AMANIX";
+
+    char    **envp = new char *[headers.size() + 1];
+    i_pos = 0;
     std::map<std::string, std::string>::iterator    it;
-    int i = 0;
-    for (it = headers.begin(); it != headers.end(); ++it, ++i)
+    for (it = headers.begin(); it != headers.end(); ++it, ++i_pos)
     {
         std::string value = it->first + "=" + it->second;
-        envp[i] = new char[value.length() + 1];
-        strcpy(envp[i], value.c_str());
+        envp[i_pos] = new char[value.length() + 1];
+        strcpy(envp[i_pos], value.c_str());
     }
 
-    envp[i] = NULL;
+    envp[i_pos] = NULL;
+
+    return envp;
+}
+
+HttpResponse    response_cgi(const HttpRequest& req, std::string path, HttpResponse& res, ServerCfg& _cfg, RouteCfg* route)
+{
+    char    **envp = get_cgi_headers(req, path);
 
     std::string executablePath = ServerConfig::getExecutablePath(path);
     std::string result = executeScript(executablePath, path, req.body(), envp);
 
-    set_cgi_headers(res, result);
+    set_res_cgi_headers(res, result);
 
     return res;
 }
@@ -372,7 +397,7 @@ HttpResponse    response_delete(const HttpRequest& req, std::string path, HttpRe
 
     std::string result = executeScript(executablePath, deletePath, body, NULL);
 
-    set_cgi_headers(res, result);
+    set_res_cgi_headers(res, result);
 
     return res;
 }
