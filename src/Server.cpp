@@ -211,7 +211,7 @@ void    set_cgi_headers(HttpResponse& res, std::string response)
     }
 }
 
-std::string executeScript(std::string executablePath, std::string path, std::string body)
+std::string executeScript(std::string executablePath, std::string path, std::string body, char **envp)
 {
     int     pipe_in[2];
     int     pipe_out[2];
@@ -219,18 +219,13 @@ std::string executeScript(std::string executablePath, std::string path, std::str
     char    **argv;
 
     argv = new char *[3];
-    argv[0] = new char[executablePath.length()];
-    argv[1] = new char[path.length()];
+    argv[0] = new char[executablePath.length() + 1];
+    argv[1] = new char[path.length() + 1];
 
     strcpy(argv[0], executablePath.c_str());
     strcpy(argv[1], path.c_str());
 
     argv[2] = NULL;
-
-    char *envVars[] = {
-        "MY_ENV_VAR=my_value",
-        NULL
-    };
 
     if (pipe(pipe_in) < 0 || pipe(pipe_out) < 0)
     {
@@ -249,7 +244,7 @@ std::string executeScript(std::string executablePath, std::string path, std::str
         dup2(pipe_out[1], STDOUT_FILENO);
 
         // Execute the CGI script
-        execve(argv[0], argv, envVars);
+        execve(argv[0], argv, envp);
 
         std::cout << "ERROR: Failed to execute CGI script : " << std::endl;
         exit(1);
@@ -298,8 +293,24 @@ std::string executeScript(std::string executablePath, std::string path, std::str
 
 HttpResponse    response_cgi(const HttpRequest& req, std::string path, HttpResponse& res, ServerCfg& _cfg, RouteCfg* route)
 {
+    std::map<std::string, std::string>  headers = req.headers();
+
+    char    **envp;
+    envp = new char *[headers.size() + 1];
+
+    std::map<std::string, std::string>::iterator    it;
+    int i = 0;
+    for (it = headers.begin(); it != headers.end(); ++it, ++i)
+    {
+        std::string value = it->first + "=" + it->second;
+        envp[i] = new char[value.length() + 1];
+        strcpy(envp[i], value.c_str());
+    }
+
+    envp[i] = NULL;
+
     std::string executablePath = ServerConfig::getExecutablePath(path);
-    std::string result = executeScript(executablePath, path, req.body());
+    std::string result = executeScript(executablePath, path, req.body(), envp);
 
     set_cgi_headers(res, result);
 
