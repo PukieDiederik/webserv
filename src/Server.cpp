@@ -297,23 +297,30 @@ char            **get_cgi_headers(const HttpRequest& req, std::string path)
     int i_pos;
 
     headers["AUTH_TYPE"] = "Basic";
-    headers["CONTENT_LENGTH"] = req.headers("Content-Length");
-    headers["CONTENT_TYPE"] = req.headers("Content-Type");
     headers["GATEWAY_INTERFACE"] = "CGI/1.1";
     headers["HTTP_COOKIE"] = req.headers("Cookie");
     headers["REDIRECT_STATUS"] = "200";
     headers["REMOTE_ADDR"] = req.headers("Host");
     headers["REQUEST_METHOD"] = req.method();
 
-    i_pos = find_delimiter(path, "cgi-bin/");
-    headers["SCRIPT_NAME"] = path;
-    headers["SCRIPT_FILENAME"] = (i_pos < 0 ? "" : path.substr(i_pos + 8, path.size()));
+    i_pos = find_delimiter(path, "/cgi-bin/");
+    headers["PATH_INFO"] = "";
+    headers["PATH_TRANSLATED"] = path;
+    headers["REQUEST_URI"] = (i_pos < 0 ? "" : path.substr(i_pos, path.size()));
+    headers["SCRIPT_NAME"] = (i_pos < 0 ? "" : path.substr(i_pos + 1, path.size()));
+    headers["SCRIPT_FILENAME"] = (i_pos < 0 ? "" : path.substr(i_pos + 9, path.size()));
 
     i_pos = find_delimiter(req.headers("Host"), ":");
     headers["SERVER_NAME"] = (i_pos > 0 ? req.headers("Host").substr(0, i_pos) : "");
     headers["SERVER_PORT"] = (i_pos > 0 ? req.headers("Host").substr(i_pos + 1, req.headers("Host").size()) : "");
     headers["SERVER_PROTOCOL"] = "HTTP/1.1";
     headers["SERVER_SOFTWARE"] = "AMANIX";
+
+    if (req.method() == "POST")
+    {
+        headers["CONTENT_LENGTH"] = req.headers("Content-Length");
+        headers["CONTENT_TYPE"] = req.headers("Content-Type");
+    }
 
     char    **envp = new char *[headers.size() + 1];
     i_pos = 0;
