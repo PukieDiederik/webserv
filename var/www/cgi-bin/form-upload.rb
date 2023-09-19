@@ -7,7 +7,8 @@ params = cgi.params
 
 if params.has_key?"file"
 	file = params["file"].first
-	server_file = '/home/edgar/projects/42-school/webserver-fork/var/www/files/' + file.original_filename
+	server_file = ENV['UPLOAD_FOLDER'] + file.original_filename
+
 	File.open(server_file.untaint, "w") do |f|
 		f << file.read
 	end

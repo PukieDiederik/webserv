@@ -163,7 +163,7 @@ HttpResponse    list_dir_res(const HttpRequest& req, std::string path, HttpRespo
     return res;
 }
 
-void    set_res_cgi_headers(HttpResponse& res, std::string response)
+void            set_res_cgi_headers(HttpResponse& res, std::string response)
 {
     std::string             line;
     int                     i;
@@ -211,7 +211,7 @@ void    set_res_cgi_headers(HttpResponse& res, std::string response)
     }
 }
 
-std::string executeScript(std::string executablePath, std::string path, std::string body, char **envp)
+std::string     executeScript(std::string executablePath, std::string path, std::string body, char **envp)
 {
     int     pipe_in[2];
     int     pipe_out[2];
@@ -320,6 +320,11 @@ char            **get_cgi_headers(const HttpRequest& req, std::string path)
     {
         headers["CONTENT_LENGTH"] = req.headers("Content-Length");
         headers["CONTENT_TYPE"] = req.headers("Content-Type");
+
+        i_pos = find_delimiter(path, "cgi-bin/");
+        std::string value = (i_pos < 0 ? "" : path.substr(0, i_pos));
+        value.append("files/");
+        headers["UPLOAD_FOLDER"] = value;
     }
 
     char    **envp = new char *[headers.size() + 1];
@@ -337,7 +342,7 @@ char            **get_cgi_headers(const HttpRequest& req, std::string path)
     return envp;
 }
 
-void    delete_cgi_headers(char **envp)
+void            delete_cgi_headers(char **envp)
 {
     for (int i = 0; envp[i] != NULL; i++)
         delete[] envp[i];
