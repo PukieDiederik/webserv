@@ -60,7 +60,6 @@ HttpResponse    Server::handleRequest( const HttpRequest& req)
     }
 
     path = get_path(req, route);
-    std::cout << "path: " << path << std::endl; 
 
     // Check if file exists
     if (!is_directory(path) && ::access(path.c_str(), F_OK) < 0)
