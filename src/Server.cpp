@@ -337,12 +337,22 @@ char            **get_cgi_headers(const HttpRequest& req, std::string path)
     return envp;
 }
 
+void    delete_cgi_headers(char **envp)
+{
+    for (int i = 0; envp[i] != NULL; i++)
+        delete[] envp[i];
+
+    delete[] envp;
+}
+
 HttpResponse    response_cgi(const HttpRequest& req, std::string path, HttpResponse& res, ServerCfg& _cfg, RouteCfg* route)
 {
     char    **envp = get_cgi_headers(req, path);
 
     std::string executablePath = ServerConfig::getExecutablePath(path);
     std::string result = executeScript(executablePath, path, req.body(), envp);
+
+    delete_cgi_headers(envp);
 
     set_res_cgi_headers(res, result);
 
