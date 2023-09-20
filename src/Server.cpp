@@ -14,6 +14,7 @@
 #include <cstdio>
 #include <cstring>
 #include <cstdlib>
+#include <sys/time.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 
@@ -163,12 +164,15 @@ HttpResponse    list_dir_res(const HttpRequest& req, std::string path, HttpRespo
     return res;
 }
 
-void            set_res_cgi_headers(HttpResponse& res, std::string response)
+void            set_res_cgi_headers(const HttpRequest& req, HttpResponse& res, ServerCfg& _cfg, RouteCfg* route, std::string response)
 {
     std::string             line;
     int                     i;
     std::string::size_type  startPos = 0;
     std::string::size_type  endPos;
+
+    if (is_error_code(response))
+        response_error(req, res, _cfg, route, ParserUtils::atoi(response));
 
     while ((endPos = response.find('\n', startPos)) != std::string::npos)
     {
@@ -230,7 +234,7 @@ std::string     executeScript(std::string executablePath, std::string path, std:
     if (pipe(pipe_in) < 0 || pipe(pipe_out) < 0)
     {
         std::cout << "ERROR: Failed to create pipes" << std::endl;
-        return "";
+        return "500";
     }
 
     _cgi_pid = fork();
@@ -259,36 +263,66 @@ std::string     executeScript(std::string executablePath, std::string path, std:
         write(pipe_in[1], body.c_str(), body.length());
         close(pipe_in[1]);
 
-        // Wait for the child process to complete
-        int status;
-        waitpid(_cgi_pid, &status, 0);
+        // Set up a Timeout (5 seconds)
+        fd_set  readSet;
+        FD_ZERO(&readSet);
+        FD_SET(pipe_out[0], &readSet);
 
-        if (WIFEXITED(status))
+        struct timeval  timeout;
+        timeout.tv_sec = 5;
+        timeout.tv_usec = 0;
+
+        int result = select(pipe_out[0] + 1, &readSet, NULL, NULL, &timeout);
+
+        if (result == -1)
         {
-            // Child process exited normally
-            WEXITSTATUS(status);
-
-            // Read the response from the child process
-            char				buffer[1024];
-            int					bytes_read;
-            std::stringstream	ss;
-            while ((bytes_read = read(pipe_out[0], buffer, sizeof(buffer))) > 0)
-                ss << buffer;
-
-            close(pipe_out[0]);
-
-            return ss.str();
+            std::cout << "ERROR: Select failed" << std::endl;
+            return "500";
         }
+        // Timeout occurred, kill the child process
+        else if (result == 0)
+        {
+            std::cout << "ERROR: Timeout occurred" << std::endl;
+            kill(_cgi_pid, SIGKILL);
+            waitpid(_cgi_pid, NULL, 0);
+            return "408";
+        }
+        // Wait for the child process to complete
         else
-            std::cout << "ERROR: Child process did not exit normally" << std::endl;
+        {
+            int status;
+            waitpid(_cgi_pid, &status, 0);
+
+            if (WIFEXITED(status))
+            {
+                // Child process exited normally
+                WEXITSTATUS(status);
+
+                // Read the response from the child process
+                char				buffer[1024];
+                int					bytes_read;
+                std::stringstream	ss;
+                while ((bytes_read = read(pipe_out[0], buffer, sizeof(buffer))) > 0)
+                    ss << buffer;
+
+                close(pipe_out[0]);
+
+                return ss.str();
+            }
+            else
+            {
+                std::cout << "ERROR: Child process did not exit normally" << std::endl;
+                return "500";
+            }
+        }
     }
     else
     {
         std::cout << "ERROR: Failed to fork" << std::endl;
-        return "";
+        return "500";
     }
 
-    return "";
+    return "500";
 }
 
 char            **get_cgi_headers(const HttpRequest& req, std::string path)
@@ -359,7 +393,7 @@ HttpResponse    response_cgi(const HttpRequest& req, std::string path, HttpRespo
 
     delete_cgi_headers(envp);
 
-    set_res_cgi_headers(res, result);
+    set_res_cgi_headers(req, res, _cfg, route, result);
 
     return res;
 }
@@ -419,7 +453,7 @@ HttpResponse    response_delete(const HttpRequest& req, std::string path, HttpRe
 
     std::string result = executeScript(executablePath, deletePath, body, NULL);
 
-    set_res_cgi_headers(res, result);
+    set_res_cgi_headers(req, res, _cfg, route, result);
 
     return res;
 }
