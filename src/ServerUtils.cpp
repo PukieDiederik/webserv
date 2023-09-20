@@ -201,3 +201,19 @@ int find_delimiter(const std::string str, const std::string delimiter)
     else
         return (-1);
 }
+
+/*
+*  is_error_code:
+*      Check if it is an error code (number of 3 digits)
+* */
+int is_error_code(const std::string str)
+{
+    if (str.length() != 3)
+        return false;
+
+    for (std::string::const_iterator it = str.begin(); it != str.end(); ++it)
+        if (!isdigit(*it))
+            return false;
+
+    return true;
+}

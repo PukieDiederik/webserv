@@ -17,5 +17,6 @@ bool	is_directory( const std::string& path );
 std::vector<std::string>    list_dir( const std::string& path );
 std::string	get_filename_extension(const std::string& filename);
 int			find_delimiter(const std::string str, const std::string delimiter);
+int			is_error_code(const std::string str);
 
 #endif
