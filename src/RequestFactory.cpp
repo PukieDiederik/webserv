@@ -135,17 +135,22 @@ void RequestFactory::parse()
     {
         if (m_body_type == RequestFactory::LENGTH)
         {
+            std::cout << "Parsing body on Content-Length";
             std::stringstream ss;
             ss << m_active_req.headers("Content-Length");
 
             unsigned int s;
             ss >> s;
 
-            if (m_buffer.length() != s) // Exit if not enough is in the buffer yet
+            std::cout << "Content-Length: " << s << std::endl;
+
+            if (m_buffer.length() < s) // Exit if not enough is in the buffer yet
                 return;
 
             m_active_req.body() = m_buffer.substr(0, s);
             m_req_buffer.push(m_active_req);
+            m_buffer.erase(0, s);
+            std::cout << "buffer:\n" << m_buffer << std::endl;
             m_active_status = RequestFactory::REQ_LINE;
         }
         else if (m_body_type == RequestFactory::CHUNKED)

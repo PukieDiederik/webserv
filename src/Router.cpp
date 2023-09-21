@@ -329,7 +329,6 @@ void Router::listen()
                     continue;
 
                 int bytes_send = 0;
-                std::cout << "Writing: " << out_it->second.length() << " characters" << std::endl;
                 // start writing on the socket
                 for (std::size_t s = 0; s < out_it->second.length(); s += bytes_send)
                 {
@@ -340,7 +339,6 @@ void Router::listen()
                     if (bytes_send <= 0)
                         break; // Something errored
                 }
-                std::cout << "bytes_send: " << bytes_send << std::endl;
                 // Remove the out_buffer for this socket
                 out_buffer.erase(out_it);
 
