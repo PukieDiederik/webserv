@@ -28,6 +28,6 @@ class Server {
         ServerCfg&  cfg();
 };
 
-HttpResponse& response_error(HttpResponse& res, ServerCfg& _cfg, const int statusCode);
+HttpResponse& response_error(HttpResponse& res, const ServerCfg* _cfg, int statusCode);
 
 #endif

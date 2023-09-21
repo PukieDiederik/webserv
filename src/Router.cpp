@@ -276,9 +276,16 @@ void Router::listen()
                             res.set_status(400, "Bad request");
                             res.headers("Connection", "Close");
 
-                            res = response_error(res, event_map[events[i].data.fd].server->cfg(), 400);
+                            if (event_map[events[i].data.fd].server)
+                                res = response_error(res, &event_map[events[i].data.fd].server->cfg(), 400);
+                            else
+                                res = response_error(res, NULL, 400);
+
                             out_buffer[events[i].data.fd] += res.toString();
                             event_map[events[i].data.fd].closing = true;
+
+                            event_map[events[i].data.fd].event.events |= EPOLLOUT;
+                            epoll_ctl(epoll_fd, EPOLL_CTL_MOD, events[i].data.fd, &event_map[events[i].data.fd].event);
                             break;
                         }
                     }
