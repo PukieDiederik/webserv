@@ -164,6 +164,15 @@ Server* find_server_from_port(int port, std::vector<Server>& servers, HttpReques
     return s;
 }
 
+// Adds data to the output
+void add_output(int epoll_fd, out_buffer_t& ob, struct epoll_event& event, const std::string& str)
+{
+    ob[event.data.fd] += str;
+
+    event.events |= EPOLLOUT;
+    epoll_ctl(epoll_fd, EPOLL_CTL_MOD, event.data.fd, &event);
+}
+
 void Router::listen()
 {
     int epoll_fd;
@@ -257,35 +266,35 @@ void Router::listen()
 
                     // Start reading data
                     int bytes_read = 1;
-                    std::ostringstream req_sstream; // stringstream used for storing everything until all is read
-                    req_sstream.write(buffer, bytes_read);
 
                     while (bytes_read > 0) {
+                        // Start reading data from the socket
                         bytes_read = recv(events[i].data.fd, buffer, sizeof(buffer), 0);
                         if (bytes_read <= 0)
                             break;
-                        req_sstream.write(buffer, bytes_read);
                         std::string s(buffer, bytes_read);
                         try
                         {
+                            // Try inputting read data into the request factory
                             event_map[events[i].data.fd].rf.in(s);
                         }
                         catch (const std::exception& e)
                         {
+                            // Generate error 400 response
                             HttpResponse res;
                             res.set_status(400, "Bad request");
                             res.headers("Connection", "Close");
 
+                            // If we don't have a server found for this connection use default settings
                             if (event_map[events[i].data.fd].server)
                                 res = response_error(res, &event_map[events[i].data.fd].server->cfg(), 400);
                             else
                                 res = response_error(res, NULL, 400);
 
-                            out_buffer[events[i].data.fd] += res.toString();
+                            // Adds 400 response to the output buffer
+                            add_output(epoll_fd, out_buffer, event_map[events[i].data.fd].event, res.toString());
+                            // Will close the connection on a bad request
                             event_map[events[i].data.fd].closing = true;
-
-                            event_map[events[i].data.fd].event.events |= EPOLLOUT;
-                            epoll_ctl(epoll_fd, EPOLL_CTL_MOD, events[i].data.fd, &event_map[events[i].data.fd].event);
                             break;
                         }
                     }
@@ -315,13 +324,7 @@ void Router::listen()
                         res.headers("Server", "42-webserv");
 
                         // Add the server to out_buffer to later be sent
-                        std::string res_s = res.toString();
-                        out_buffer[events[i].data.fd] += res_s;
-
-                        // Update epoll to start listening to EPOLLOUT events
-                        // (won't do anything if it was already listening for EPOLLOUT events)
-                        event_map[events[i].data.fd].event.events |= EPOLLOUT;
-                        epoll_ctl(epoll_fd, EPOLL_CTL_MOD, events[i].data.fd, &event_map[events[i].data.fd].event);
+                        add_output(epoll_fd, out_buffer, event_map[events[i].data.fd].event, res.toString());
                     }
                     update_timeout(timeouts, &event_map[events[i].data.fd]);
                 }
