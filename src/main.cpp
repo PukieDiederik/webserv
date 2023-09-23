@@ -23,8 +23,6 @@ int main(int argc, char **argv) {
         
 		r.listen();
 		
-		return (0);
-
     } catch (const std::exception &ex) {
 		std::cout << ex.what() << std::endl;
 	}
