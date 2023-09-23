@@ -53,8 +53,6 @@ void	route_checker( ServerCfg& server, bool cgi_config ) {
 
 }
 
-#include <algorithm>
-
 void	server_checker( std::vector<ServerCfg>& servers, bool cgi_cmds ) {
 
 	int	server_count = 1;
