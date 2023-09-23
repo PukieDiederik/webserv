@@ -38,7 +38,7 @@ Router::Router()
             sa.sin_port = ntohs(_servers.back().cfg().port);
 //        sa.sin_addr.s_addr = (127 << 24) | (0 << 16) | (0 << 8) | (1);
 
-            if (!inet_pton(AF_INET, "127.0.0.1", &sa.sin_addr.s_addr)) //TODO replace this with host once implemented
+            if (!inet_pton(AF_INET, cfg._servers[i].host.c_str(), &sa.sin_addr.s_addr))
                 throw std::runtime_error("Could not parse IP");
 
             if ((_socket_fds[_servers.back().cfg().port] = socket(AF_INET, SOCK_STREAM, 0)) < 0)
@@ -59,6 +59,7 @@ Router::Router()
 
 Router::~Router()
 {
+    std::cout << "[Router Destructor]" << std::endl;
     for(std::size_t i = 0; i < ServerConfig::getInstance()._servers.size(); ++i)
     {
         close(_socket_fds[i]);
