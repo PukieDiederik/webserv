@@ -1,7 +1,7 @@
 #include "ServerConfig.hpp"
 #include "Router.hpp"
 #include <exception>
-
+#include <cstdlib>
 #include <iostream>
 
 int main(int argc, char **argv) {

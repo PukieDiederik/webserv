@@ -73,7 +73,6 @@ void	ServerConfig::parseCgi(int &bad_line, bool &keywd_bracket, std::ifstream &f
 		if ( token == "cgi_add" ) {
 			add_cgi_cmds( iss_curr_line, token, ltoken, bad_line, _cgi_cmds, _cgi );
 		}
-
 		else if ( token.compare( "}" ) == 0 ) { keywd_bracket = false; return ; }
 		else if ( token[0] == '#' ) continue ;
 		else
