@@ -5,12 +5,19 @@ require "cgi"
 cgi = CGI.new
 params = cgi.params
 
+was_file_uploaded = false
+
 if params.has_key?"file"
 	file = params["file"].first
-	server_file = ENV['UPLOAD_FOLDER'] + file.original_filename
 
-	File.open(server_file.untaint, "w") do |f|
-		f << file.read
+	if file && file.original_filename
+		server_file = ENV['UPLOAD_FOLDER'] + file.original_filename
+
+		File.open(server_file.untaint, "w") do |f|
+			f << file.read
+		end
+
+		was_file_uploaded = true
 	end
 end
 
@@ -30,7 +37,7 @@ puts '		<div class="page-wrapper">'
 puts '			<div class="container">'
 puts '				<section>'
 puts '					<h1 class="title">'
-puts '						Form Submission'
+puts "						File #{was_file_uploaded ? 'uploaded' : 'not uploaded'}"
 puts '					</h1>'
 puts '				</section>'
 puts '			</div>'

@@ -5,10 +5,14 @@ import os
 
 form = cgi.FieldStorage()
 
+was_file_uploaded = False
+
 if "file" in form and form["file"].file:
 	file_item = form["file"]
 
 	with open(os.environ.get('UPLOAD_FOLDER') + file_item.filename, "wb") as file:
+		was_file_uploaded = True
+
 		while True:
 			chunk = file_item.file.read(1024)
 			if not chunk:
@@ -31,7 +35,7 @@ print('		<div class="page-wrapper">')
 print('			<div class="container">')
 print('				<section>')
 print('					<h1 class="title">')
-print('						Form Submission')
+print("						File {}".format('uploaded' if was_file_uploaded else 'not uploaded'))
 print('					</h1>')
 print('				</section>')
 print('			</div>')

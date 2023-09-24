@@ -4,12 +4,12 @@ require "cgi"
 
 cgi = CGI.new
 
-was_file_defeted = false
+was_file_deleted = false
 
 if File.exist?(cgi["filename"])
 	File.delete(cgi["filename"])
 
-	was_file_defeted = !File.exist?(cgi["filename"])
+	was_file_deleted = !File.exist?(cgi["filename"])
 end
 
 puts 'HTTP/1.0 200 OK'
@@ -28,7 +28,7 @@ puts '		<div class="page-wrapper">'
 puts '			<div class="container">'
 puts '				<section>'
 puts '					<h1 class="title">'
-puts "						File #{was_file_defeted ? 'deleted' : 'not deleted'}"
+puts "						File #{was_file_deleted ? 'deleted' : 'not deleted'}"
 puts '					</h1>'
 puts '				</section>'
 puts '			</div>'
