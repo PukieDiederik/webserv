@@ -6,7 +6,7 @@ cgi = CGI.new
 
 was_file_deleted = false
 
-if File.exist?(cgi["filename"])
+if File.exist?(cgi["filename"]) && !File.directory?(cgi["filename"]) && cgi["filename"].include?("/var/www/files/")
 	File.delete(cgi["filename"])
 
 	was_file_deleted = !File.exist?(cgi["filename"])
