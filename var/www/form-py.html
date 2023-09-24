@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>42 Webserver - Form</title>
+
+		<link rel="stylesheet" href="/index.css">
+
+		<script src="/index.js"></script>
+	</head>
+
+	<body>
+		<div class="page-wrapper">
+			<div class="container">
+				<section>
+					<h1 class="title">
+						Form
+					</h1>
+				</section>
+
+				<section>
+					<form method="post" action="/cgi-bin/form.py">
+						<fieldset>
+							<legend>WHAT IS YOUR NAME !?</legend>
+
+							<br>
+							<br>
+
+							<label for="fname">
+								First name:
+								<input type="text" placeholder="..." id="fname" name="fname">
+							</label>
+
+							<br>
+							<br>
+
+							<label for="lname">
+								Last name:
+								<input type="text" placeholder="..." id="lname" name="lname">
+							</label>
+
+							<br>
+							<br>
+						</fieldset>
+
+						<br>
+						<input type="submit" class="button" value="Submit">
+					</form>
+				</section>
+			</div>
+		</div>
+	</body>
+</html>

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>42 Webserver - Form Upload</title>
+
+		<link rel="stylesheet" href="/index.css">
+
+		<script src="/index.js"></script>
+	</head>
+
+	<body>
+		<div class="page-wrapper">
+			<div class="container">
+				<section>
+					<h1 class="title">
+						Form Upload
+					</h1>
+				</section>
+
+				<section>
+					<form method="post" enctype="multipart/form-data" action="/cgi-bin/form-upload.py">
+						<fieldset>
+							<legend>WHAT FILE YOU WANNA UPLOAD !?</legend>
+
+							<br>
+							<br>
+
+							<label for="file">
+								File:
+								<input type="file" id="file" name="file">
+							</label>
+
+							<br>
+							<br>
+						</fieldset>
+
+						<br>
+						<input type="submit" class="button" value="Submit">
+					</form>
+				</section>
+			</div>
+		</div>
+	</body>
+</html>
