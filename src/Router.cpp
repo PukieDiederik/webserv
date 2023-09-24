@@ -355,7 +355,7 @@ void Router::listen()
 
                 if (em.closing)
                 {
-                    std::cout << "Closing connection early" << std::endl;
+                    std::cout << "Closing connection: " << em.event.data.fd << std::endl;
                     clear_fd(events[i].data.fd, epoll_fd, event_map, timeouts, out_buffer);
                 }
                 else
@@ -375,16 +375,31 @@ void Router::listen()
         while(!timeouts.empty() && timeouts.front()->timeout_at.tv_sec <= t.tv_sec
                                 && timeouts.front()->timeout_at.tv_usec <= t.tv_usec)
         {
-            std::cout << "File descriptor (" << timeouts.front()->event.data.fd
-                      << ") timed out, Cleaning up." << std::endl;
-            if (!event_map.count(timeouts.front()->event.data.fd))
+            // If it was already closing and it has not closed the socket yet, it will force close the socket
+            if (timeouts.front()->closing)
             {
-                std::cerr << "Could not find socket: " << timeouts.front()->event.data.fd << "\n";
-                timeouts.pop_front();
-                continue;
+                std::cout << "File descriptor (" << timeouts.front()->event.data.fd
+                          << ") timed out, Cleaning up." << std::endl;
+                clear_fd(timeouts.front()->event.data.fd, epoll_fd, event_map, timeouts, out_buffer);
             }
-            // Clear up socket data
-            clear_fd(timeouts.front()->event.data.fd, epoll_fd, event_map, timeouts, out_buffer);
+            else
+            {
+                std::cout << "File descriptor (" << timeouts.front()->event.data.fd
+                          << ") timed out, sending 408." << std::endl;
+
+                HttpResponse res;
+                res.set_status(408, "Request Timeout");
+                res.headers("Connection", "close");
+
+                if (timeouts.front()->server)
+                    response_error(res, &timeouts.front()->server->cfg(), 408);
+                else
+                    response_error(res, NULL, 408);
+
+                add_output(epoll_fd, out_buffer, timeouts.front()->event, res.toString());
+                timeouts.front()->closing = true;
+                update_timeout(timeouts, timeouts.front());
+            }
         }
     }
     close(epoll_fd);
