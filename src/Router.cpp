@@ -273,7 +273,7 @@ void Router::listen()
                     {
                         HttpResponse res;
                         HttpRequest req = event_map[events[i].data.fd].rf.getRequest();
-                        if (req.headers().count("Connection") && req.headers("Connection") == "close") // send timeout ?
+                        if (req.headers().count("Connection") && req.headers("Connection") == "close")
                             event_map[events[i].data.fd].closing = true;
 
                         std::cout << "Made request" << std::endl;
