@@ -10,14 +10,18 @@ was_file_uploaded = False
 if "file" in form and form["file"].file:
 	file_item = form["file"]
 
-	with open(os.environ.get('UPLOAD_FOLDER') + file_item.filename, "wb") as file:
-		was_file_uploaded = True
+	try:
+		with open(os.environ.get('UPLOAD_FOLDER') + file_item.filename, "wb") as file:
+			was_file_uploaded = True
 
-		while True:
-			chunk = file_item.file.read(1024)
-			if not chunk:
-				break
-			file.write(chunk)
+			while True:
+				chunk = file_item.file.read(1024)
+				if not chunk:
+					break
+				file.write(chunk)
+	except Exception as e:
+		was_file_uploaded = False
+
 
 print('HTTP/1.0 200 OK')
 print('Content-type: text/html')
