@@ -32,12 +32,12 @@
 
 
 // BEGIN: Helper Functions Prototypes
-RouteCfg*       find_route(const HttpRequest& req, std::vector<RouteCfg>& routes);
-HttpResponse    list_dir_res(const HttpRequest& req, std::string path, HttpResponse& res, ServerCfg& _cfg, RouteCfg* route);
-HttpResponse    response_cgi(const HttpRequest& req, std::string path, HttpResponse& res, ServerCfg& _cfg, RouteCfg* route);
-HttpResponse    response_get(const HttpRequest& req, std::string path, HttpResponse& res, ServerCfg& _cfg, RouteCfg* route);
-HttpResponse    response_head(const HttpRequest& req, std::string path, HttpResponse& res, ServerCfg& _cfg, RouteCfg* route);
-HttpResponse    response_delete(const HttpRequest& req, std::string path, HttpResponse& res, ServerCfg& _cfg, RouteCfg* route);
+const RouteCfg*       find_route(const HttpRequest& req, const std::vector<RouteCfg>& routes);
+HttpResponse    list_dir_res(const HttpRequest& req, std::string path, HttpResponse& res, const ServerCfg& _cfg, const RouteCfg* route);
+HttpResponse    response_cgi(const HttpRequest& req, std::string path, HttpResponse& res, const ServerCfg& _cfg, const RouteCfg* route);
+HttpResponse    response_get(const HttpRequest& req, std::string path, HttpResponse& res, const ServerCfg& _cfg, const RouteCfg* route);
+HttpResponse    response_head(const HttpRequest& req, std::string path, HttpResponse& res, const ServerCfg& _cfg, const RouteCfg* route);
+HttpResponse    response_delete(const HttpRequest& req, std::string path, HttpResponse& res, const ServerCfg& _cfg, const RouteCfg* route);
 // END: Helper Functions Prototypes
 
 
@@ -50,7 +50,7 @@ Server::~Server() {}
 
 Server& Server::operator=(const Server& copy)
 {
-    _cfg = copy._cfg;
+    *this = Server(copy._cfg);
     return *this;
 }
 // END: Canonical Form Functions
@@ -61,7 +61,7 @@ Server& Server::operator=(const Server& copy)
 HttpResponse    Server::handleRequest( const HttpRequest& req)
 {
     HttpResponse    res;
-    RouteCfg*       route = find_route(req, _cfg.routes);
+    const RouteCfg*       route = find_route(req, _cfg.routes);
     std::string     path;
 
     if ( route->is_redirect ) {
@@ -112,7 +112,7 @@ HttpResponse    Server::handleRequest( const HttpRequest& req)
     }
 }
 
-ServerCfg&  Server::cfg()
+const ServerCfg&  Server::cfg()
 {
     return _cfg;
 }
@@ -120,14 +120,14 @@ ServerCfg&  Server::cfg()
 
 
 // BEGIN: Helper Functions
-RouteCfg*   find_route(const HttpRequest& req, std::vector<RouteCfg>& routes)
+const RouteCfg*   find_route(const HttpRequest& req, const std::vector<RouteCfg>& routes)
 {
-    std::pair<std::size_t, RouteCfg*>   route_match(0, NULL);
+    std::pair<std::size_t, const RouteCfg*>   route_match(0, NULL);
 
-    for(std::vector<RouteCfg>::iterator i = routes.begin(); i != routes.end(); ++i) {
+    for(std::vector<RouteCfg>::const_iterator i = routes.begin(); i != routes.end(); ++i) {
 	    std::string	available_route = i->route_path;
 	    if ( available_route[available_route.size() - 1] == '/' ) available_route.substr( 0, available_route.size() - 1 );
-	    
+
 	    std::string::size_type  p = req.target().find( available_route );
 	    std::string::size_type  q = req.target().find( available_route  + "/" );
 
@@ -135,23 +135,23 @@ RouteCfg*   find_route(const HttpRequest& req, std::vector<RouteCfg>& routes)
 	    	if ( req.target() != available_route && q != 0 && available_route != "/")
 			available_route = "";
 		if ( available_route.length() > route_match.first )
-            		route_match = std::pair<int, RouteCfg*>(available_route.length(), &(*i));
+            		route_match = std::pair<int, const RouteCfg*>(available_route.length(), &(*i));
 	    }
     }
 
     return route_match.second;
 }
 
-HttpResponse    list_dir_res(const HttpRequest& req, std::string path, HttpResponse& res, ServerCfg& _cfg, RouteCfg* route)
+HttpResponse    list_dir_res(const HttpRequest& req, std::string path, HttpResponse& res, const ServerCfg& _cfg, const RouteCfg* route)
 {
     res.body().clear();
-    
+
     std::ifstream   file(DIRLISTING);
     std::string     line_buff;
 
     if (!file.is_open())
         return response_error(res, &_cfg, 500);
-    
+
     std::string                 items;
     std::vector<std::string>    dir_listing = list_dir(path);
 
@@ -173,7 +173,7 @@ HttpResponse    list_dir_res(const HttpRequest& req, std::string path, HttpRespo
     return res;
 }
 
-void            set_res_cgi_headers(const HttpRequest& req, HttpResponse& res, ServerCfg& _cfg, RouteCfg* route, std::string response)
+void            set_res_cgi_headers(const HttpRequest& req, HttpResponse& res, const ServerCfg& _cfg, const RouteCfg* route, std::string response)
 {
     std::string             line;
     int                     i;
@@ -393,7 +393,7 @@ void            delete_cgi_headers(char **envp)
     delete[] envp;
 }
 
-HttpResponse    response_cgi(const HttpRequest& req, std::string path, HttpResponse& res, ServerCfg& _cfg, RouteCfg* route)
+HttpResponse    response_cgi(const HttpRequest& req, std::string path, HttpResponse& res, const ServerCfg& _cfg, const RouteCfg* route)
 {
     char    **envp = get_cgi_headers(req, path);
 
@@ -407,7 +407,7 @@ HttpResponse    response_cgi(const HttpRequest& req, std::string path, HttpRespo
     return res;
 }
 
-HttpResponse    response_get(const HttpRequest& req, std::string path, HttpResponse& res, ServerCfg& _cfg, RouteCfg* route) {
+HttpResponse    response_get(const HttpRequest& req, std::string path, HttpResponse& res, const ServerCfg& _cfg, const RouteCfg* route) {
     switch (index_path(req, route, path)) {
         case AUTOINDEX:
             return list_dir_res(req, path, res, _cfg, route);
@@ -435,7 +435,7 @@ HttpResponse    response_get(const HttpRequest& req, std::string path, HttpRespo
     return res;
 }
 
-HttpResponse    response_head(const HttpRequest& req, std::string path, HttpResponse& res, ServerCfg& _cfg, RouteCfg* route) {
+HttpResponse    response_head(const HttpRequest& req, std::string path, HttpResponse& res, const ServerCfg& _cfg, const RouteCfg* route) {
     switch (index_path(req, route, path)) {
         case VALIDPATH:
             res.set_status(200);
@@ -454,7 +454,7 @@ HttpResponse    response_head(const HttpRequest& req, std::string path, HttpResp
     return res;
 }
 
-HttpResponse    response_delete(const HttpRequest& req, std::string path, HttpResponse& res, ServerCfg& _cfg, RouteCfg* route) {
+HttpResponse    response_delete(const HttpRequest& req, std::string path, HttpResponse& res, const ServerCfg& _cfg, const RouteCfg* route) {
     std::string executablePath = ServerConfig::getExecutablePath("/cgi-bin/form-delete.rb");
     std::string deletePath = get_path("/cgi-bin/form-delete.rb", route);
     std::string body = "filename=";

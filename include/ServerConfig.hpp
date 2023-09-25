@@ -35,10 +35,10 @@ struct RouteCfg {
 	bool				cgi_enabled;
 
 	bool				auto_index;
-	
+
 	// This should raise an error if not given and autoindex is false
 	std::string			index;
-	
+
 	// If this is empty it will accept any method
 	std::vector<std::string>	accepted_methods;
 
@@ -56,7 +56,7 @@ struct ServerCfg {
 	std::vector<std::string>	server_names;
 
 	// First argument is the error code, the second argument is the path to a file.
- 
+
 	std::map<short, std::string>	error_pages;
 	int				max_body_size;
 
@@ -88,11 +88,10 @@ class ServerConfig {
 		// This will store mime types and their respective content-type. The first
 		// argument is a file extensions, and the second argument is a content-type
 		mime_tab_t _mime;
-    
+
 
         // Constructors/Destructors
 		ServerConfig();
-        ServerConfig(const std::string& filepath); // will take a file to parse
         ServerConfig(const ServerConfig& copy);
 
 	protected:// Parser utils
@@ -117,8 +116,9 @@ class ServerConfig {
 
 		static std::string getMimeType(const std::string& filename);
 
-        static void initialize(const std::string& filepath);
-        static const ServerConfig& getInstance();
+        void initialize(const std::string& filepath);
+        static ServerConfig& getInstance();
+
         static bool	isCgiScript(std::string filename);
         static const std::string	getExecutablePath(std::string filename);
 };
