@@ -13,11 +13,13 @@ if params.has_key?"file"
 	if file && file.original_filename
 		server_file = ENV['UPLOAD_FOLDER'] + file.original_filename
 
-		File.open(server_file.untaint, "w") do |f|
-			f << file.read
-		end
+		if (!File.directory?(server_file))
+			File.open(server_file.untaint, "w") do |f|
+				f << file.read
+			end
 
-		was_file_uploaded = true
+			was_file_uploaded = true
+		end
 	end
 end
 
