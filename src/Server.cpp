@@ -90,10 +90,8 @@ HttpResponse    Server::handleRequest( const HttpRequest& req)
 
 
     // Handle CGI
-    else if (ServerConfig::isCgiScript(path)){
-    std::cout << "Doing CGI" << std::endl;
-
-        return response_cgi(req, path, res, _cfg, route);}
+    else if (ServerConfig::isCgiScript(path))
+        return response_cgi(req, path, res, _cfg, route);
 
     // Handle GET method
     else if (req.method() == "GET")

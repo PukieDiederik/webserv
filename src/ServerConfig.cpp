@@ -235,7 +235,7 @@ const std::string	ServerConfig::getExecutablePath(std::string filename)
 	std::string	result = "";
 
 	const ServerConfig&	sc = ServerConfig::getInstance();
-	for (std::map<std::string, char **>::const_iterator it = sc._cgi.begin(); it != sc._cgi.end(); ++it)
+	for (std::map<std::string, char **>::const_iterator it = sc._cgi.begin(); it != sc._cgi.end(); it++)
 	{
 		if (extension == it->first)
 		{
