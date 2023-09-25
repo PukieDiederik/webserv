@@ -56,6 +56,7 @@ void	route_checker( ServerCfg& server, bool cgi_config ) {
 void	server_checker( std::vector<ServerCfg>& servers, bool cgi_cmds ) {
 
 	int	server_count = 1;
+	std::map<int, std::string>	ports;
 	
 	for ( std::vector<ServerCfg>::iterator server = servers.begin(); server != servers.end(); server++ ) {
 		if ( VERBOSE )
@@ -67,6 +68,9 @@ void	server_checker( std::vector<ServerCfg>& servers, bool cgi_cmds ) {
 			std::cout << "\tServer host:\n\t\t[" << ( *server ).host << "]" << std::endl;
 
 		if ( ( *server ).port == -42 ) throw std::runtime_error( "missing port config" );
+		std::map<int, std::string>::iterator it = ports.find( (*server).port );
+		if ( it != ports.end() ) throw std::runtime_error( "port already in use by host: " + it->second);
+		ports.insert( std::make_pair( (*server).port, (*server).server_names[0] ));
 		if  (VERBOSE )
 			std::cout << "\tServer port:\n\t\t[" << ( *server ).port << "]" << std::endl;
 

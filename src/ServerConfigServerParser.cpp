@@ -24,7 +24,7 @@ void	ServerConfig::parseServerHost(const std::string &curr_line, ServerCfg &serv
 	std::getline(iss_curr_line, token, ' ');
 	
 	if (token.compare("localhost") == 0) {
-		server_conf.host = "127.0.0.0";
+		server_conf.host = "127.0.0.1";
 		std::getline(iss_curr_line, ltoken, ' ');
 		if (!(ltoken.empty()) && ltoken[0] != '#') throw std::runtime_error("Error: unexpected token: line: " + ParserUtils::intToString(bad_line)); 
 		return ;
