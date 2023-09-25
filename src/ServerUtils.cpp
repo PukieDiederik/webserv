@@ -1,3 +1,4 @@
+#include "ParserUtils.hpp"
 #include "ServerUtils.hpp"
 #include <vector>
 #include <string>
@@ -16,18 +17,6 @@ std::string	removeSlashDups( std::string str) {
 	while ((pos = result.find("//", pos)) != std::string::npos)
 		result.erase(pos, 1);
 	return result;
-}
-
-/*
- *  startsWith:
- *      Check if string starts with substring
- * */
-bool    startsWith(const std::string& str, const std::string& prefix) {
-    if (str.length() < prefix.length()) {
-        return false;
-    }
-
-    return !str.compare(0, prefix.length(), prefix);
 }
 
 std::string	find_remove( const std::string& str, char flag ) {
@@ -178,4 +167,53 @@ std::vector<std::string>    list_dir( const std::string& path ) {
         closedir(dir);
     }
     return dir_listing;
+}
+
+/*
+*  get_filename_extension:
+*      Gets the extension of a filename or path
+* */
+std::string get_filename_extension(const std::string& filename)
+{
+    size_t  dotPos = filename.rfind('.');
+    // Check if filename contains a period
+    if (dotPos == std::string::npos)
+        return "";
+
+    // Extract file extension based on the period found
+    std::string extension = filename.substr(dotPos + 1);
+
+    return (extension);
+}
+
+/*
+*  find_delimiter:
+*      Get the index of 'delimiter' on the 'str'
+*      Otherwise return -1
+* */
+int find_delimiter(const std::string str, const std::string delimiter)
+{
+    if (str.empty())
+        return (-1);
+    size_t poz = str.find(delimiter);
+    if (poz != std::string::npos)
+        return (poz);
+    else
+        return (-1);
+}
+
+/*
+*  is_error_code:
+*      Check if it is an error code (number of 3 digits)
+* */
+int is_error_code(const std::string str)
+{
+    if (str.length() != 3)
+        return false;
+
+    for (std::string::const_iterator it = str.begin(); it != str.end(); ++it)
+        if (!isdigit(*it))
+            return false;
+
+    return true;
 }

@@ -1,4 +1,5 @@
 #include "ServerConfig.hpp"
+#include "ServerUtils.hpp"
 #include "ParserUtils.hpp"
 
 #include <stdexcept>
@@ -157,6 +158,8 @@ ServerConfig::~ServerConfig() {
 
 ServerConfig& ServerConfig::operator=(const ServerConfig& copy)
 {
+	_cgi_cmds = copy._cgi_cmds;
+	_cgi = copy._cgi;
     _mime = copy._mime;
     _servers = copy._servers;
 	
@@ -186,13 +189,9 @@ ServerConfig& ServerConfig::operator=(const ServerConfig& copy)
 }
 
 std::string ServerConfig::getMimeType(const std::string& filename) {
-    size_t dotPos = filename.rfind('.');
-    // Check if filename contains a period
-    if (dotPos == std::string::npos)
-        return MIME_DEFAULT;
-
-    // Extract file extension based on the period found
-    std::string extension = filename.substr(dotPos + 1);
+	std::string	extension = get_filename_extension(filename);
+	if (extension.empty())
+		return MIME_DEFAULT;
 
     const ServerConfig& sc = ServerConfig::getInstance();
     ServerConfig::mime_tab_t::const_iterator it = sc._mime.find(extension);
@@ -210,4 +209,46 @@ void ServerConfig::initialize(const std::string &filepath)
 const ServerConfig& ServerConfig::getInstance()
 {
     return ServerConfig::_instance;
+}
+
+bool	ServerConfig::isCgiScript(std::string filename)
+{
+	std::string	extension = get_filename_extension(filename);
+	if (extension.empty())
+		return false;
+
+	const ServerConfig&	sc = ServerConfig::getInstance();
+	for (std::map<std::string, char **>::const_iterator it = sc._cgi.begin(); it != sc._cgi.end(); it++)
+	{
+		if (extension == it->first)
+			return true;
+	}
+
+	return false;
+}
+
+const std::string	ServerConfig::getExecutablePath(std::string filename)
+{
+	std::string	extension = get_filename_extension(filename);
+	if (extension.empty())
+		return "";
+
+	std::string	result = "";
+
+	const ServerConfig&	sc = ServerConfig::getInstance();
+	for (std::map<std::string, char **>::const_iterator it = sc._cgi.begin(); it != sc._cgi.end(); it++)
+	{
+		if (extension == it->first)
+		{
+			for (int i = 0; (it->second)[i] != NULL; i++)
+			{
+				result += (it->second)[i];
+				if ((it->second)[i + 1] != NULL)
+					result += " ";
+			}
+			break;
+		}
+	}
+
+	return result;
 }

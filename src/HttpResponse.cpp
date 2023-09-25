@@ -130,6 +130,7 @@ std::map<short, std::string>    createStatusCodeMap() {
     map.insert(std::make_pair(403, "Forbidden"));
     map.insert(std::make_pair(404, "File Not Found"));
     map.insert(std::make_pair(405, "Method Not Allowed"));
+    map.insert(std::make_pair(408, "Request Timeout"));
     map.insert(std::make_pair(500, "Internal Server Error"));
 
     return map;
