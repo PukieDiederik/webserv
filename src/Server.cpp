@@ -456,7 +456,7 @@ HttpResponse    response_head(const HttpRequest& req, std::string path, HttpResp
 
 HttpResponse    response_delete(const HttpRequest& req, std::string path, HttpResponse& res, const ServerCfg& _cfg, const RouteCfg* route) {
     std::string executablePath = ServerConfig::getExecutablePath("/cgi-bin/form-delete.rb");
-    std::string deletePath = get_path("/cgi-bin/form-delete.rb", route);
+    std::string deletePath = removeSlashDups(_cfg.root_dir +  "/cgi-bin/form-delete.rb");
     std::string body = "filename=";
     body.append(path);
 
