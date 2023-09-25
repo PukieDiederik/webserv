@@ -9,7 +9,7 @@
 
 class Server {
     private:
-        ServerCfg   _cfg;
+        const ServerCfg&   _cfg;
 
         Server();
 
@@ -25,7 +25,7 @@ class Server {
         // Will take a request and handle it, which includes calling CGI
         HttpResponse    handleRequest( const HttpRequest& req);
 
-        ServerCfg&  cfg();
+        const ServerCfg&  cfg();
 };
 
 HttpResponse& response_error(HttpResponse& res, const ServerCfg* _cfg, int statusCode);
