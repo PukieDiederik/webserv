@@ -48,7 +48,9 @@ const HttpMessage::headers_t& HttpMessage::headers() const { return _headers; }
 
 const std::string& HttpMessage::headers(const std::string& field_name) const
 {
-    return _headers.at(field_name);
+    static const std::string    empty = "";
+
+    return (_headers.count(field_name) < 1) ? empty : _headers.at(field_name);
 }
 
 HttpMessage::headers_t::const_iterator HttpMessage::headers(const std::string& field, const std::string& value)
