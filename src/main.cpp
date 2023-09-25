@@ -1,7 +1,7 @@
 #include "ServerConfig.hpp"
 #include "Router.hpp"
 #include <exception>
-
+#include <cstdlib>
 #include <iostream>
 
 int main(int argc, char **argv) {
@@ -20,7 +20,9 @@ int main(int argc, char **argv) {
         Router r;
 
         std::cout << "Started listening" << std::endl;
-        r.listen();
+        
+		r.listen();
+		
     } catch (const std::exception &ex) {
 		std::cout << ex.what() << std::endl;
 	}

@@ -74,7 +74,7 @@ HttpResponse&       HttpResponse::set_status(int code)
     std::map<short, std::string>::const_iterator    it = _status_code_map.find(code);
 
     _status_code = code;
-    _status_message = (it != HttpResponse::_status_code_map.end()) ? it->second : "Undefined";
+    _status_message = (it != HttpResponse::_status_code_map.end()) ? it->second : "";
 
     return *this;
 }

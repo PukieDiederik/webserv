@@ -147,15 +147,13 @@ ServerConfig::ServerConfig(const std::string& filepath) {
 ServerConfig::ServerConfig(const ServerConfig& copy) { *this = copy; }
 
 ServerConfig::~ServerConfig() {
-	// TODO: Free cmds arrays, and use copy operator to duplicate it
 	// Deletion of cmds arrays
-	/*
 	for (std::vector<char **>::iterator it = _cgi_cmds.begin(); it != _cgi_cmds.end(); it++) {
 		for (int i = 0; (*it)[i] != NULL; i++)
 			delete[] (*it)[i];
 		delete[] *it;
 	}
-	*/
+	_cgi_cmds.clear();
 }
 
 ServerConfig& ServerConfig::operator=(const ServerConfig& copy)
@@ -164,6 +162,29 @@ ServerConfig& ServerConfig::operator=(const ServerConfig& copy)
 	_cgi = copy._cgi;
     _mime = copy._mime;
     _servers = copy._servers;
+	
+	// deep copy _cgi_cmds
+	for ( size_t i = 0; i < copy._cgi_cmds.size(); i++ ) {
+		char**	og_cmd = copy._cgi_cmds[i];
+
+		size_t	len = 0;
+		while ( og_cmd[len] != NULL )
+			len++;
+		
+		char**	cmd_array = new char*[len + 1];
+		cmd_array[len] = NULL;
+
+		for ( size_t j = 0; j < len; j++ ) {
+			cmd_array[j] = new char[std::strlen( og_cmd[j] ) + 1];
+			std::strcpy( cmd_array[j], og_cmd[j] );
+		}
+
+		_cgi_cmds.push_back( cmd_array );
+
+	}
+
+	_cgi = copy._cgi;
+
     return *this;
 }
 

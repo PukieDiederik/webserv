@@ -16,9 +16,10 @@
 #include <deque>
 #include <sys/time.h>
 #include <algorithm>
+#include "Server.hpp"
 
 // Timeout in seconds
-#define TIMEOUT_TIME 15
+#define TIMEOUT_TIME 30
 
 Router::Router()
 {
@@ -38,7 +39,7 @@ Router::Router()
             sa.sin_port = ntohs(_servers.back().cfg().port);
 //        sa.sin_addr.s_addr = (127 << 24) | (0 << 16) | (0 << 8) | (1);
 
-            if (!inet_pton(AF_INET, "127.0.0.1", &sa.sin_addr.s_addr)) //TODO replace this with host once implemented
+            if (!inet_pton(AF_INET, cfg._servers[i].host.c_str(), &sa.sin_addr.s_addr))
                 throw std::runtime_error("Could not parse IP");
 
             if ((_socket_fds[_servers.back().cfg().port] = socket(AF_INET, SOCK_STREAM, 0)) < 0)
@@ -59,6 +60,7 @@ Router::Router()
 
 Router::~Router()
 {
+    std::cout << "[Router Destructor]" << std::endl;
     for(std::size_t i = 0; i < ServerConfig::getInstance()._servers.size(); ++i)
     {
         close(_socket_fds[i]);
@@ -137,6 +139,7 @@ Server* find_server_from_port(int port, std::vector<Server>& servers, HttpReques
     Server* s = NULL;
     std::string host = req.host();
 
+
     if (host.find(':'))
         host = host.substr(0, host.find(':')); // Remove port if provided
 
@@ -160,6 +163,15 @@ Server* find_server_from_port(int port, std::vector<Server>& servers, HttpReques
         }
     }
     return s;
+}
+
+// Adds data to the output
+void add_output(int epoll_fd, out_buffer_t& ob, struct epoll_event& event, const std::string& str)
+{
+    ob[event.data.fd] += str;
+
+    event.events |= EPOLLOUT;
+    epoll_ctl(epoll_fd, EPOLL_CTL_MOD, event.data.fd, &event);
 }
 
 void Router::listen()
@@ -219,9 +231,10 @@ void Router::listen()
         // Go through each event
         for (int i = 0; i < num_events; ++i)
         {
+            event_map_t::mapped_type& em = event_map[events[i].data.fd];
             if (events[i].events & EPOLLIN) {
                 // If it is a server socket we should create a client socket
-                if (event_map[events[i].data.fd].is_server) {
+                if (em.is_server) {
                     std::cout << "New connection found" << std::endl;
 
                     // Create client socket
@@ -240,7 +253,7 @@ void Router::listen()
                     struct event e = create_event(client_socket,
                                                   EPOLLIN | EPOLLRDHUP | EPOLLHUP,
                                                   false,
-                                                  event_map[events[i].data.fd].port,
+                                                  em.port,
                                                   NULL);
 
                     event_map[client_socket] = e; // Add it to the list of events
@@ -251,54 +264,67 @@ void Router::listen()
                     std::cout << "Created client socket with fd: " << client_socket << std::endl;
                 }
                 // If it's a client socket we should process the request
-                else {
+                else if (!em.closing) {
+
                     // Start reading data
                     int bytes_read = 1;
-                    std::ostringstream req_sstream; // stringstream used for storing everything until all is read
-                    req_sstream.write(buffer, bytes_read);
 
                     while (bytes_read > 0) {
+                        // Start reading data from the socket
                         bytes_read = recv(events[i].data.fd, buffer, sizeof(buffer), 0);
                         if (bytes_read <= 0)
                             break;
-                        req_sstream.write(buffer, bytes_read);
                         std::string s(buffer, bytes_read);
-                        event_map[events[i].data.fd].rf.in(s);
+                        try
+                        {
+                            // Try inputting read data into the request factory
+                            em.rf.in(s);
+                        }
+                        catch (const std::exception& e)
+                        {
+                            // Generate error 400 response
+                            HttpResponse res;
+                            res.set_status(400, "Bad request");
+                            res.headers("Connection", "Close");
+
+                            // If we don't have a server found for this connection use default settings
+                            if (em.server)
+                                res = response_error(res, &em.server->cfg(), 400);
+                            else
+                                res = response_error(res, NULL, 400);
+
+                            // Adds 400 response to the output buffer
+                            add_output(epoll_fd, out_buffer, em.event, res.toString());
+                            // Will close the connection on a bad request
+                            em.closing = true;
+                            break;
+                        }
                     }
 
                     std::cout << "handling new data on: " << events[i].data.fd << std::endl;
 
 
-                    if (event_map[events[i].data.fd].rf.isReqReady())
+                    if (!em.closing && em.rf.isReqReady())
                     {
                         HttpResponse res;
-                        HttpRequest req = event_map[events[i].data.fd].rf.getRequest();
+                        HttpRequest req = em.rf.getRequest();
                         if (req.headers().count("Connection") && req.headers("Connection") == "close")
-                            event_map[events[i].data.fd].closing = true;
+                            em.closing = true;
 
                         std::cout << "Made request" << std::endl;
                         // Figure out which server this request belongs to
-                        if (event_map[events[i].data.fd].server == NULL) {
-                            event_map[events[i].data.fd].server = find_server_from_port(
-                                event_map[events[i].data.fd].port,
-                                _servers,
-                                req);
+                        if (em.server == NULL) {
+                            em.server = find_server_from_port(em.port, _servers, req);
                         }
-                        res = event_map[events[i].data.fd].server->handleRequest(req);
+                        res = em.server->handleRequest(req);
 
                         // Add the server header
                         res.headers("Server", "42-webserv");
 
                         // Add the server to out_buffer to later be sent
-                        std::string res_s = res.toString();
-                        out_buffer[events[i].data.fd] += res_s;
-                        update_timeout(timeouts, &event_map[events[i].data.fd]);
-
-                        // Update epoll to start listening to EPOLLOUT events
-                        // (won't do anything if it was already listening for EPOLLOUT events)
-                        event_map[events[i].data.fd].event.events |= EPOLLOUT;
-                        epoll_ctl(epoll_fd, EPOLL_CTL_MOD, events[i].data.fd, &event_map[events[i].data.fd].event);
+                        add_output(epoll_fd, out_buffer, em.event, res.toString());
                     }
+                    update_timeout(timeouts, &em);
                 }
             }
             // If the socket is ready for write operations
@@ -311,7 +337,6 @@ void Router::listen()
                     continue;
 
                 int bytes_send = 0;
-                std::cout << "Writing: " << out_it->second.length() << " characters" << std::endl;
                 // start writing on the socket
                 for (std::size_t s = 0; s < out_it->second.length(); s += bytes_send)
                 {
@@ -322,21 +347,20 @@ void Router::listen()
                     if (bytes_send <= 0)
                         break; // Something errored
                 }
-                std::cout << "bytes_send: " << bytes_send << std::endl;
                 // Remove the out_buffer for this socket
                 out_buffer.erase(out_it);
 
                 // Update epoll
-                event_map[events[i].data.fd].event.events &= ~EPOLLOUT;
-                epoll_ctl(epoll_fd, EPOLL_CTL_MOD, events[i].data.fd, &event_map[events[i].data.fd].event);
+                em.event.events &= ~EPOLLOUT;
+                epoll_ctl(epoll_fd, EPOLL_CTL_MOD, events[i].data.fd, &em.event);
 
-                if (event_map[events[i].data.fd].closing)
+                if (em.closing)
                 {
-                    std::cout << "Closing connection early" << std::endl;
+                    std::cout << "Closing connection: " << em.event.data.fd << std::endl;
                     clear_fd(events[i].data.fd, epoll_fd, event_map, timeouts, out_buffer);
                 }
                 else
-                    update_timeout(timeouts, &event_map[events[i].data.fd]);
+                    update_timeout(timeouts, &em);
             }
             // On socket closure
             if (events[i].events & (EPOLLRDHUP | EPOLLHUP)) {
@@ -352,16 +376,31 @@ void Router::listen()
         while(!timeouts.empty() && timeouts.front()->timeout_at.tv_sec <= t.tv_sec
                                 && timeouts.front()->timeout_at.tv_usec <= t.tv_usec)
         {
-            std::cout << "File descriptor (" << timeouts.front()->event.data.fd
-                      << ") timed out, Cleaning up." << std::endl;
-            if (!event_map.count(timeouts.front()->event.data.fd))
+            // If it was already closing and it has not closed the socket yet, it will force close the socket
+            if (timeouts.front()->closing)
             {
-                std::cerr << "Could not find socket: " << timeouts.front()->event.data.fd << "\n";
-                timeouts.pop_front();
-                continue;
+                std::cout << "File descriptor (" << timeouts.front()->event.data.fd
+                          << ") timed out, Cleaning up." << std::endl;
+                clear_fd(timeouts.front()->event.data.fd, epoll_fd, event_map, timeouts, out_buffer);
             }
-            // Clear up socket data
-            clear_fd(timeouts.front()->event.data.fd, epoll_fd, event_map, timeouts, out_buffer);
+            else
+            {
+                std::cout << "File descriptor (" << timeouts.front()->event.data.fd
+                          << ") timed out, sending 408." << std::endl;
+
+                HttpResponse res;
+                res.set_status(408, "Request Timeout");
+                res.headers("Connection", "close");
+
+                if (timeouts.front()->server)
+                    response_error(res, &timeouts.front()->server->cfg(), 408);
+                else
+                    response_error(res, NULL, 408);
+
+                add_output(epoll_fd, out_buffer, timeouts.front()->event, res.toString());
+                timeouts.front()->closing = true;
+                update_timeout(timeouts, timeouts.front());
+            }
         }
     }
     close(epoll_fd);
