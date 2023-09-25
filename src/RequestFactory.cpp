@@ -180,7 +180,7 @@ void RequestFactory::parse()
                 if (m_buffer.length() - s + 2 < n)
                     return;
 
-                if (m_buffer.compare(s + n, 2, "\r\n"))
+                if ( m_buffer.compare(s + n - 2, 2, "\r\n") && m_buffer.compare(s + n, 2, "\r\n") )
                     throw ParsingException("Expected newline");
 
                 m_active_req.body() += m_buffer.substr(s, n);
