@@ -15,6 +15,14 @@
 #define VALIDPATH 0
 #define AUTOINDEX 1
 #define INVALIDPATH 2
+#define DEFAULT_ERROR "<html><head><title>Error</title></head>\
+				       <body style=\"\
+				       display: flex;\
+				       justify-content: center;\
+				       align-items: center;\
+				       height: 100vh; margin: 0;\"\
+				       ><h1>Error</h1></body></html>\
+				       "
 
 
 // BEGIN: Helper Functions Prototypes
@@ -23,7 +31,6 @@ HttpResponse    list_dir_res(const HttpRequest& req, std::string path, HttpRespo
 HttpResponse    response_get(const HttpRequest& req, std::string path, HttpResponse& res, ServerCfg& _cfg, RouteCfg* route);
 HttpResponse    response_head(const HttpRequest& req, std::string path, HttpResponse& res, ServerCfg& _cfg, RouteCfg* route);
 HttpResponse    response_delete(const HttpRequest& req, std::string path, HttpResponse& res, ServerCfg& _cfg, RouteCfg* route);
-HttpResponse    response_error(const HttpRequest& req, HttpResponse& res, ServerCfg& _cfg, RouteCfg* route, const int statusCode);
 // END: Helper Functions Prototypes
 
 
@@ -50,31 +57,33 @@ HttpResponse    Server::handleRequest( const HttpRequest& req)
     RouteCfg*       route = find_route(req, _cfg.routes);
     std::string     path;
 
-    // Check if a valid route has been found
-    if (!route) return response_error( req, res, _cfg, route, 404);
-
     if ( route->is_redirect ) {
         res.set_status( 301 );
         res.set_header("Location" , route->redirect_to );
         return res;
     }
 
+    // Check if a valid route has been found
+    if (!route)
+        return response_error(res, &_cfg, 404);
+
     path = get_path(req, route);
 
     // Check if file exists
     if (!is_directory(path) && ::access(path.c_str(), F_OK) < 0)
-        return response_error(req, res, _cfg, route, 404);
+        return response_error(res, &_cfg, 404);
 
     // Check if we have access to file
-    else if (::access(path.c_str(), O_RDONLY) < 0)
-        return response_error(req, res, _cfg, route, 403);
+    if (::access(path.c_str(), O_RDONLY) < 0)
+        return response_error(res, &_cfg, 403);
 
     // Check if requested method is available
-    else if (!route->accepted_methods.empty() && !is_accepted_method(route, req.method()))
-        return response_error(req, res, _cfg, route, 405);
+    if (!route->accepted_methods.empty() && !is_accepted_method(route, req.method()))
+        return response_error(res, &_cfg, 405);
+
 
     // Handle GET method
-    else if (req.method() == "GET") {
+    if (req.method() == "GET") {
         return response_get(req, path, res, _cfg, route);
     }
 
@@ -89,7 +98,7 @@ HttpResponse    Server::handleRequest( const HttpRequest& req)
 
     else {
         std::cout << "Returning response error" << std::endl;
-        return response_error(req, res, _cfg, route, 501);
+        return response_error(res, &_cfg, 501);
     }
 
     // TODO: check for CGI
@@ -133,7 +142,7 @@ HttpResponse    list_dir_res(const HttpRequest& req, std::string path, HttpRespo
     std::string     line_buff;
 
     if (!file.is_open())
-        return response_error(req, res, _cfg, route, 500);
+        return response_error(res, &_cfg, 500);
     
     std::string                 items;
     std::vector<std::string>    dir_listing = list_dir(path);
@@ -162,14 +171,14 @@ HttpResponse    response_get(const HttpRequest& req, std::string path, HttpRespo
             return list_dir_res(req, path, res, _cfg, route);
 
         case INVALIDPATH:
-            return response_error(req, res, _cfg, route, 404);
+            return response_error(res, &_cfg, 404);
     }
 
     std::ifstream   file(path.c_str());
     char buff [BUFFER_SIZE];
 
     if (!file.is_open())
-        return response_error(req, res, _cfg, route, 500);
+        return response_error(res, &_cfg, 500);
 
     std::ostringstream ss;
 
@@ -197,7 +206,7 @@ HttpResponse    response_head(const HttpRequest& req, std::string path, HttpResp
             return res;
 
         case INVALIDPATH:
-            return response_error(req, res, _cfg, route, 404);
+            return response_error(res, &_cfg, 404);
     }
 
     return res;
@@ -220,47 +229,35 @@ HttpResponse    response_delete(const HttpRequest& req, std::string path, HttpRe
 			break ;
 		}
         	default:
-			return response_error(req, res, _cfg, route, 404);
+			return response_error(res, &_cfg, 404);
 	}
 
     return res;
 }
 
-HttpResponse    response_error(const HttpRequest& req, HttpResponse& res, ServerCfg& _cfg, RouteCfg* route, const int statusCode) {
-    std::map<short, std::string>::const_iterator    it = _cfg.error_pages.find(statusCode);
-    
-    if (it != _cfg.error_pages.end()) {
-    	std::string     path = get_path(it->second, _cfg);
+HttpResponse& response_error(HttpResponse& res, const ServerCfg* _cfg, int statusCode) {
+    std::map<short, std::string>::const_iterator    it;
+    if (_cfg)
+        it = _cfg->error_pages.find(statusCode);
+
+    res.set_status(statusCode);
+
+    if (_cfg && it != _cfg->error_pages.end()) {
+    	std::string     path = get_path(it->second, *_cfg);
     	std::ifstream   file(path.c_str());
     	std::string     buff(BUFFER_SIZE, '\0');
 
 		if (is_file(path) && file.is_open()) {
 			while(file.read(&buff[0], BUFFER_SIZE).gcount() > 0)
 				res.body().append(buff, 0, file.gcount());
-			
-			std::ostringstream  ss;
-            		ss << res.body().length();
 
-            		res.set_status(200);
-            		res.set_header("Content-Type", ServerConfig::getMimeType(path));
-        	} else if (statusCode == 500)
-			res.set_status(500);
-		else
-			return response_error(req, res, _cfg, route, 500);
+            res.set_header("Content-Type", ServerConfig::getMimeType(path));
+        }
+        return res;
 	}
     else {
-		res.body().append( "\
-				<html><head><title>Error</title></head>\
-				<body style=\"\
-				display: flex;\
-				justify-content: center;\
-				align-items: center;\
-				height: 100vh; margin: 0;\"\
-				><h1>Error</h1></body></html>\
-				" );
-        res.set_status( statusCode );
+		res.body() = DEFAULT_ERROR;
         res.set_header("Content-Type", "text/html");
-		return res;
 	}
 	return res;
 }

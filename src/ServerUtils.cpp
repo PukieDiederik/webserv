@@ -66,7 +66,7 @@ std::string	get_path(std::string req_target, RouteCfg* route)
 	return path;
 }
 
-std::string	get_path( std::string error_page, ServerCfg& _cfg ) {
+std::string	get_path( std::string error_page, const ServerCfg& _cfg ) {
 	return removeSlashDups( _cfg.root_dir + error_page );
 }
 
