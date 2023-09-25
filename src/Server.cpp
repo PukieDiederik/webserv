@@ -81,13 +81,16 @@ HttpResponse    Server::handleRequest( const HttpRequest& req)
         return response_error(res, &_cfg, 404);
 
     // Check if we have access to file
-    if (::access(path.c_str(), O_RDONLY) < 0)
+    else if (::access(path.c_str(), O_RDONLY) < 0)
         return response_error(res, &_cfg, 403);
 
     // Check if requested method is available
-    if (!route->accepted_methods.empty() && !is_accepted_method(route, req.method()))
+    else if (!route->accepted_methods.empty() && !is_accepted_method(route, req.method()))
         return response_error(res, &_cfg, 405);
 
+    // Check if body surpasses the 'max_body_size'
+    else if ((_cfg.max_body_size > 0) && (req.body().length() > _cfg.max_body_size))
+        return response_error(res, &_cfg, 413);
 
     // Handle CGI
     else if (ServerConfig::isCgiScript(path))
