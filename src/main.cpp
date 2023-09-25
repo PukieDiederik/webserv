@@ -1,8 +1,8 @@
 #include "ServerConfig.hpp"
+#include "SessionManager.hpp"
 #include "Router.hpp"
 #include <exception>
-#include "SessionManager.hpp"
-
+#include <cstdlib>
 #include <iostream>
 
 int main(int argc, char **argv) {
@@ -14,14 +14,17 @@ int main(int argc, char **argv) {
 	}
 
 	try {
-		ServerConfig::initialize(argv[1]);
-		SessionManager::initialize();
+
+		ServerConfig::getInstance().initialize(argv[1]);
+    SessionManager::initialize();
 
         // Start listening
         Router r;
 
         std::cout << "Started listening" << std::endl;
-        r.listen();
+
+		r.listen();
+
     } catch (const std::exception &ex) {
 		std::cout << ex.what() << std::endl;
 	}

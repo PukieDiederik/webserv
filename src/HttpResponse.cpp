@@ -74,7 +74,7 @@ HttpResponse&       HttpResponse::set_status(int code)
     std::map<short, std::string>::const_iterator    it = _status_code_map.find(code);
 
     _status_code = code;
-    _status_message = (it != HttpResponse::_status_code_map.end()) ? it->second : "Undefined";
+    _status_message = (it != HttpResponse::_status_code_map.end()) ? it->second : "";
 
     return *this;
 }
@@ -131,6 +131,7 @@ std::map<short, std::string>    createStatusCodeMap() {
     map.insert(std::make_pair(403, "Forbidden"));
     map.insert(std::make_pair(404, "File Not Found"));
     map.insert(std::make_pair(405, "Method Not Allowed"));
+    map.insert(std::make_pair(408, "Request Timeout"));
     map.insert(std::make_pair(500, "Internal Server Error"));
 
     return map;

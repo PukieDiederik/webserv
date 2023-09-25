@@ -11,9 +11,33 @@
 	<body>
 		<div class="page-wrapper">
 			<div class="container">
-				<h1 class="title">
-					Form Upload
-				</h1>
+				<section>
+					<h1 class="title">
+						Form Upload
+					</h1>
+				</section>
+
+				<section>
+					<form method="post" enctype="multipart/form-data" action="/cgi-bin/form-upload.rb">
+						<fieldset>
+							<legend>WHAT FILE YOU WANNA UPLOAD !?</legend>
+
+							<br>
+							<br>
+
+							<label for="file">
+								File:
+								<input type="file" id="file" name="file">
+							</label>
+
+							<br>
+							<br>
+						</fieldset>
+
+						<br>
+						<input type="submit" class="button" value="Submit">
+					</form>
+				</section>
 			</div>
 		</div>
 	</body>

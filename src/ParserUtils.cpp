@@ -297,3 +297,11 @@ std::string trimSpace(std::string s)
     return s.substr(start, end + 1 - start);
 }
 
+// Check if string starts with substring
+bool	startsWith(const std::string& str, const std::string& prefix)
+{
+    if (str.length() < prefix.length())
+        return false;
+
+    return !str.compare(0, prefix.length(), prefix);
+}

@@ -1,3 +1,4 @@
+#include "ParserUtils.hpp"
 #include "ServerUtils.hpp"
 #include <vector>
 #include <string>
@@ -18,18 +19,6 @@ std::string	removeSlashDups( std::string str) {
 	return result;
 }
 
-/*
- *  startsWith:
- *      Check if string starts with substring
- * */
-bool    startsWith(const std::string& str, const std::string& prefix) {
-    if (str.length() < prefix.length()) {
-        return false;
-    }
-
-    return !str.compare(0, prefix.length(), prefix);
-}
-
 std::string	find_remove( const std::string& str, char flag ) {
 	std::string	return_str = str;
 	std::string::size_type	pos = return_str.find( flag );
@@ -44,12 +33,12 @@ std::string	find_remove( const std::string& str, char flag ) {
  *  get_path:
  *      Retrieves path from request
  * */
-std::string	get_path(const HttpRequest& req, RouteCfg* route)
+std::string	get_path(const HttpRequest& req, const RouteCfg* route)
 {
 	return get_path(req.target(), route);
 }
 
-std::string	get_path(std::string req_target, RouteCfg* route)
+std::string	get_path(std::string req_target, const RouteCfg* route)
 {
 	std::string path;
 
@@ -66,7 +55,7 @@ std::string	get_path(std::string req_target, RouteCfg* route)
 	return path;
 }
 
-std::string	get_path( std::string error_page, ServerCfg& _cfg ) {
+std::string	get_path( std::string error_page, const ServerCfg& _cfg ) {
 	return removeSlashDups( _cfg.root_dir + error_page );
 }
 
@@ -76,14 +65,15 @@ std::string	get_path( std::string error_page, ServerCfg& _cfg ) {
 *       If not, return predefined index
 *
 */
-int	index_path( RouteCfg* route, std::string& path ) {
+
+int	index_path( const HttpRequest& req, const RouteCfg* route, std::string& path ) {
     // if is a file return request
     if ( is_file( path ) ) {
         return 0;
     }
     else if ( is_directory( path ) ) {
         std::vector<std::string>    dir_listing = list_dir( path );
-        
+
         // If index.html exists in said folder, return request
         std::vector<std::string>::iterator it = std::find(dir_listing.begin(), dir_listing.end(), route->index);
 
@@ -116,7 +106,7 @@ int	replace_occurrence( std::string& str, const std::string& occurr, const std::
         start_pos += replacement.length();
         i++;
     }
-    
+
     return i;
 }
 
@@ -124,7 +114,7 @@ int	replace_occurrence( std::string& str, const std::string& occurr, const std::
 *   @is_accepted_method:
 *    Checks if the requested method is accepted by the route
 */
-bool	is_accepted_method( RouteCfg* route, const std::string method ) {
+bool	is_accepted_method(const RouteCfg* route, const std::string method ) {
     return std::find(route->accepted_methods.begin(), route->accepted_methods.end(), method) != route->accepted_methods.end();
 }
 
@@ -138,7 +128,7 @@ bool    is_file( const std::string& path ) {
     if ( path[path.size() - 1] == '/' ) return false;
 
     struct stat buf;
-    
+
     // Any error returns false
     if ( stat(path.c_str(), &buf) != 0 ) return false;
 
@@ -151,10 +141,10 @@ bool    is_file( const std::string& path ) {
 */
 bool	is_directory( const std::string& path ) {
     struct stat buf;
-    
+
     // Any error returns false
     if ( stat(path.c_str(), &buf) != 0 ) return false;
-    
+
     // Check if is a dir
     return S_ISDIR( buf.st_mode );
 }
@@ -170,7 +160,7 @@ std::vector<std::string>    list_dir( const std::string& path ) {
     struct dirent* ent;
 
     dir = opendir( path.c_str() );
-    
+
     if ( dir != NULL ) {
         while ( ( ent = readdir( dir ) ) != NULL ) {
             dir_listing.push_back( ent->d_name );
@@ -188,4 +178,53 @@ std::string removeAfterChar( const std::string str, char c ) {
 std::string removeBeforeChar( const std::string str, char c ) {
     std::string::size_type pos = str.find( c );
     return ( pos != std::string::npos ) ? str.substr( pos + 1 ) : str;
+}
+
+/*
+*  get_filename_extension:
+*      Gets the extension of a filename or path
+* */
+std::string get_filename_extension(const std::string& filename)
+{
+    size_t  dotPos = filename.rfind('.');
+    // Check if filename contains a period
+    if (dotPos == std::string::npos)
+        return "";
+
+    // Extract file extension based on the period found
+    std::string extension = filename.substr(dotPos + 1);
+
+    return (extension);
+}
+
+/*
+*  find_delimiter:
+*      Get the index of 'delimiter' on the 'str'
+*      Otherwise return -1
+* */
+int find_delimiter(const std::string str, const std::string delimiter)
+{
+    if (str.empty())
+        return (-1);
+    size_t poz = str.find(delimiter);
+    if (poz != std::string::npos)
+        return (poz);
+    else
+        return (-1);
+}
+
+/*
+*  is_error_code:
+*      Check if it is an error code (number of 3 digits)
+* */
+int is_error_code(const std::string str)
+{
+    if (str.length() != 3)
+        return false;
+
+    for (std::string::const_iterator it = str.begin(); it != str.end(); ++it)
+        if (!isdigit(*it))
+            return false;
+
+    return true;
 }

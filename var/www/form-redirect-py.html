@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 	<head>
-		<title>[DIR]</title>
+		<title>42 Webserver - Form Redirect</title>
 
 		<link rel="stylesheet" href="/index.css">
 
@@ -13,14 +13,14 @@
 			<div class="container">
 				<section>
 					<h1 class="title">
-						Index of [DIR]
+						Form Redirect
 					</h1>
 				</section>
 
 				<section>
-					<ul>
-						[ITEMS]
-					</ul>
+					<form method="post" action="/cgi-bin/form-redirect.py">
+						<input type="submit" class="button" value="REDIRECT ME">
+					</form>
 				</section>
 			</div>
 		</div>
