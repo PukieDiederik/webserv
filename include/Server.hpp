@@ -23,7 +23,7 @@ class Server {
         Server& operator=(const Server& copy);
 
         // Will take a request and handle it, which includes calling CGI
-        HttpResponse    handleRequest( const HttpRequest& req);
+        HttpResponse    handleRequest( const HttpRequest& req );
 
         const ServerCfg&  cfg();
 };

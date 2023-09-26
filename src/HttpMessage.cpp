@@ -1,6 +1,11 @@
 #include "HttpMessage.hpp"
 #include <sstream>
 #include <exception>
+#include "SessionManager.hpp"
+
+# include <iostream>
+
+void    debugss( const std::string& event, const std::string& trace );
 
 HttpMessage::headers_t::iterator HttpMessage::add_header(const std::string& name, const std::string& value)
 {
@@ -73,6 +78,15 @@ std::string HttpMessage::toStringHeaders() const
     std::stringstream result;
     for (HttpMessage::headers_t::const_iterator i = _headers.begin(); i != _headers.end(); ++i)
         result << i->first << ": " << i->second << "\r\n";
+
+    // gde-alme
+    if ( !SM_ON ) return result.str();
+    for ( HttpMessage::cookies_t::const_iterator i = _cookies.begin(); i != _cookies.end(); i++ ) {
+        //debugss( "Adding cookie", i->second );
+        if ( i->second.find( '=' ) != std::string::npos)
+            result << "Set-Cookie" << ": " << i->second  << "\r\n";
+    }
+
     return result.str();
 }
 std::string HttpMessage::toStringBody() const { return _body;}
@@ -85,3 +99,13 @@ std::string HttpMessage::toString()
 
     return result.str();
 }
+
+// gde-alme
+void    HttpMessage::setCookies( const HttpMessage::cookies_t& cookies ) {
+    _cookies = cookies;
+}
+
+HttpMessage::cookies_t  HttpMessage::getCookies() const {
+    return _cookies;
+}
+

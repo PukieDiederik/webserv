@@ -21,7 +21,7 @@ std::string	removeSlashDups( std::string str) {
 
 std::string	find_remove( const std::string& str, char flag ) {
 	std::string	return_str = str;
-	std::string::size_type	pos = return_str.find( '?' );
+	std::string::size_type	pos = return_str.find( flag );
 
 	if ( pos != std::string::npos )
 		return_str.erase( pos );
@@ -65,6 +65,7 @@ std::string	get_path( std::string error_page, const ServerCfg& _cfg ) {
 *       If not, return predefined index
 *
 */
+
 int	index_path( const HttpRequest& req, const RouteCfg* route, std::string& path ) {
     // if is a file return request
     if ( is_file( path ) ) {
@@ -167,6 +168,16 @@ std::vector<std::string>    list_dir( const std::string& path ) {
         closedir(dir);
     }
     return dir_listing;
+}
+
+std::string removeAfterChar( const std::string str, char c ) {
+    std::string::size_type pos = str.find( c );
+    return ( pos != std::string::npos ) ? str.substr( 0, pos ) : str;
+}
+
+std::string removeBeforeChar( const std::string str, char c ) {
+    std::string::size_type pos = str.find( c );
+    return ( pos != std::string::npos ) ? str.substr( pos + 1 ) : str;
 }
 
 /*

@@ -4,6 +4,7 @@
 #include "HttpRequest.hpp"
 #include "HttpResponse.hpp"
 #include "ServerUtils.hpp"
+#include "SessionManager.hpp"
 #include <iostream>
 #include <unistd.h>
 #include <fcntl.h>
@@ -32,12 +33,16 @@
 
 
 // BEGIN: Helper Functions Prototypes
+
 const RouteCfg*       find_route(const HttpRequest& req, const std::vector<RouteCfg>& routes);
 HttpResponse    list_dir_res(const HttpRequest& req, std::string path, HttpResponse& res, const ServerCfg& _cfg, const RouteCfg* route);
 HttpResponse    response_cgi(const HttpRequest& req, std::string path, HttpResponse& res, const ServerCfg& _cfg, const RouteCfg* route);
 HttpResponse    response_get(const HttpRequest& req, std::string path, HttpResponse& res, const ServerCfg& _cfg, const RouteCfg* route);
 HttpResponse    response_head(const HttpRequest& req, std::string path, HttpResponse& res, const ServerCfg& _cfg, const RouteCfg* route);
 HttpResponse    response_delete(const HttpRequest& req, std::string path, HttpResponse& res, const ServerCfg& _cfg, const RouteCfg* route);
+HttpResponse    response_error(const HttpRequest& req, HttpResponse& res, ServerCfg& _cfg, RouteCfg* route, const int statusCode);
+std::string     handleCookies( const HttpRequest& req, HttpResponse& res );
+
 // END: Helper Functions Prototypes
 
 
@@ -55,14 +60,14 @@ Server& Server::operator=(const Server& copy)
 }
 // END: Canonical Form Functions
 
-
 // BEGIN: Class Functions
 // Will take a request and handle it, which includes calling CGI
-HttpResponse    Server::handleRequest( const HttpRequest& req)
+HttpResponse    Server::handleRequest( const HttpRequest& req )
 {
     HttpResponse    res;
     const RouteCfg*       route = find_route(req, _cfg.routes);
     std::string     path;
+    std::string     session_id;
 
     if ( route->is_redirect ) {
         res.set_status( 301 );
@@ -75,6 +80,8 @@ HttpResponse    Server::handleRequest( const HttpRequest& req)
         return response_error(res, &_cfg, 404);
 
     path = get_path(req, route);
+    if ( SM_ON )
+        session_id = handleCookies( req, res );
 
     // Check if file exists
     if (!is_directory(path) && ::access(path.c_str(), F_OK) < 0)
@@ -412,6 +419,7 @@ HttpResponse    response_cgi(const HttpRequest& req, std::string path, HttpRespo
 
 HttpResponse    response_get(const HttpRequest& req, std::string path, HttpResponse& res, const ServerCfg& _cfg, const RouteCfg* route) {
     switch (index_path(req, route, path)) {
+
         case AUTOINDEX:
             return list_dir_res(req, path, res, _cfg, route);
 
@@ -420,7 +428,6 @@ HttpResponse    response_get(const HttpRequest& req, std::string path, HttpRespo
     }
 
     std::ifstream   file(path.c_str());
-    char buff [BUFFER_SIZE];
 
     if (!file.is_open())
         return response_error(res, &_cfg, 500);
@@ -437,6 +444,7 @@ HttpResponse    response_get(const HttpRequest& req, std::string path, HttpRespo
 
     return res;
 }
+
 
 HttpResponse    response_head(const HttpRequest& req, std::string path, HttpResponse& res, const ServerCfg& _cfg, const RouteCfg* route) {
     switch (index_path(req, route, path)) {
@@ -456,6 +464,7 @@ HttpResponse    response_head(const HttpRequest& req, std::string path, HttpResp
 
     return res;
 }
+
 
 HttpResponse    response_delete(const HttpRequest& req, std::string path, HttpResponse& res, const ServerCfg& _cfg, const RouteCfg* route) {
     std::string executablePath = ServerConfig::getExecutablePath("/cgi-bin/form-delete.rb");

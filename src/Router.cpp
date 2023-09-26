@@ -316,8 +316,9 @@ void Router::listen()
                         if (em.server == NULL) {
                             em.server = find_server_from_port(em.port, _servers, req);
                         }
-                        res = em.server->handleRequest(req);
 
+                        res = em.server->handleRequest(req);
+                   
                         // Add the server header
                         res.headers("Server", "42-webserv");
 

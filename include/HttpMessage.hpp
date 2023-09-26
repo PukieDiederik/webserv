@@ -12,8 +12,10 @@
 class HttpMessage {
 public:
     typedef std::map<std::string, std::string> headers_t;
+    typedef std::map<std::string, std::string> cookies_t;
 protected:
     headers_t _headers;
+    cookies_t _cookies;
     int _major_version;
     int _minor_version;
 
@@ -51,6 +53,10 @@ public:
 
     // This will convert it back to a text based http message
     virtual std::string toString();
+
+    void    setCookies( const HttpMessage::cookies_t& cookies );
+    HttpMessage::cookies_t  getCookies() const;
+
 };
 
 #endif
