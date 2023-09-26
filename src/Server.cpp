@@ -293,7 +293,7 @@ std::string     executeScript(std::string executablePath, std::string path, std:
             std::cout << "ERROR: Timeout occurred" << std::endl;
             kill(_cgi_pid, SIGKILL);
             waitpid(_cgi_pid, NULL, 0);
-            return "408";
+            return "500";
         }
         // Wait for the child process to complete
         else
