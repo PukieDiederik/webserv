@@ -96,7 +96,7 @@ void RequestFactory::parse()
             m_buffer.erase(0, m_buffer.find('\n') + 1);
             if (line.empty())
                 break;
-            
+
             // Add header
             std::string _field = line.substr(0, line.find(static_cast<std::string>(": ")));
             std::string _value = line.substr(line.find(static_cast<std::string>(": ")) + 2);

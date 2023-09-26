@@ -65,7 +65,7 @@ void	parseEnableCgi(RouteCfg &route_conf, std::istringstream &iss_c_line, int &b
  *		Checks if any additional tokens in string, if not comments throws error
  *
  */
-void	parseRoot(RouteCfg &route_conf, std::istringstream &iss_c_line, int &bad_line, std::ifstream &fd_conf, std::string& curr_line) {
+void	parseRoot(RouteCfg &route_conf, std::istringstream &iss_c_line, int &bad_line) {
 	std::string	token, ntoken;
 	if (!(route_conf.root.empty())) throw std::runtime_error("Error: multiple root definitions: line: " + ParserUtils::intToString(bad_line));
 
@@ -175,7 +175,7 @@ void	ServerConfig::parseServerRoute(std::string &curr_line, ServerCfg &server_co
 		} else if (ntoken.compare("enable_cgi") == 0) {
 			parseEnableCgi(route_conf, iss_c_line, bad_line);
 		} else if (ntoken.compare("root") == 0) {
-			parseRoot(route_conf, iss_c_line, bad_line, fd_conf, curr_line);
+			parseRoot(route_conf, iss_c_line, bad_line);
 		} else if (ntoken.compare("methods") == 0) {
 			parseMethods(route_conf, iss_c_line, bad_line);
 		} else if (ntoken.compare("redirect") == 0) {
