@@ -58,7 +58,7 @@ struct ServerCfg {
 	// First argument is the error code, the second argument is the path to a file.
 
 	std::map<short, std::string>	error_pages;
-	int				max_body_size;
+	unsigned int		    		max_body_size;
 
 	// This should be an absolute path
 	std::string			root_dir;

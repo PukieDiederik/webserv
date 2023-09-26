@@ -12,6 +12,7 @@ class Server {
         const ServerCfg&   _cfg;
 
         Server();
+        Server& operator=(const Server& copy);
 
     public:
         // Will take a server config to set up this server, and a general config for stuff like CGI and mime types
@@ -20,7 +21,6 @@ class Server {
 
         ~Server();
 
-        Server& operator=(const Server& copy);
 
         // Will take a request and handle it, which includes calling CGI
         HttpResponse    handleRequest( const HttpRequest& req);
