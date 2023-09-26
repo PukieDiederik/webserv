@@ -7,7 +7,7 @@
 
 class RequestFactory {
 public:
-    
+
 private:
     enum parse_status { REQ_LINE, HEADER, BODY };
     enum body_parse_type { LENGTH, CHUNKED };

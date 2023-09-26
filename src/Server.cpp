@@ -174,7 +174,7 @@ HttpResponse    list_dir_res(const HttpRequest& req, std::string path, HttpRespo
 void            set_res_cgi_headers(HttpResponse& res, const ServerCfg& _cfg, std::string response)
 {
     std::string             line;
-    unsigned int            i;
+    unsigned long      i;
     std::string::size_type  startPos = 0;
     std::string::size_type  endPos;
 
