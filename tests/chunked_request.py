@@ -1,10 +1,10 @@
 import socket
 def send_chunked_request():
     host = "localhost"
-    port = 3001
+    port = 3000
 
     request = (
-            "POST /endpoint HTTP/1.1\r\n"
+            "POST / HTTP/1.1\r\n"
             "Host: " + host + "\r\n"
             "Transfer-Encoding: chunked\r\n"
             "Content-Type: text/plain\r\n"

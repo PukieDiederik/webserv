@@ -59,11 +59,20 @@ HttpResponse    Server::handleRequest( const HttpRequest& req)
     const RouteCfg*       route = find_route(req, _cfg.routes);
     std::string     path;
 
+
     if ( route->is_redirect ) {
         res.set_status( 301 );
         res.set_header("Location" , route->redirect_to );
         return res;
     }
+
+    // Check if requested method is available
+    else if (!route->accepted_methods.empty() && !is_accepted_method(route, req.method()))
+        return response_error(res, &_cfg, 405);
+
+    // Check if body surpasses the 'max_body_size'
+    else if ((_cfg.max_body_size > 0) && (req.body().length() > _cfg.max_body_size))
+        return response_error(res, &_cfg, 413);
 
     // Check if a valid route has been found
     if (!route)
@@ -78,14 +87,6 @@ HttpResponse    Server::handleRequest( const HttpRequest& req)
     // Check if we have access to file
     else if (::access(path.c_str(), O_RDONLY) < 0)
         return response_error(res, &_cfg, 403);
-
-    // Check if requested method is available
-    else if (!route->accepted_methods.empty() && !is_accepted_method(route, req.method()))
-        return response_error(res, &_cfg, 405);
-
-    // Check if body surpasses the 'max_body_size'
-    else if ((_cfg.max_body_size > 0) && (req.body().length() > _cfg.max_body_size))
-        return response_error(res, &_cfg, 413);
 
     // Handle CGI
     else if (ServerConfig::isCgiScript(path))
@@ -292,7 +293,7 @@ std::string     executeScript(std::string executablePath, std::string path, std:
             std::cout << "ERROR: Timeout occurred" << std::endl;
             kill(_cgi_pid, SIGKILL);
             waitpid(_cgi_pid, NULL, 0);
-            return "408";
+            return "500";
         }
         // Wait for the child process to complete
         else

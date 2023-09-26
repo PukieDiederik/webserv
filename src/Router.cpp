@@ -17,6 +17,7 @@
 #include <sys/time.h>
 #include <algorithm>
 #include "Server.hpp"
+#include <cerrno>
 
 // Timeout in seconds
 #define TIMEOUT_TIME 30
@@ -268,7 +269,6 @@ void Router::listen()
 
                     // Start reading data
                     int bytes_read = 1;
-
                     while (bytes_read > 0) {
                         // Start reading data from the socket
                         bytes_read = recv(events[i].data.fd, buffer, sizeof(buffer), 0);
@@ -300,7 +300,6 @@ void Router::listen()
                             break;
                         }
                     }
-
                     std::cout << "handling new data on: " << events[i].data.fd << std::endl;
 
 
@@ -347,6 +346,13 @@ void Router::listen()
                     if (bytes_send <= 0)
                         break; // Something errored
                 }
+                if (bytes_send <= 0)
+                {
+                    std::cout << "Error on writing, closing fd" << std::endl;
+                    clear_fd(events[i].data.fd, epoll_fd, event_map, timeouts, out_buffer);
+                }
+
+
                 // Remove the out_buffer for this socket
                 out_buffer.erase(out_it);
 
