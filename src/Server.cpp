@@ -36,7 +36,7 @@ const RouteCfg*       find_route(const HttpRequest& req, const std::vector<Route
 HttpResponse    list_dir_res(const HttpRequest& req, std::string path, HttpResponse& res, const ServerCfg& _cfg);
 HttpResponse    response_cgi(const HttpRequest& req, std::string path, HttpResponse& res, const ServerCfg& _cfg);
 HttpResponse    response_get(const HttpRequest& req, std::string path, HttpResponse& res, const ServerCfg& _cfg, const RouteCfg* route);
-HttpResponse    response_head(const HttpRequest& req, std::string path, HttpResponse& res, const ServerCfg& _cfg, const RouteCfg* route);
+HttpResponse    response_head(std::string path, HttpResponse& res, const ServerCfg& _cfg, const RouteCfg* route);
 HttpResponse    response_delete(std::string path, HttpResponse& res, const ServerCfg& _cfg);
 // END: Helper Functions Prototypes
 
@@ -97,7 +97,7 @@ HttpResponse    Server::handleRequest( const HttpRequest& req)
 
     // Handle HEAD method
     else if (req.method() == "HEAD")
-        return response_head(req, path, res, _cfg, route);
+        return response_head(path, res, _cfg, route);
 
     // Handle DELETE method
     else if (req.method() == "DELETE")
@@ -406,7 +406,7 @@ HttpResponse    response_cgi(const HttpRequest& req, std::string path, HttpRespo
 }
 
 HttpResponse    response_get(const HttpRequest& req, std::string path, HttpResponse& res, const ServerCfg& _cfg, const RouteCfg* route) {
-    switch (index_path(req, route, path)) {
+    switch (index_path(route, path)) {
         case AUTOINDEX:
             return list_dir_res(req, path, res, _cfg);
 
@@ -432,8 +432,8 @@ HttpResponse    response_get(const HttpRequest& req, std::string path, HttpRespo
     return res;
 }
 
-HttpResponse    response_head(const HttpRequest& req, std::string path, HttpResponse& res, const ServerCfg& _cfg, const RouteCfg* route) {
-    switch (index_path(req, route, path)) {
+HttpResponse    response_head(std::string path, HttpResponse& res, const ServerCfg& _cfg, const RouteCfg* route) {
+    switch (index_path(route, path)) {
         case VALIDPATH:
             res.set_status(200);
             res.set_header("Content-type", ServerConfig::getMimeType(path));
