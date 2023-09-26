@@ -26,7 +26,7 @@ void	route_checker( ServerCfg& server, bool cgi_config ) {
 				std::cout << "\t\tRoute root:\n\t\t\t[" << ( *route ).root << "]" << std::endl;
 
 			if ( VERBOSE )
-				std::cout << "\t\tRoute cgi enabled:\n\t\t\t[" << std::flush; 
+				std::cout << "\t\tRoute cgi enabled:\n\t\t\t[" << std::flush;
 			if (( *route ).cgi_enabled && VERBOSE ) {
 				std::cout << "yes]" << std::endl;
 				if ( cgi_config ) throw std::runtime_error( "cgi enabled but missing cgi config" );
@@ -41,7 +41,7 @@ void	route_checker( ServerCfg& server, bool cgi_config ) {
 			if ( VERBOSE )
 				std::cout << "\t\tRoute index:\n\t\t\t[" << ( *route ).index << "]" << std::endl;
 
-			if ( !( ( *route ).accepted_methods.empty() ) ) {	
+			if ( !( ( *route ).accepted_methods.empty() ) ) {
 				if ( VERBOSE )
 					std::cout << "\t\tRoute accepted methods:" << std::endl;
 				for ( std::vector<std::string>::iterator method = ( *route ).accepted_methods.begin(); method != ( *route ).accepted_methods.end(); method++ ) {
@@ -57,19 +57,19 @@ void	server_checker( std::vector<ServerCfg>& servers, bool cgi_cmds ) {
 
 	int	server_count = 1;
 	std::map<int, std::string>	ports;
-	
+
 	for ( std::vector<ServerCfg>::iterator server = servers.begin(); server != servers.end(); server++ ) {
 		if ( VERBOSE )
 			std::cout << "\nServer[" << server_count++ << "]:" << std::endl;
-		
+
 		if ( ( *server ).host.empty() ) throw std::runtime_error( "missing ipv4 (hostname) config" );
-		
+
 		if ( VERBOSE )
 			std::cout << "\tServer host:\n\t\t[" << ( *server ).host << "]" << std::endl;
 
 		if ( ( *server ).port == -42 ) throw std::runtime_error( "missing port config" );
 		std::map<int, std::string>::iterator it = ports.find( (*server).port );
-		if ( it != ports.end() ) throw std::runtime_error( "port already in use by host: " + it->second);
+		if ( it != ports.end() && it->second == (*server).host) throw std::runtime_error( "port already in use by host: " + it->second);
 		ports.insert( std::make_pair( (*server).port, (*server).server_names[0] ));
 		if  (VERBOSE )
 			std::cout << "\tServer port:\n\t\t[" << ( *server ).port << "]" << std::endl;

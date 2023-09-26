@@ -42,12 +42,14 @@ std::string	get_path(std::string req_target, const RouteCfg* route)
 {
 	std::string path;
 
-	if (startsWith(req_target, route->route_path))
-		req_target.erase(0, route->route_path.length());
-
 	// ignore everything after ? or #
 	req_target = find_remove( req_target, '?' );
 	req_target = find_remove( req_target, '#' );
+
+    if (!route->index.empty() && req_target == route->route_path)
+        req_target = route->index;
+	else if (startsWith(req_target, route->route_path))
+		req_target.erase(0, route->route_path.length());
 
 	path = route->root + "/" + req_target;
 	path = removeSlashDups(path);
