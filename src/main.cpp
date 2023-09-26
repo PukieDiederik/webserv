@@ -4,7 +4,23 @@
 #include <cstdlib>
 #include <iostream>
 #include <csignal>
-#include "SignalException.hpp"
+
+class SignalException : public std::exception {
+	public:
+		SignalException() {
+			std::cout << "Signal: " << _msg << std::endl;
+		}
+		virtual const char* what() const throw() { return _msg; }
+
+	private:
+	char	_msg[1024];
+};
+
+void	sighandler(int signum) {
+	(void)signum;
+	throw SignalException();
+}
+
 
 int main(int argc, char **argv) {
 	(void) argc;
